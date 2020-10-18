@@ -2,7 +2,7 @@
   "main": "bin/index.js",
   "scripts": {
     "build": "tsc",
-    "lint": "eslint --fix .",
+    "lint": "eslint .",
     "start": "npm run build && node bin/index.js"
   },
   "author": "Trevor Sundberg",
