@@ -425,20 +425,9 @@ std::string CWriter::ExportName(string_view mangled_name) {
 
 // static
 std::string CWriter::LegalizeName(string_view name) {
-  if (name.empty())
-    return "_";
-
-  std::string result;
-  result = isalpha(name[0]) ? name[0] : '_';
-  for (size_t i = 1; i < name.size(); ++i)
+  std::string result = "w2b_";
+  for (size_t i = 0; i < name.size(); ++i)
     result += isalnum(name[i]) ? name[i] : '_';
-
-  // In addition to containing valid characters for C, we must also avoid
-  // colliding with things C cares about, such as reserved words (e.g. "void")
-  // or a function name like main() (which a compiler will  complain about if we
-  // define it with another type). To avoid such problems, prefix.
-  result = "w2b_" + result;
-
   return result;
 }
 
