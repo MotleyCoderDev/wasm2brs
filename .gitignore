@@ -1,3 +1,5 @@
 build
 out
+test/node_modules
+test/bin
 project/source/wasm.brs

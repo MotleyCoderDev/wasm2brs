@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "sourceMap": true,
+    "noImplicitAny": false,
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "target": "ES6",
+    "removeComments": false,
+    "allowSyntheticDefaultImports": true,
+    "allowJs": false,
+    "esModuleInterop": true,
+    "baseUrl": "./",
+    "outDir": "bin"
+  },
+  "exclude": [
+      "node_modules",
+      "bin"
+  ]
+}
