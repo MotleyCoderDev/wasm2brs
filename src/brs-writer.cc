@@ -2192,7 +2192,7 @@ void CWriter::WriteCSource() {
   WriteMemories();
   //WriteTables();
   WriteFuncs();
-  WriteDataInitializers();
+  //WriteDataInitializers();
   //WriteElemInitializers();
   //WriteExports(WriteExportsKind::Definitions);
   //WriteInitExports();
