@@ -26,9 +26,7 @@ class Stream;
 
 struct WriteCOptions {};
 
-Result WriteBrs(Stream* c_stream,
-                Stream* h_stream,
-                const char* header_name,
+Result WriteBrs(Stream* brs_stream,
                 const Module*,
                 const WriteCOptions&);
 

@@ -124,14 +124,10 @@ int GetShiftMask(Type type) {
 
 class CWriter {
  public:
-  CWriter(Stream* c_stream,
-          Stream* h_stream,
-          const char* header_name,
+  CWriter(Stream* stream,
           const WriteCOptions& options)
       : options_(options),
-        c_stream_(c_stream),
-        h_stream_(h_stream),
-        header_name_(header_name) {}
+        brs_stream_(stream) {}
 
   Result WriteModule(const Module&);
 
@@ -143,7 +139,6 @@ class CWriter {
 
   void UseStream(Stream*);
 
-  void WriteCHeader();
   void WriteCSource();
 
   size_t MarkTypeStack() const;
@@ -274,9 +269,7 @@ class CWriter {
   const Func* func_ = nullptr;
   Stream* stream_ = nullptr;
   MemoryStream func_stream_;
-  Stream* c_stream_ = nullptr;
-  Stream* h_stream_ = nullptr;
-  std::string header_name_;
+  Stream* brs_stream_ = nullptr;
   Result result_ = Result::Ok;
   int indent_ = 0;
   bool should_write_indent_next_ = false;
@@ -765,25 +758,6 @@ void CWriter::WriteInitExpr(const ExprList& expr_list) {
   }
 }
 
-std::string CWriter::GenerateHeaderGuard() const {
-  std::string result;
-  for (char c : header_name_) {
-    if (isalnum(c) || c == '_') {
-      result += toupper(c);
-    } else {
-      result += '_';
-    }
-  }
-  result += "_GENERATED_";
-  return result;
-}
-
-void CWriter::WriteSourceTop() {
-  Write(s_source_includes);
-  Write(Newline(), "#include \"", header_name_, "\"", Newline());
-  Write(s_source_declarations);
-}
-
 void CWriter::WriteFuncTypes() {
   Write(Newline());
   Writef("static u32 func_types[%" PRIzd "];", module_->types.size());
@@ -1196,7 +1170,7 @@ void CWriter::Write(const Func& func) {
     Write("Return ", StackVar(0), Newline());
   }
 
-  stream_ = c_stream_;
+  stream_ = brs_stream_;
 
   //WriteStackVarDeclarations();
 
@@ -2170,21 +2144,8 @@ void CWriter::Write(const LoadSplatExpr& expr) {
   PushType(result_type);
 }
 
-void CWriter::WriteCHeader() {
-  stream_ = h_stream_;
-  std::string guard = GenerateHeaderGuard();
-  Write("#ifndef ", guard, Newline());
-  Write("#define ", guard, Newline());
-  Write(s_header_top);
-  WriteImports();
-  WriteExports(WriteExportsKind::Declarations);
-  Write(s_header_bottom);
-  Write(Newline(), "#endif  /* ", guard, " */", Newline());
-}
-
 void CWriter::WriteCSource() {
-  stream_ = c_stream_;
-  //WriteSourceTop();
+  stream_ = brs_stream_;
   //WriteFuncTypes();
   WriteFuncDeclarations();
   WriteImports();
@@ -2202,19 +2163,16 @@ void CWriter::WriteCSource() {
 Result CWriter::WriteModule(const Module& module) {
   WABT_USE(options_);
   module_ = &module;
-  //WriteCHeader();
   WriteCSource();
   return result_;
 }
 
 }  // end anonymous namespace
 
-Result WriteBrs(Stream* c_stream,
-                Stream* h_stream,
-                const char* header_name,
+Result WriteBrs(Stream* stream,
                 const Module* module,
                 const WriteCOptions& options) {
-  CWriter c_writer(c_stream, h_stream, header_name, options);
+  CWriter c_writer(stream, options);
   return c_writer.WriteModule(*module);
 }
 
