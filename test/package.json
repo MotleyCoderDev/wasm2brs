@@ -8,7 +8,9 @@
   "author": "Trevor Sundberg",
   "license": "MIT",
   "dependencies": {
-    "execa": "^4.0.3"
+    "@types/mkdirp": "^1.0.1",
+    "execa": "^4.0.3",
+    "mkdirp": "^1.0.4"
   },
   "devDependencies": {
     "@types/node": "^14.11.10",
