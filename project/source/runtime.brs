@@ -81,3 +81,9 @@ Function GetMem() As Object
     End If
     Return m.Mem
 End Function
+
+Function MemCpy(toBytes as Object, toOffset as Integer, fromBytes as Object, fromOffset as Integer, size as Integer)
+    For i = 0 To size Step 1
+        toBytes[i + toOffset] = fromBytes[i + fromOffset]
+    End For
+End Function

@@ -751,7 +751,7 @@ void CWriter::WriteFuncTypes() {
   Write(Newline());
   Writef("static u32 func_types[%" PRIzd "];", module_->types.size());
   Write(Newline(), Newline());
-  Write("static void init_func_types(void) {", Newline());
+  Write("static void InitFuncTypes(void) {", Newline());
   Index func_type_index = 0;
   for (TypeEntry* type : module_->types) {
     FuncType* func_type = cast<FuncType>(type);
@@ -874,7 +874,7 @@ void CWriter::WriteGlobals() {
     }
   }
 
-  Write(Newline(), "Function init_globals()", OpenBrace());
+  Write(Newline(), "Function InitGlobals()", OpenBrace());
   global_index = 0;
   for (const Global* global : module_->globals) {
     bool is_import = global_index < module_->num_global_imports;
@@ -896,8 +896,6 @@ void CWriter::WriteGlobal(const Global& global, const std::string& name) {
 void CWriter::WriteMemories() {
   if (module_->memories.size() == module_->num_memory_imports)
     return;
-
-  Write(Newline());
 
   assert(module_->memories.size() <= 1);
   Index memory_index = 0;
@@ -939,55 +937,39 @@ void CWriter::WriteTable(const std::string& name) {
 }
 
 void CWriter::WriteDataInitializers() {
-  const Memory* memory = nullptr;
-  Index data_segment_index = 0;
+  const Memory* memory = module_->memories.empty() ? nullptr : module_->memories[0];
 
-  if (!module_->memories.empty()) {
-    if (module_->data_segments.empty()) {
-      Write(Newline());
-    } else {
-      for (const DataSegment* data_segment : module_->data_segments) {
-        Write(Newline(), "static const u8 data_segment_data_",
-              data_segment_index, "[] = ", OpenBrace());
-        size_t i = 0;
-        for (uint8_t x : data_segment->data) {
-          Writef("0x%02x, ", x);
-          if ((++i % 12) == 0)
-            Write(Newline());
-        }
-        if (i > 0)
-          Write(Newline());
-        Write(CloseBrace(), Newline());
-        ++data_segment_index;
-      }
-    }
-
-    memory = module_->memories[0];
-  }
-
-  Write(Newline(), "static void init_memory(void) ", OpenBrace());
+  Write(Newline(), "Function InitMemory()", OpenBrace());
   if (memory && module_->num_memory_imports == 0) {
     uint32_t max =
         memory->page_limits.has_max ? memory->page_limits.max : 65536;
-    Write("wasm_rt_allocate_memory(", ExternalPtr(memory->name), ", ",
-          memory->page_limits.initial, ", ", max, ")", Newline());
+    Write(ExternalPtr(memory->name), " = CreateObject(\"roByteArray\")", Newline());
+    Write(ExternalPtr(memory->name), ".SetResize(", memory->page_limits.initial * WABT_PAGE_SIZE, ", True)", Newline());
   }
-  data_segment_index = 0;
+
+  Index data_segment_index = 0;
   for (const DataSegment* data_segment : module_->data_segments) {
-    Write("memcpy(&(", ExternalRef(memory->name), ".data[");
+    const std::string data_segment_name = "data_segment_" + std::to_string(data_segment_index);
+    Write(data_segment_name, " = CreateObject(\"roByteArray\")", Newline());
+    Write(data_segment_name, ".FromHexString(\"");
+    for (uint8_t x : data_segment->data) {
+      Writef("%02x", x);
+    }
+    Write("\")", Newline());
+
+    Write("MemCpy(", ExternalRef(memory->name), ", ");
     WriteInitExpr(data_segment->offset);
-    Write("]), data_segment_data_", data_segment_index, ", ",
-          data_segment->data.size(), ")", Newline());
+    Write(", ", data_segment_name, ", 0, ", data_segment->data.size(), ")", Newline());
     ++data_segment_index;
   }
 
-  Write(CloseBrace(), Newline());
+  Write(CloseBrace(), "End Function", Newline());
 }
 
 void CWriter::WriteElemInitializers() {
   const Table* table = module_->tables.empty() ? nullptr : module_->tables[0];
 
-  Write(Newline(), "static void init_table(void) ", OpenBrace());
+  Write(Newline(), "static void InitTable(void) ", OpenBrace());
   Write("uint32_t offset;", Newline());
   if (table && module_->num_table_imports == 0) {
     uint32_t max =
@@ -1021,7 +1003,7 @@ void CWriter::WriteElemInitializers() {
 }
 
 void CWriter::WriteInitExports() {
-  Write(Newline(), "static void init_exports(void) ", OpenBrace());
+  Write(Newline(), "static void InitExports(void) ", OpenBrace());
   WriteExports(WriteExportsKind::Initializers);
   Write(CloseBrace(), Newline());
 }
@@ -1100,16 +1082,16 @@ void CWriter::WriteExports(WriteExportsKind kind) {
 }
 
 void CWriter::WriteInit() {
-  Write(Newline(), "void WASM_RT_ADD_PREFIX(init)(void) ", OpenBrace());
-  Write("init_func_types();", Newline());
-  Write("init_globals();", Newline());
-  Write("init_memory();", Newline());
-  Write("init_table();", Newline());
-  Write("init_exports();", Newline());
+  Write(Newline(), "Function Init()", OpenBrace());
+  //Write("InitFuncTypes()", Newline());
+  Write("InitGlobals()", Newline());
+  Write("InitMemory()", Newline());
+  //Write("InitTable()", Newline());
+  //Write("InitExports()", Newline());
   for (Var* var : module_->starts) {
-    Write(ExternalRef(module_->GetFunc(*var)->name), "();", Newline());
+    Write(ExternalRef(module_->GetFunc(*var)->name), "()", Newline());
   }
-  Write(CloseBrace(), Newline());
+  Write(CloseBrace(), "End Function", Newline());
 }
 
 void CWriter::WriteFuncs() {
@@ -1166,7 +1148,7 @@ void CWriter::Write(const Func& func) {
   std::unique_ptr<OutputBuffer> buf = func_stream_.ReleaseOutputBuffer();
   stream_->WriteData(buf->data.data(), buf->data.size());
 
-  Write(CloseBrace(), "End Function");
+  Write(CloseBrace(), "End Function", Newline());
 
   func_stream_.Clear();
   func_ = nullptr;
@@ -2140,13 +2122,13 @@ void CWriter::WriteCSource() {
   WriteImports();
   WriteGlobals();
   WriteMemories();
+  WriteDataInitializers();
   //WriteTables();
   WriteFuncs();
-  //WriteDataInitializers();
   //WriteElemInitializers();
   //WriteExports(WriteExportsKind::Definitions);
   //WriteInitExports();
-  //WriteInit();
+  WriteInit();
 }
 
 Result CWriter::WriteModule(const Module& module) {

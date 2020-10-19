@@ -15,6 +15,7 @@ sub Main()
     'w2b_rot13()
     'screen.ShowMessage(GetMem().ToAsciiString())
 
+    Init()
     RunTests()
 
     while(true)
