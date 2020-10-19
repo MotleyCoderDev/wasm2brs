@@ -55,7 +55,7 @@ End Function
 '    Return 0
 'End Function
 Function I32Load16S(buffer as Object, index as Integer) as Integer
-    x = buffer[index] + buffer[index + 1] << 8
+    x = buffer[index] + (buffer[index + 1] << 8)
     If x > 32767 Then x = x + &HFFFF0000
     Return x
 End Function
@@ -63,7 +63,7 @@ End Function
 '    Return 0
 'End Function
 Function I32Load16U(buffer as Object, index as Integer) as Integer
-    Return buffer[index] + buffer[index + 1] << 8
+    Return buffer[index] + (buffer[index + 1] << 8)
 End Function
 'Function I64Load16U(buffer as Object, index as Integer) as Integer
 '    Return 0
