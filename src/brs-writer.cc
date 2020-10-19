@@ -944,7 +944,7 @@ void CWriter::WriteDataInitializers() {
     uint32_t max =
         memory->page_limits.has_max ? memory->page_limits.max : 65536;
     Write(ExternalPtr(memory->name), " = CreateObject(\"roByteArray\")", Newline());
-    Write(ExternalPtr(memory->name), ".SetResize(", memory->page_limits.initial * WABT_PAGE_SIZE, ", True)", Newline());
+    Write(ExternalPtr(memory->name), "[", memory->page_limits.initial * WABT_PAGE_SIZE, "] = 0", Newline());
   }
 
   Index data_segment_index = 0;
