@@ -82,14 +82,17 @@ interface WastTest {
 
     let testFunction = "Function RunTests()\n";
 
+    let i = 0;
     for (const command of test.commands) {
       switch (command.type) {
         case "assert_return": {
           const args = command.action.args.map((arg) => toArgValue(arg)).join(",");
-          testFunction += `If w2b_${command.action.field}(${args}) <> ${toArgValue(command.expected[0])} Then Stop\n`;
+          testFunction += `x${i} = w2b_${command.action.field}(${args})\n`;
+          testFunction += `If x${i} <> ${toArgValue(command.expected[0])} Then Stop\n`;
           break;
         }
       }
+      ++i;
     }
     testFunction += "End Function\n";
     fs.writeFileSync(path.join(projectSource, "test.cases.brs"), testFunction);
