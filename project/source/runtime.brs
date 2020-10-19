@@ -19,7 +19,9 @@ End Function
 'End Function
 
 Function I32Load(buffer as Object, index as Integer) as Integer
-    Return buffer.GetSignedLong(index)
+    x = buffer[index] + (buffer[index + 1] << 8) + (buffer[index + 2] << 16) + (buffer[index + 3] << 24)
+    If x > &H7FFFFFFF Then x = x + &HFFFF0000
+    Return x
 End Function
 'Function I64Load(buffer as Object, index as Integer) as Integer
 '    Return 0
@@ -56,7 +58,7 @@ End Function
 'End Function
 Function I32Load16S(buffer as Object, index as Integer) as Integer
     x = buffer[index] + (buffer[index + 1] << 8)
-    If x > 32767 Then x = x + &HFFFF0000
+    If x > &H7FFF Then x = x + &HFFFF0000
     Return x
 End Function
 'Function I64Load16S(buffer as Object, index as Integer) as Integer
