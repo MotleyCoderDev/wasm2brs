@@ -15,6 +15,8 @@ sub Main()
     'w2b_rot13()
     'screen.ShowMessage(GetMem().ToAsciiString())
 
+    RunTests()
+
     while(true)
         msg = wait(0, m.port)
         msgType = type(msg)

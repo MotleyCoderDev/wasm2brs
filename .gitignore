@@ -3,4 +3,4 @@ out
 test/node_modules
 test/bin
 test/out
-project/source/wasm.brs
+project/source/test.*.brs
