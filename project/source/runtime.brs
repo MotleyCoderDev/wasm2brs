@@ -19,12 +19,11 @@ End Function
 'End Function
 
 Function I32Load(buffer as Object, index as Integer) as Integer
-    x = buffer[index] + (buffer[index + 1] << 8) + (buffer[index + 2] << 16) + (buffer[index + 3] << 24)
-    Return x
+    Return buffer[index] + (buffer[index + 1] << 8) + (buffer[index + 2] << 16) + (buffer[index + 3] << 24)
 End Function
-'Function I64Load(buffer as Object, index as Integer) as Integer
-'    Return 0
-'End Function
+Function I64Load(buffer as Object, index as Integer) as LongInteger
+    Return 0& + buffer[index] + (buffer[index + 1] << 8) + (buffer[index + 2] << 16) + (buffer[index + 3] << 24) + (buffer[index + 4] << 32&) + (buffer[index + 5] << 40&) + (buffer[index + 6] << 48&) + (buffer[index + 7] << 56&)
+End Function
 'Function F32Load(buffer as Object, index as Integer) as Integer
 '    Return 0
 'End Function
@@ -46,35 +45,39 @@ End Function
 Function I32Load8S(buffer as Object, index as Integer) as Integer
     Return buffer.GetSignedByte(index)
 End Function
-'Function I64Load8S(buffer as Object, index as Integer) as Integer
-'    Return 0
-'End Function
+Function I64Load8S(buffer as Object, index as Integer) as LongInteger
+    Return 0& + buffer.GetSignedByte(index)
+End Function
 Function I32Load8U(buffer As Object, index As Integer) as Integer
     Return buffer[index]
 End Function
-'Function I64Load8U(buffer as Object, index as Integer) as Integer
-'    Return 0
-'End Function
+Function I64Load8U(buffer as Object, index as Integer) as LongInteger
+    Return 0& + buffer[index]
+End Function
 Function I32Load16S(buffer as Object, index as Integer) as Integer
     x = buffer[index] + (buffer[index + 1] << 8)
     If x > &H7FFF Then x = x + &HFFFF0000
     Return x
 End Function
-'Function I64Load16S(buffer as Object, index as Integer) as Integer
-'    Return 0
-'End Function
+Function I64Load16S(buffer as Object, index as Integer) as LongInteger
+    x = 0& + buffer[index] + (buffer[index + 1] << 8)
+    If x > &H7FFF Then x = x + &HFFFFFFFF00000000&
+    Return x
+End Function
 Function I32Load16U(buffer as Object, index as Integer) as Integer
     Return buffer[index] + (buffer[index + 1] << 8)
 End Function
-'Function I64Load16U(buffer as Object, index as Integer) as Integer
-'    Return 0
-'End Function
-'Function I64Load32S(buffer as Object, index as Integer) as Integer
-'    Return 0
-'End Function
-'Function I64Load32U(buffer as Object, index as Integer) as Integer
-'    Return 0
-'End Function
+Function I64Load16U(buffer as Object, index as Integer) as LongInteger
+    Return 0& + buffer[index] + (buffer[index + 1] << 8)
+End Function
+Function I64Load32S(buffer as Object, index as Integer) as LongInteger
+    x = 0& + buffer[index] + (buffer[index + 1] << 8) + (buffer[index + 2] << 16) + (buffer[index + 3] << 24)
+    If x > &H7FFFFFFF Then x = x + &HFFFFFFFF00000000&
+    Return x
+End Function
+Function I64Load32U(buffer as Object, index as Integer) as LongInteger
+    Return 0& + buffer[index] + (buffer[index + 1] << 8) + (buffer[index + 2] << 16) + (buffer[index + 3] << 24)
+End Function
 
 Function GetMem() As Object
     If Not m.DoesExist("Mem") Then
