@@ -12,11 +12,10 @@ sub Main()
     screen.ShowMessage("Initializing")
     screen.Show()
 
-    'w2b_rot13()
-    'screen.ShowMessage(GetMem().ToAsciiString())
-
     Init()
     RunTests()
+
+    screen.ShowMessage("Completed")
 
     while(true)
         msg = wait(0, m.port)
