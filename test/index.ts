@@ -10,7 +10,7 @@ interface WastModule {
 }
 
 interface WastArg {
-  type: "i32" | "i64";
+  type: "i32" | "i64" | "f32" | "f64";
   value: string;
 }
 
@@ -69,7 +69,16 @@ interface WastTest {
     }
   }
 
-  const toArgValue = (arg: WastArg) => parseInt(arg.value, 10);
+  const toArgValue = (arg: WastArg) => {
+    if (arg.type === "i32" || arg.type === "i64") {
+      return parseInt(arg.value, 10);
+    }
+
+    const buffer = new ArrayBuffer(4);
+    const view = new DataView(buffer);
+    view.setUint32(0, parseInt(arg.value, 10), true);
+    return view.getFloat32(0, true);
+  };
 
   const outputTest = async (test: WastTest) => {
     console.log("Module", test.moduleFilename);
@@ -88,7 +97,12 @@ interface WastTest {
         case "assert_return": {
           const args = command.action.args.map((arg) => toArgValue(arg)).join(",");
           testFunction += `x${i} = w2b_${command.action.field}(${args})\n`;
-          testFunction += `If x${i} <> ${toArgValue(command.expected[0])} Then Stop\n`;
+          const value = toArgValue(command.expected[0]);
+          if (isNaN(value)) {
+            testFunction += `If Not IsFloatNan(x${i}) Then Stop\n`;
+          } else {
+            testFunction += `If x${i} <> ${value} Then Stop\n`;
+          }
           break;
         }
       }
@@ -102,9 +116,10 @@ interface WastTest {
       outFile: rokuOut,
       host: process.env.HOST,
       password: process.env.PASSWORD,
-      deploy: process.env.HOST !== undefined && process.env.PASSWORD !== undefined
+      deploy: process.env.HOST !== undefined && process.env.PASSWORD !== undefined,
+      ignoreErrorCodes: [1065, 1061]
     });
   };
 
-  outputTest(tests[1]);
+  outputTest(tests[2]);
 })();
