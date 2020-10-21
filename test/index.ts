@@ -71,7 +71,7 @@ interface WastTest {
 
   const toArgValue = (arg: WastArg) => parseInt(arg.value, 10);
 
-  for (const test of tests) {
+  const outputTest = async (test: WastTest) => {
     console.log("Module", test.moduleFilename);
     await execa("build/wasm2brs",
       [
@@ -104,10 +104,7 @@ interface WastTest {
       password: process.env.PASSWORD,
       deploy: process.env.HOST !== undefined && process.env.PASSWORD !== undefined
     });
+  };
 
-    // Only run the first test right now.
-    if ("s".startsWith("s")) {
-      return;
-    }
-  }
+  outputTest(tests[1]);
 })();
