@@ -20,7 +20,6 @@ End Function
 
 Function I32Load(buffer as Object, index as Integer) as Integer
     x = buffer[index] + (buffer[index + 1] << 8) + (buffer[index + 2] << 16) + (buffer[index + 3] << 24)
-    If x > &H7FFFFFFF Then x = x + &HFFFF0000
     Return x
 End Function
 'Function I64Load(buffer as Object, index as Integer) as Integer
