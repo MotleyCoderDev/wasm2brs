@@ -44,10 +44,10 @@ interface WastTest {
   const fromRootOptions: execa.Options = {cwd: root, stdio: "inherit"};
   await mkdirp(testOut);
 
-  const outJson = path.join(testOut, "address.json");
+  const outJson = path.join(testOut, "current.json");
   await execa("third_party/wabt/bin/wast2json",
     [
-      "third_party/wabt/third_party/testsuite/address.wast",
+      "third_party/wabt/third_party/testsuite/i32.wast",
       "-o", outJson
     ],
     fromRootOptions);
@@ -81,7 +81,7 @@ interface WastTest {
   };
 
   const outputTest = async (test: WastTest) => {
-    console.log("Module", test.moduleFilename);
+    console.log("Testing module", test.moduleFilename);
     await execa("build/wasm2brs",
       [
         "-o", path.join(projectSource, "test.wasm.brs"),
@@ -121,5 +121,6 @@ interface WastTest {
     });
   };
 
-  outputTest(tests[2]);
+  console.log("Number of tests: ", tests.length);
+  outputTest(tests[0]);
 })();
