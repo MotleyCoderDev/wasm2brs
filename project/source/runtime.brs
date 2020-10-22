@@ -108,13 +108,57 @@ Function I32Clz(x as Integer) as Integer
         x = y
     End If
     y = x >> 1
-    If y <> 0 Then Return n - 2
-    return n - x
+    If y <> 0 Then
+        n = n - 1
+        x = y
+    End If
+    If x = 0 Then
+        Return n
+    Else
+        Return n - 1
+    End If
 End Function
 
 Function I64Clz(value as LongInteger) as LongInteger
-
     Return I32Clz(value)
+End Function
+
+Function I32Ctz(x as Integer) as Integer
+    n = 32
+    y = x << 16
+    if y <> 0 Then
+        n = n -16
+        x = y
+    End If
+    y = x << 8
+    if y <> 0 Then
+        n = n - 8
+        x = y
+    End If
+    y = x << 4
+    if y <> 0 Then
+        n = n - 4
+        x = y
+    End If
+    y = x << 2
+    if y <> 0 Then
+        n = n - 2
+        x = y
+    End If
+    y = x << 1
+    If y <> 0 Then
+        n = n - 1
+        x = y
+    End If
+    If x = 0 Then
+        Return n
+    Else
+        Return n - 1
+    End If
+End Function
+
+Function I64Ctz(x as Integer) as Integer
+    Return I32Ctz(value)
 End Function
 
 Function I32Eqz(value as Integer) as Integer
