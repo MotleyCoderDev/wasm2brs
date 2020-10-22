@@ -133,6 +133,144 @@ Function I64Eqz(value as LongInteger) as LongInteger
     End If
 End Function
 
+Function I32Eq(lhs as Integer, rhs as Integer) as Integer
+    If lhs = rhs Then Return 1
+    Return 0
+End Function
+Function I64Eq(lhs as LongInteger, rhs as LongInteger) as Integer
+    If lhs = rhs Then Return 1
+    Return 0
+End Function
+Function F32Eq(lhs as Float, rhs as Float) as Integer
+    If lhs = rhs Then Return 1
+    Return 0
+End Function
+Function F64Eq(lhs as Double, rhs as Double) as Integer
+    If lhs = rhs Then Return 1
+    Return 0
+End Function
+
+Function I32Ne(lhs as Integer, rhs as Integer) as Integer
+    If lhs <> rhs Then Return 1
+    Return 0
+End Function
+Function I64Ne(lhs as LongInteger, rhs as LongInteger) as Integer
+    If lhs <> rhs Then Return 1
+    Return 0
+End Function
+Function F32Ne(lhs as Float, rhs as Float) as Integer
+    If lhs <> rhs Then Return 1
+    Return 0
+End Function
+Function F64Ne(lhs as Double, rhs as Double) as Integer
+    If lhs <> rhs Then Return 1
+    Return 0
+End Function
+
+Function I32LtS(lhs as Integer, rhs as Integer) as Integer
+    If lhs < rhs Then Return 1
+    Return 0
+End Function
+Function I64LtS(lhs as LongInteger, rhs as LongInteger) as Integer
+    If lhs < rhs Then Return 1
+    Return 0
+End Function
+
+Function I32LtU(lhs as Integer, rhs as Integer) as Integer
+    If I32ToUnsignedI64(lhs) < I32ToUnsignedI64(rhs) Then Return 1
+    Return 0
+End Function
+Function I64LtU(lhs as LongInteger, rhs as LongInteger) as Integer
+    If lhs < rhs Then Return 1
+    Return 0
+End Function
+Function F32Lt(lhs as Float, rhs as Float) as Integer
+    If lhs < rhs Then Return 1
+    Return 0
+End Function
+Function F64Lt(lhs as Double, rhs as Double) as Integer
+    If lhs < rhs Then Return 1
+    Return 0
+End Function
+
+Function I32LeS(lhs as Integer, rhs as Integer) as Integer
+    If lhs <= rhs Then Return 1
+    Return 0
+End Function
+Function I64LeS(lhs as LongInteger, rhs as LongInteger) as Integer
+    If lhs <= rhs Then Return 1
+    Return 0
+End Function
+
+Function I32LeU(lhs as Integer, rhs as Integer) as Integer
+    If I32ToUnsignedI64(lhs) <= I32ToUnsignedI64(rhs) Then Return 1
+    Return 0
+End Function
+Function I64LeU(lhs as LongInteger, rhs as LongInteger) as Integer
+    If lhs <= rhs Then Return 1
+    Return 0
+End Function
+Function F32Le(lhs as Float, rhs as Float) as Integer
+    If lhs <= rhs Then Return 1
+    Return 0
+End Function
+Function F64Le(lhs as Double, rhs as Double) as Integer
+    If lhs <= rhs Then Return 1
+    Return 0
+End Function
+
+Function I32GtS(lhs as Integer, rhs as Integer) as Integer
+    If lhs > rhs Then Return 1
+    Return 0
+End Function
+Function I64GtS(lhs as LongInteger, rhs as LongInteger) as Integer
+    If lhs > rhs Then Return 1
+    Return 0
+End Function
+
+Function I32GtU(lhs as Integer, rhs as Integer) as Integer
+    If I32ToUnsignedI64(lhs) > I32ToUnsignedI64(rhs) Then Return 1
+    Return 0
+End Function
+Function I64GtU(lhs as LongInteger, rhs as LongInteger) as Integer
+    If lhs > rhs Then Return 1
+    Return 0
+End Function
+Function F32Gt(lhs as Float, rhs as Float) as Integer
+    If lhs > rhs Then Return 1
+    Return 0
+End Function
+Function F64Gt(lhs as Double, rhs as Double) as Integer
+    If lhs > rhs Then Return 1
+    Return 0
+End Function
+
+Function I32GeS(lhs as Integer, rhs as Integer) as Integer
+    If lhs >= rhs Then Return 1
+    Return 0
+End Function
+Function I64GeS(lhs as LongInteger, rhs as LongInteger) as Integer
+    If lhs >= rhs Then Return 1
+    Return 0
+End Function
+
+Function I32GeU(lhs as Integer, rhs as Integer) as Integer
+    If I32ToUnsignedI64(lhs) >= I32ToUnsignedI64(rhs) Then Return 1
+    Return 0
+End Function
+Function I64GeU(lhs as LongInteger, rhs as LongInteger) as Integer
+    If lhs >= rhs Then Return 1
+    Return 0
+End Function
+Function F32Ge(lhs as Float, rhs as Float) as Integer
+    If lhs >= rhs Then Return 1
+    Return 0
+End Function
+Function F64Ge(lhs as Double, rhs as Double) as Integer
+    If lhs >= rhs Then Return 1
+    Return 0
+End Function
+
 'Function I32Store(buffer As Object, index As Integer, value As Integer)
 'End Function
 'Function I64Store(buffer As Object, index As Integer, value As Integer)
