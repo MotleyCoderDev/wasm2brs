@@ -69,6 +69,70 @@ Function I64ShrS(lhs as LongInteger, rhs as LongInteger) as LongInteger
     Return lhs >> rhs
 End Function
 
+Function I32Rotl(lhs as Integer, rhs as Integer) as Integer
+    Return (((lhs) << ((rhs) And (31))) Or ((lhs) >> (((31) - (rhs) + 1) And (31))))
+End Function
+
+Function I32Rotr(lhs as Integer, rhs as Integer) as Integer
+    Return (((lhs) >> ((rhs) And (31))) Or ((lhs) << (((31) - (rhs) + 1) And (31))))
+End Function
+
+Function I64Rotl(lhs as LongInteger, rhs as LongInteger) as LongInteger
+    Return (((lhs) << ((rhs) And (63))) Or ((lhs) >> (((63) - (rhs) + 1) And (63))))
+End Function
+
+Function I64Rotr(lhs as LongInteger, rhs as LongInteger) as LongInteger
+    Return (((lhs) >> ((rhs) And (63))) Or ((lhs) << (((63) - (rhs) + 1) And (63))))
+End Function
+
+Function I32Clz(x as Integer) as Integer
+    n = 32
+    y = x >> 16
+    if y <> 0 Then
+        n = n -16
+        x = y
+    End If
+    y = x >> 8
+    if y <> 0 Then
+        n = n - 8
+        x = y
+    End If
+    y = x >> 4
+    if y <> 0 Then
+        n = n - 4
+        x = y
+    End If
+    y = x >> 2
+    if y <> 0 Then
+        n = n - 2
+        x = y
+    End If
+    y = x >> 1
+    If y <> 0 Then Return n - 2
+    return n - x
+End Function
+
+Function I64Clz(value as LongInteger) as LongInteger
+
+    Return I32Clz(value)
+End Function
+
+Function I32Eqz(value as Integer) as Integer
+    If value = 0% Then
+        Return 1%
+    Else
+        Return 0%
+    End If
+End Function
+
+Function I64Eqz(value as LongInteger) as LongInteger
+    If value = 0& Then
+        Return 1&
+    Else
+        Return 0&
+    End If
+End Function
+
 'Function I32Store(buffer As Object, index As Integer, value As Integer)
 'End Function
 'Function I64Store(buffer As Object, index As Integer, value As Integer)

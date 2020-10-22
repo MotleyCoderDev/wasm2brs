@@ -1658,19 +1658,19 @@ void CWriter::Write(const BinaryExpr& expr) {
       break;
 
     case Opcode::I32Rotl:
-      WritePrefixBinaryExpr(expr.opcode, "I32_ROTL");
+      WritePrefixBinaryExpr(expr.opcode, "I32Rotl");
       break;
 
     case Opcode::I64Rotl:
-      WritePrefixBinaryExpr(expr.opcode, "I64_ROTL");
+      WritePrefixBinaryExpr(expr.opcode, "I64Rotl");
       break;
 
     case Opcode::I32Rotr:
-      WritePrefixBinaryExpr(expr.opcode, "I32_ROTR");
+      WritePrefixBinaryExpr(expr.opcode, "I32Rotr");
       break;
 
     case Opcode::I64Rotr:
-      WritePrefixBinaryExpr(expr.opcode, "I64_ROTR");
+      WritePrefixBinaryExpr(expr.opcode, "I64Rotr");
       break;
 
     case Opcode::F32Min:
@@ -1768,13 +1768,10 @@ void CWriter::Write(const CompareExpr& expr) {
 void CWriter::Write(const ConvertExpr& expr) {
   switch (expr.opcode) {
     case Opcode::I32Eqz:
-    case Opcode::I64Eqz: {
-        //WriteSimpleUnaryExpr(expr.opcode, "!");
-        Type result_type = expr.opcode.GetResultType();
-        Write(StackVar(0, result_type), " = (", StackVar(0), " <> 0)", Newline());
-        DropTypes(1);
-        PushType(expr.opcode.GetResultType());
-      }
+      WriteSimpleUnaryExpr(expr.opcode, "I32Eqz");
+      break;
+    case Opcode::I64Eqz:
+      WriteSimpleUnaryExpr(expr.opcode, "I64Eqz");
       break;
 
     case Opcode::I64ExtendI32S:
@@ -1956,11 +1953,11 @@ void CWriter::Write(const StoreExpr& expr) {
 void CWriter::Write(const UnaryExpr& expr) {
   switch (expr.opcode) {
     case Opcode::I32Clz:
-      WriteSimpleUnaryExpr(expr.opcode, "I32_CLZ");
+      WriteSimpleUnaryExpr(expr.opcode, "I32Clz");
       break;
 
     case Opcode::I64Clz:
-      WriteSimpleUnaryExpr(expr.opcode, "I64_CLZ");
+      WriteSimpleUnaryExpr(expr.opcode, "I64Clz");
       break;
 
     case Opcode::I32Ctz:
