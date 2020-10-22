@@ -15,6 +15,60 @@ Function IsFloatNan(value as Float) as Boolean
     Return value <> value
 End Function
 
+Function AssertEqualsNan(a) as Boolean
+    If Not IsFloatNan(a) Then Stop
+End Function
+
+Function AssertEquals(a, b) as Boolean
+    If a <> b Then Stop
+End Function
+
+Function I32ToUnsignedI64(value as LongInteger) as LongInteger
+    If value < 0 Then value += &H100000000&
+    Return value
+End Function
+
+Function I32DivU(lhs as LongInteger, rhs as LongInteger) as Integer
+    Return I32ToUnsignedI64(lhs) / I32ToUnsignedI64(rhs)
+End Function
+
+Function I64DivU(lhs as LongInteger, rhs as LongInteger) as LongInteger
+    Return lhs \ rhs
+End Function
+
+Function I32RemU(lhs as LongInteger, rhs as LongInteger) as Integer
+    Return I32ToUnsignedI64(lhs) Mod I32ToUnsignedI64(rhs)
+End Function
+
+Function I64RemU(lhs as LongInteger, rhs as LongInteger) as LongInteger
+    Return lhs Mod rhs
+End Function
+
+Function I32Xor(lhs as Integer, rhs as Integer) as Integer
+    bitwiseAnd = lhs And rhs
+    bitwiseOr = lhs Or rhs
+    Return bitwiseOr And Not bitwiseAnd
+End Function
+
+Function I64Xor(lhs as LongInteger, rhs as LongInteger) as LongInteger
+    bitwiseAnd = lhs And rhs
+    bitwiseOr = lhs Or rhs
+    Return bitwiseOr And Not bitwiseAnd
+End Function
+
+Function I32ShrS(lhs as Integer, rhs as Integer) as Integer
+    rhsWrapped = I32ToUnsignedI64(rhs) Mod 32
+    leftBits = 0
+    If lhs < 0 Then
+        leftBits = &HFFFFFFFF << (32 - rhsWrapped)
+    End If
+    Return (lhs >> rhsWrapped) Or leftBits
+End Function
+
+Function I64ShrS(lhs as LongInteger, rhs as LongInteger) as LongInteger
+    Return lhs >> rhs
+End Function
+
 'Function I32Store(buffer As Object, index As Integer, value As Integer)
 'End Function
 'Function I64Store(buffer As Object, index As Integer, value As Integer)

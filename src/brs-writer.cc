@@ -1581,16 +1581,19 @@ void CWriter::Write(const BinaryExpr& expr) {
       break;
 
     case Opcode::I32DivS:
-      WritePrefixBinaryExpr(expr.opcode, "I32_DIV_S");
+      WriteInfixBinaryExpr(expr.opcode, "\\");
       break;
 
     case Opcode::I64DivS:
-      WritePrefixBinaryExpr(expr.opcode, "I64_DIV_S");
+      WriteInfixBinaryExpr(expr.opcode, "\\");
       break;
 
     case Opcode::I32DivU:
+      WritePrefixBinaryExpr(expr.opcode, "I32DivU");
+      break;
+
     case Opcode::I64DivU:
-      WritePrefixBinaryExpr(expr.opcode, "DIV_U");
+      WritePrefixBinaryExpr(expr.opcode, "I64DivU");
       break;
 
     case Opcode::F32Div:
@@ -1599,16 +1602,19 @@ void CWriter::Write(const BinaryExpr& expr) {
       break;
 
     case Opcode::I32RemS:
-      WritePrefixBinaryExpr(expr.opcode, "I32_REM_S");
+      WriteInfixBinaryExpr(expr.opcode, "MOD");
       break;
 
     case Opcode::I64RemS:
-      WritePrefixBinaryExpr(expr.opcode, "I64_REM_S");
+      WriteInfixBinaryExpr(expr.opcode, "MOD");
       break;
 
     case Opcode::I32RemU:
+      WritePrefixBinaryExpr(expr.opcode, "I32RemU");
+      break;
+
     case Opcode::I64RemU:
-      WriteInfixBinaryExpr(expr.opcode, "MOD");
+      WritePrefixBinaryExpr(expr.opcode, "I64RemU");
       break;
 
     case Opcode::I32And:
@@ -1622,8 +1628,11 @@ void CWriter::Write(const BinaryExpr& expr) {
       break;
 
     case Opcode::I32Xor:
+      WritePrefixBinaryExpr(expr.opcode, "I32Xor");
+      break;
+
     case Opcode::I64Xor:
-      WriteInfixBinaryExpr(expr.opcode, "^");
+      WritePrefixBinaryExpr(expr.opcode, "I64Xor");
       break;
 
     case Opcode::I32Shl:
@@ -1634,16 +1643,12 @@ void CWriter::Write(const BinaryExpr& expr) {
       break;
 
     case Opcode::I32ShrS:
-    case Opcode::I64ShrS: {
-      Type type = expr.opcode.GetResultType();
-      // TODO(trevor): This is WRONG but we need to move on (removed casting)
-      Write(StackVar(1), " = ", "(", StackVar(1), " >> (", StackVar(0), " AND ", GetShiftMask(type), "))", Newline());
-      //Write(StackVar(1), " = (", type, ")((", SignedType(type), ")",
-      //      StackVar(1), " >> (", StackVar(0), " AND ", GetShiftMask(type), "));",
-      //      Newline());
-      DropTypes(1);
+      WritePrefixBinaryExpr(expr.opcode, "I32ShrS");
       break;
-    }
+
+    case Opcode::I64ShrS:
+      WritePrefixBinaryExpr(expr.opcode, "I64ShrS");
+      break;
 
     case Opcode::I32ShrU:
     case Opcode::I64ShrU:
@@ -2028,11 +2033,23 @@ void CWriter::Write(const UnaryExpr& expr) {
       break;
 
     case Opcode::I32Extend8S:
+      WriteSimpleUnaryExpr(expr.opcode, "I32Extend8S");
+      break;
+
     case Opcode::I32Extend16S:
+      WriteSimpleUnaryExpr(expr.opcode, "I32Extend16S");
+      break;
+
     case Opcode::I64Extend8S:
+      WriteSimpleUnaryExpr(expr.opcode, "I64Extend8S");
+      break;
+
     case Opcode::I64Extend16S:
+      WriteSimpleUnaryExpr(expr.opcode, "I64Extend16S");
+      break;
+
     case Opcode::I64Extend32S:
-      UNIMPLEMENTED(expr.opcode.GetName());
+      WriteSimpleUnaryExpr(expr.opcode, "I32Extend8S");
       break;
 
     default:

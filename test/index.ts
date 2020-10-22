@@ -71,13 +71,13 @@ interface WastTest {
 
   const toArgValue = (arg: WastArg) => {
     if (arg.type === "i32" || arg.type === "i64") {
-      return parseInt(arg.value, 10);
+      return parseInt(arg.value, 10) + (arg.type === "i32" ? "%" : "&");
     }
 
     const buffer = new ArrayBuffer(4);
     const view = new DataView(buffer);
     view.setUint32(0, parseInt(arg.value, 10), true);
-    return view.getFloat32(0, true);
+    return view.getFloat32(0, true) + (arg.type === "f32" ? "!" : "#");
   };
 
   const outputTest = async (test: WastTest) => {
@@ -91,22 +91,20 @@ interface WastTest {
 
     let testFunction = "Function RunTests()\n";
 
-    let i = 0;
     for (const command of test.commands) {
       switch (command.type) {
         case "assert_return": {
           const args = command.action.args.map((arg) => toArgValue(arg)).join(",");
-          testFunction += `x${i} = w2b_${command.action.field}(${args})\n`;
-          const value = toArgValue(command.expected[0]);
-          if (isNaN(value)) {
-            testFunction += `If Not IsFloatNan(x${i}) Then Stop\n`;
+          const actual = `w2b_${command.action.field}(${args})`;
+          const expected = toArgValue(command.expected[0]);
+          if (expected.startsWith("NaN")) {
+            testFunction += `AssertEqualsNan(${actual})\n`;
           } else {
-            testFunction += `If x${i} <> ${value} Then Stop\n`;
+            testFunction += `AssertEquals(${actual}, ${expected})\n`;
           }
           break;
         }
       }
-      ++i;
     }
     testFunction += "End Function\n";
     fs.writeFileSync(path.join(projectSource, "test.cases.brs"), testFunction);
@@ -117,7 +115,7 @@ interface WastTest {
       host: process.env.HOST,
       password: process.env.PASSWORD,
       deploy: process.env.HOST !== undefined && process.env.PASSWORD !== undefined,
-      ignoreErrorCodes: [1065, 1061]
+      ignoreErrorCodes: [1065, 1061, 1082]
     });
   };
 
