@@ -47,7 +47,7 @@ interface WastTest {
   const outJson = path.join(testOut, "current.json");
   await execa("third_party/wabt/bin/wast2json",
     [
-      "third_party/wabt/third_party/testsuite/i32.wast",
+      "third_party/wabt/third_party/testsuite/i64.wast",
       "-o", outJson
     ],
     fromRootOptions);

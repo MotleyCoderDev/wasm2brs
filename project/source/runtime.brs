@@ -177,7 +177,25 @@ Function I32Extend8S(x as Integer) as Integer
     Return x
 End Function
 
+Function I64Extend8S(x as LongInteger) as LongInteger
+    x = x Mod &H100
+    If x >= &H80 Then x -= &H100
+    Return x
+End Function
+
 Function I32Extend16S(x  as Integer) as Integer
+    x = x Mod &H10000
+    If x >= &H8000 Then x -= &H10000
+    Return x
+End Function
+
+Function I64Extend16S(x  as LongInteger) as LongInteger
+    x = x Mod &H10000
+    If x >= &H8000 Then x -= &H10000
+    Return x
+End Function
+
+Function I64Extend32S(x  as LongInteger) as LongInteger
     x = x Mod &H10000
     If x >= &H8000 Then x -= &H10000
     Return x
