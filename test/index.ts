@@ -119,6 +119,6 @@ interface WastTest {
     });
   };
 
-  console.log("Number of tests: ", tests.length);
+  console.log("Number of tests:", tests.length);
   outputTest(tests[0]);
 })();
