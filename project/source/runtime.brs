@@ -119,8 +119,8 @@ Function I32Clz(x as Integer) as Integer
     End If
 End Function
 
-Function I64Clz(value as LongInteger) as LongInteger
-    Return I32Clz(value)
+Function I64Clz(x as LongInteger) as LongInteger
+    Return I32Clz(x)
 End Function
 
 Function I32Ctz(x as Integer) as Integer
@@ -170,6 +170,19 @@ End Function
 Function I64Popcnt(x as LongInteger) as LongInteger
     Return I32Popcnt(x)
 End Function
+
+Function I32Extend8S(x as Integer) as Integer
+    x = x Mod &H100
+    If x >= &H80 Then x -= &H100
+    Return x
+End Function
+
+Function I32Extend16S(x  as Integer) as Integer
+    x = x Mod &H10000
+    If x >= &H8000 Then x -= &H10000
+    Return x
+End Function
+
 
 Function I32Eqz(value as Integer) as Integer
     If value = 0% Then

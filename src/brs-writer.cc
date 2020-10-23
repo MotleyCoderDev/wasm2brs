@@ -1810,47 +1810,47 @@ void CWriter::Write(const ConvertExpr& expr) {
       break;
 
     case Opcode::I64ExtendI32S:
-      WriteSimpleUnaryExpr(expr.opcode, U64_CAST "(s64)(s32)");
+      WriteSimpleUnaryExpr(expr.opcode, "I64ExtendI32S");
       break;
 
     case Opcode::I64ExtendI32U:
-      WriteSimpleUnaryExpr(expr.opcode, U64_CAST);
+      WriteSimpleUnaryExpr(expr.opcode, "I64ExtendI32U");
       break;
 
     case Opcode::I32WrapI64:
-      WriteSimpleUnaryExpr(expr.opcode, "(u32)");
+      WriteSimpleUnaryExpr(expr.opcode, "I32WrapI64");
       break;
 
     case Opcode::I32TruncF32S:
-      WriteSimpleUnaryExpr(expr.opcode, "I32_TRUNC_S_F32");
+      WriteSimpleUnaryExpr(expr.opcode, "I32TruncF32S");
       break;
 
     case Opcode::I64TruncF32S:
-      WriteSimpleUnaryExpr(expr.opcode, "I64_TRUNC_S_F32");
+      WriteSimpleUnaryExpr(expr.opcode, "I64TruncF32S");
       break;
 
     case Opcode::I32TruncF64S:
-      WriteSimpleUnaryExpr(expr.opcode, "I32_TRUNC_S_F64");
+      WriteSimpleUnaryExpr(expr.opcode, "I32TruncF64S");
       break;
 
     case Opcode::I64TruncF64S:
-      WriteSimpleUnaryExpr(expr.opcode, "I64_TRUNC_S_F64");
+      WriteSimpleUnaryExpr(expr.opcode, "I64TruncF64S");
       break;
 
     case Opcode::I32TruncF32U:
-      WriteSimpleUnaryExpr(expr.opcode, "I32_TRUNC_U_F32");
+      WriteSimpleUnaryExpr(expr.opcode, "I32TruncF32U");
       break;
 
     case Opcode::I64TruncF32U:
-      WriteSimpleUnaryExpr(expr.opcode, "I64_TRUNC_U_F32");
+      WriteSimpleUnaryExpr(expr.opcode, "I64TruncF32U");
       break;
 
     case Opcode::I32TruncF64U:
-      WriteSimpleUnaryExpr(expr.opcode, "I32_TRUNC_U_F64");
+      WriteSimpleUnaryExpr(expr.opcode, "I32TruncF64U");
       break;
 
     case Opcode::I64TruncF64U:
-      WriteSimpleUnaryExpr(expr.opcode, "I64_TRUNC_U_F64");
+      WriteSimpleUnaryExpr(expr.opcode, "I64TruncF64U");
       break;
 
     case Opcode::I32TruncSatF32S:
@@ -2081,7 +2081,7 @@ void CWriter::Write(const UnaryExpr& expr) {
       break;
 
     case Opcode::I64Extend32S:
-      WriteSimpleUnaryExpr(expr.opcode, "I32Extend8S");
+      WriteSimpleUnaryExpr(expr.opcode, "I64Extend32S");
       break;
 
     default:
