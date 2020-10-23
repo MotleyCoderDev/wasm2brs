@@ -157,8 +157,18 @@ Function I32Ctz(x as Integer) as Integer
     End If
 End Function
 
-Function I64Ctz(x as Integer) as Integer
+Function I64Ctz(x as LongInteger) as LongInteger
     Return I32Ctz(value)
+End Function
+
+Function I32Popcnt(n as Integer) as Integer
+    n = n - ((n >> 1) And &H55555555)
+    n = (n And &H33333333) + ((n >> 2) And &H33333333)
+    Return ((n + (n >> 4) And &HF0F0F0F) * &H1010101) >> 24
+End Function
+
+Function I64Popcnt(x as LongInteger) as LongInteger
+    Return I32Popcnt(x)
 End Function
 
 Function I32Eqz(value as Integer) as Integer

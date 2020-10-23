@@ -2004,11 +2004,11 @@ void CWriter::Write(const UnaryExpr& expr) {
       break;
 
     case Opcode::I32Popcnt:
-      WriteSimpleUnaryExpr(expr.opcode, "I32_POPCNT");
+      WriteSimpleUnaryExpr(expr.opcode, "I32Popcnt");
       break;
 
     case Opcode::I64Popcnt:
-      WriteSimpleUnaryExpr(expr.opcode, "I64_POPCNT");
+      WriteSimpleUnaryExpr(expr.opcode, "I64Popcnt");
       break;
 
     case Opcode::F32Neg:
