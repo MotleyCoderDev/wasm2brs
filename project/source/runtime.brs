@@ -1,22 +1,54 @@
 
 Function FloatInf() as Float
-    Return 1e39
+    Return 1e39!
 End Function
 
 Function FloatNan() as Float
-    Return 0 * FloatInf()
+    Return 0! * FloatInf()
 End Function
 
 Function FloatNegativeZero() as Float
-    Return -1 / FloatInf()
+    Return -1! / FloatInf()
 End Function
 
 Function IsFloatNan(value as Float) as Boolean
     Return value <> value
 End Function
 
-Function AssertEqualsNan(a) as Boolean
+Function FloatSign(value as Float) as Float
+    If value > 0 Then Return 1!
+    If value < 0 Then Return -1!
+    Return 0
+End Function
+
+Function AssertEqualsFloatNan(a) as Boolean
     If Not IsFloatNan(a) Then Stop
+End Function
+
+Function DoubleInf() as Double
+    Return FloatInf()
+End Function
+
+Function DoubleNan() as Double
+    Return 0# * DoubleInf()
+End Function
+
+Function DoubleNegativeZero() as Double
+    Return -1# / DoubleInf()
+End Function
+
+Function IsDoubleNan(value as Float) as Boolean
+    Return value <> value
+End Function
+
+Function DoubleSign(value as Double) as Double
+    If value > 0 Then Return 1!
+    If value < 0 Then Return -1!
+    Return 0
+End Function
+
+Function AssertEqualsDoubleNan(a) as Boolean
+    If Not IsDoubleNan(a) Then Stop
 End Function
 
 Function AssertEquals(a, b) as Boolean

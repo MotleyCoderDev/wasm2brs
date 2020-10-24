@@ -74,6 +74,9 @@ interface WastTest {
   }
 
   const floatNanBrs = "FloatNan()";
+  const floatInfBrs = "FloatInf()";
+  const doubleNanBrs = "DoubleNan()";
+  const doubleInfBrs = "DoubleInf()";
   const toArgValue = (arg: WastArg) => {
     if (arg.type === "i32" || arg.type === "i64") {
       return arg.value + (arg.type === "i32" ? "%" : "&");
@@ -83,25 +86,25 @@ interface WastTest {
       throw new Error("Unhandled f64 type");
     }
 
-    // TODO(trevor): Differentiate between nan:canonical and nan:arithmetic, (find a way in Brightscript)
+    // TODO(trevor): Differentiate between nan:canonical and nan:arithmetic (find a way in Brightscript)
     if (arg.value === "nan:canonical" || arg.value === "nan:arithmetic") {
-      return floatNanBrs;
+      return arg.type === "f32" ? floatNanBrs : doubleNanBrs;
     }
 
     const buffer = new ArrayBuffer(4);
     const view = new DataView(buffer);
     view.setUint32(0, parseInt(arg.value, 10), true);
-    const floatStr = view.getFloat32(0, true).toString();
-    if (floatStr === "Infinity") {
-      return "FloatInf()";
+    const str = view.getFloat32(0, true).toString();
+    if (str === "Infinity") {
+      return arg.type === "f32" ? floatInfBrs : doubleInfBrs;
     }
-    if (floatStr === "-Infinity") {
-      return "-FloatInf()";
+    if (str === "-Infinity") {
+      return arg.type === "f32" ? `-${floatInfBrs}` : `-${doubleInfBrs}`;
     }
-    if (floatStr === "NaN") {
-      return floatNanBrs;
+    if (str === "NaN") {
+      return arg.type === "f32" ? floatNanBrs : doubleNanBrs;
     }
-    return floatStr + (arg.type === "f32" ? "!" : "#");
+    return str + (arg.type === "f32" ? "!" : "#");
   };
 
   const outputTest = async (test: WastTest) => {
@@ -123,7 +126,9 @@ interface WastTest {
           const expected = toArgValue(command.expected[0]);
           const ending = ` ' ${testWastFilename}(${command.line})\n`;
           if (expected === floatNanBrs) {
-            testFunction += `AssertEqualsNan(${actual})${ending}`;
+            testFunction += `AssertEqualsFloatNan(${actual})${ending}`;
+          } else if (expected === doubleNanBrs) {
+            testFunction += `AssertEqualsDoubleNan(${actual})${ending}`;
           } else {
             testFunction += `AssertEquals(${actual}, ${expected})${ending}`;
           }
