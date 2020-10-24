@@ -3,9 +3,9 @@ Function IsNegativeZero(value as Dynamic) as Boolean
 End Function
 
 Function SignNoZero(value as Float) as Integer
-    If value > 0 Then Return 1
-    If value < 0 Then Return -1
-    If IsNegativeZero(value) Then Return -1
+    If value > 0 Return 1
+    If value < 0 Return -1
+    If IsNegativeZero(value) Return -1
     Return 1
 End Function
 
@@ -233,94 +233,94 @@ End Function
 
 
 Function F32Min(lhs as Float, rhs as Float) as Float
-    If IsNan(lhs) Or IsNan(rhs) Then Return FloatNan()
-    If lhs < rhs Then Return lhs
+    If IsNan(lhs) Or IsNan(rhs) Return FloatNan()
+    If lhs < rhs Return lhs
     Return rhs
 End Function
 
 Function F64Min(lhs as Double, rhs as Double) as Double
-    If IsNan(lhs) Or IsNan(rhs) Then Return DoubleNan()
-    If lhs < rhs Then Return lhs
+    If IsNan(lhs) Or IsNan(rhs) Return DoubleNan()
+    If lhs < rhs Return lhs
     Return rhs
 End Function
 
 Function F32Max(lhs as Float, rhs as Float) as Float
-    If IsNan(lhs) Or IsNan(rhs) Then Return FloatNan()
-    If lhs > rhs Then Return lhs
+    If IsNan(lhs) Or IsNan(rhs) Return FloatNan()
+    If lhs > rhs Return lhs
     Return rhs
 End Function
 
 Function F64Max(lhs as Double, rhs as Double) as Double
-    If IsNan(lhs) Or IsNan(rhs) Then Return DoubleNan()
-    If lhs > rhs Then Return lhs
+    If IsNan(lhs) Or IsNan(rhs) Return DoubleNan()
+    If lhs > rhs Return lhs
     Return rhs
 End Function
 
 Function F32Ceil(value as Float) as Float
-    If IsOutsideLongIntegerRange(value) Then Return value
+    If IsOutsideLongIntegerRange(value) Return value
     whole = LongInt(value)
-    If value > whole Then Return whole + 1
+    If value > whole Return whole + 1
     return whole
 End Function
 
 Function F64Ceil(value as Double) as Double
-    If IsOutsideLongIntegerRange(value) Then Return value
+    If IsOutsideLongIntegerRange(value) Return value
     whole = LongInt(value)
-    If value > whole Then Return whole + 1
+    If value > whole Return whole + 1
     return whole
 End Function
 
 Function F32Floor(value as Float) as Float
-    If IsOutsideLongIntegerRange(value) Then Return value
+    If IsOutsideLongIntegerRange(value) Return value
     whole = LongInt(value)
-    If value < whole Then Return whole - 1
+    If value < whole Return whole - 1
     return whole
 End Function
 
 Function F64Floor(value as Double) as Double
-    If IsOutsideLongIntegerRange(value) Then Return value
+    If IsOutsideLongIntegerRange(value) Return value
     whole = LongInt(value)
-    If value < whole Then Return whole - 1
+    If value < whole Return whole - 1
     return whole
 End Function
 
 Function F32Trunc(value as Float) as Float
-    If IsOutsideLongIntegerRange(value) Then Return value
+    If IsOutsideLongIntegerRange(value) Return value
     return LongInt(value)
 End Function
 
 Function F64Trunc(value as Double) as Double
-    If IsOutsideLongIntegerRange(value) Then Return value
+    If IsOutsideLongIntegerRange(value) Return value
     return LongInt(value)
 End Function
 
 Function F32Div(lhs as Float, rhs as Float) as Float
-    If lhs = 0! And rhs = 0! Then Return FloatNan()
+    If lhs = 0! And rhs = 0! Return FloatNan()
     If rhs = 0! Then
-        If IsNan(lhs) Then Return FloatNan()
+        If IsNan(lhs) Return FloatNan()
         Return SignNoZero(lhs) * SignNoZero(rhs) * FloatInf() 
     End If
     Return lhs / rhs
 End Function
 
 Function F64Div(lhs as Double, rhs as Double) as Double
-    If lhs = 0! And rhs = 0! Then Return DoubleNan()
+    If lhs = 0! And rhs = 0! Return DoubleNan()
     If rhs = 0! Then
-        If IsNan(lhs) Then Return DoubleNan()
+        If IsNan(lhs) Return DoubleNan()
         Return SignNoZero(lhs) * SignNoZero(rhs) * DoubleInf() 
     End If
     Return lhs / rhs
 End Function
 
 Function F32Nearest(value as Float) as Float
-    If IsOutsideLongIntegerRange(value) Then Return value
-    If value > 0 Then Return F32Floor(value + 0.499999970197)
+    If IsOutsideLongIntegerRange(value) Return value
+    If value > 0 Return F32Floor(value + 0.499999970197)
     Return F32Ceil(value - 0.499999970197)
 End Function
 
 Function F64Nearest(value as Double) as Double
-    If IsOutsideLongIntegerRange(value) Then Return value
-    If value > 0 Then Return F64Floor(value + 0.499999970197)
+    If IsOutsideLongIntegerRange(value) Return value
+    If value > 0 Return F64Floor(value + 0.499999970197)
     Return F64Ceil(value - 0.499999970197)
 End Function
 
@@ -341,155 +341,155 @@ Function I64Eqz(value as LongInteger) as LongInteger
 End Function
 
 Function I32Eq(lhs as Integer, rhs as Integer) as Integer
-    If lhs = rhs Then Return 1
+    If lhs = rhs Return 1
     Return 0
 End Function
 Function I64Eq(lhs as LongInteger, rhs as LongInteger) as Integer
-    If lhs = rhs Then Return 1
+    If lhs = rhs Return 1
     Return 0
 End Function
 Function F32Eq(lhs as Float, rhs as Float) as Integer
-    If lhs = rhs Then Return 1
+    If lhs = rhs Return 1
     Return 0
 End Function
 Function F64Eq(lhs as Double, rhs as Double) as Integer
-    If lhs = rhs Then Return 1
+    If lhs = rhs Return 1
     Return 0
 End Function
 
 Function I32Ne(lhs as Integer, rhs as Integer) as Integer
-    If lhs <> rhs Then Return 1
+    If lhs <> rhs Return 1
     Return 0
 End Function
 Function I64Ne(lhs as LongInteger, rhs as LongInteger) as Integer
-    If lhs <> rhs Then Return 1
+    If lhs <> rhs Return 1
     Return 0
 End Function
 Function F32Ne(lhs as Float, rhs as Float) as Integer
-    If lhs <> rhs Then Return 1
+    If lhs <> rhs Return 1
     Return 0
 End Function
 Function F64Ne(lhs as Double, rhs as Double) as Integer
-    If lhs <> rhs Then Return 1
+    If lhs <> rhs Return 1
     Return 0
 End Function
 
 Function I32LtS(lhs as Integer, rhs as Integer) as Integer
-    If lhs < rhs Then Return 1
+    If lhs < rhs Return 1
     Return 0
 End Function
 Function I64LtS(lhs as LongInteger, rhs as LongInteger) as Integer
-    If lhs < rhs Then Return 1
+    If lhs < rhs Return 1
     Return 0
 End Function
 
 Function I32LtU(lhs as Integer, rhs as Integer) as Integer
-    If I32ToUnsignedI64(lhs) < I32ToUnsignedI64(rhs) Then Return 1
+    If I32ToUnsignedI64(lhs) < I32ToUnsignedI64(rhs) Return 1
     Return 0
 End Function
 Function I64LtU(lhs as LongInteger, rhs as LongInteger) as Integer
-    If lhs < rhs Then Return 1
+    If lhs < rhs Return 1
     Return 0
 End Function
 Function F32Lt(lhs as Float, rhs as Float) as Integer
-    If lhs < rhs Then Return 1
+    If lhs < rhs Return 1
     Return 0
 End Function
 Function F64Lt(lhs as Double, rhs as Double) as Integer
-    If lhs < rhs Then Return 1
+    If lhs < rhs Return 1
     Return 0
 End Function
 
 Function I32LeS(lhs as Integer, rhs as Integer) as Integer
-    If lhs <= rhs Then Return 1
+    If lhs <= rhs Return 1
     Return 0
 End Function
 Function I64LeS(lhs as LongInteger, rhs as LongInteger) as Integer
-    If lhs <= rhs Then Return 1
+    If lhs <= rhs Return 1
     Return 0
 End Function
 
 Function I32LeU(lhs as Integer, rhs as Integer) as Integer
-    If I32ToUnsignedI64(lhs) <= I32ToUnsignedI64(rhs) Then Return 1
+    If I32ToUnsignedI64(lhs) <= I32ToUnsignedI64(rhs) Return 1
     Return 0
 End Function
 Function I64LeU(lhs as LongInteger, rhs as LongInteger) as Integer
-    If lhs <= rhs Then Return 1
+    If lhs <= rhs Return 1
     Return 0
 End Function
 Function F32Le(lhs as Float, rhs as Float) as Integer
-    If lhs <= rhs Then Return 1
+    If lhs <= rhs Return 1
     Return 0
 End Function
 Function F64Le(lhs as Double, rhs as Double) as Integer
-    If lhs <= rhs Then Return 1
+    If lhs <= rhs Return 1
     Return 0
 End Function
 
 Function I32GtS(lhs as Integer, rhs as Integer) as Integer
-    If lhs > rhs Then Return 1
+    If lhs > rhs Return 1
     Return 0
 End Function
 Function I64GtS(lhs as LongInteger, rhs as LongInteger) as Integer
-    If lhs > rhs Then Return 1
+    If lhs > rhs Return 1
     Return 0
 End Function
 
 Function I32GtU(lhs as Integer, rhs as Integer) as Integer
-    If I32ToUnsignedI64(lhs) > I32ToUnsignedI64(rhs) Then Return 1
+    If I32ToUnsignedI64(lhs) > I32ToUnsignedI64(rhs) Return 1
     Return 0
 End Function
 Function I64GtU(lhs as LongInteger, rhs as LongInteger) as Integer
-    If lhs > rhs Then Return 1
+    If lhs > rhs Return 1
     Return 0
 End Function
 Function F32Gt(lhs as Float, rhs as Float) as Integer
-    If lhs > rhs Then Return 1
+    If lhs > rhs Return 1
     Return 0
 End Function
 Function F64Gt(lhs as Double, rhs as Double) as Integer
-    If lhs > rhs Then Return 1
+    If lhs > rhs Return 1
     Return 0
 End Function
 
 Function I32GeS(lhs as Integer, rhs as Integer) as Integer
-    If lhs >= rhs Then Return 1
+    If lhs >= rhs Return 1
     Return 0
 End Function
 Function I64GeS(lhs as LongInteger, rhs as LongInteger) as Integer
-    If lhs >= rhs Then Return 1
+    If lhs >= rhs Return 1
     Return 0
 End Function
 
 Function I32GeU(lhs as Integer, rhs as Integer) as Integer
-    If I32ToUnsignedI64(lhs) >= I32ToUnsignedI64(rhs) Then Return 1
+    If I32ToUnsignedI64(lhs) >= I32ToUnsignedI64(rhs) Return 1
     Return 0
 End Function
 Function I64GeU(lhs as LongInteger, rhs as LongInteger) as Integer
-    If lhs >= rhs Then Return 1
+    If lhs >= rhs Return 1
     Return 0
 End Function
 Function F32Ge(lhs as Float, rhs as Float) as Integer
-    If lhs >= rhs Then Return 1
+    If lhs >= rhs Return 1
     Return 0
 End Function
 Function F64Ge(lhs as Double, rhs as Double) as Integer
-    If lhs >= rhs Then Return 1
+    If lhs >= rhs Return 1
     Return 0
 End Function
 
 Function F64Sqrt(fg as Double) as Double
     'The implementation is accurate but not perfect (make wasm tests pass)
-    If fg = 5e-324# Then Return 2.2227587494850775e-162#
-    If fg = -2.2250738585072014e-308# Then Return DoubleNan()
-    If fg = 2.2250738585072014e-308# Then Return 1.4916681462400413e-154#
-    If fg = 0.5# Then Return 0.7071067811865476#
-    If fg = 6.283185307179586# Then Return 2.5066282746310002#
-    If fg = 1.7976931348623157e+308# Then Return 1.3407807929942596e+154#
+    If fg = 5e-324# Return 2.2227587494850775e-162#
+    If fg = -2.2250738585072014e-308# Return DoubleNan()
+    If fg = 2.2250738585072014e-308# Return 1.4916681462400413e-154#
+    If fg = 0.5# Return 0.7071067811865476#
+    If fg = 6.283185307179586# Return 2.5066282746310002#
+    If fg = 1.7976931348623157e+308# Return 1.3407807929942596e+154#
 
-    If fg < 0 Or IsNan(fg) Then Return DoubleNan()
-    If fg = DoubleInf() Then Return DoubleInf()
-    If fg = -DoubleInf() Then Return DoubleNan()
+    If fg < 0 Or IsNan(fg) Return DoubleNan()
+    If fg = DoubleInf() Return DoubleInf()
+    If fg = -DoubleInf() Return DoubleNan()
 
     n = fg / 2.0#
     lstX = 0.0#
@@ -537,7 +537,7 @@ Function F32Load(buffer as Object, index as Integer) as Float
 
     exponent = (((b0 And 127) << 1) Or (b1 And (1 << 7)) >> 7)
 
-    If exponent = 0 Then Return 0
+    If exponent = 0 Return 0
 
     mul = 2 ^ (exponent - 127 - 23)
     mantissa = b3 + b2 * (2 ^ (8 * 1)) + (b1 And 127) * (2 ^ (8 * 2)) + (2 ^ 23)
@@ -567,8 +567,8 @@ Function F64Load(buffer as Object, index as Integer) as Double
 
     exponent = (((b0 And 127) << 4) Or (b1 And (15 << 4)) >> 4)
 
-    If exponent = 0 Then Return 0
-    If exponent = &H7FF Then Return sign * FloatInf()
+    If exponent = 0 Return 0
+    If exponent = &H7FF Return sign * FloatInf()
 
     mul = 2 ^ (exponent - 1023 - 52)
     mantissa = b3 + b2 * (2 ^ (8 * 1)) + (b1 And 127) * (2 ^ (8 * 2)) + (2 ^ 23)
