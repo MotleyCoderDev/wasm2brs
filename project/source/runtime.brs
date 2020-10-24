@@ -183,24 +183,54 @@ Function I64Extend8S(x as LongInteger) as LongInteger
     Return x
 End Function
 
-Function I32Extend16S(x  as Integer) as Integer
+Function I32Extend16S(x as Integer) as Integer
     x = x Mod &H10000
     If x >= &H8000 Then x -= &H10000
     Return x
 End Function
 
-Function I64Extend16S(x  as LongInteger) as LongInteger
+Function I64Extend16S(x as LongInteger) as LongInteger
     x = x Mod &H10000
     If x >= &H8000 Then x -= &H10000
     Return x
 End Function
 
-Function I64Extend32S(x  as LongInteger) as LongInteger
+Function I64Extend32S(x as LongInteger) as LongInteger
     x = x Mod &H10000
     If x >= &H8000 Then x -= &H10000
     Return x
 End Function
 
+
+Function F32Min(lhs as Float, rhs as Float) as Float
+    If lhx < rhs Then Return lhs
+    Return rhs
+End Function
+
+Function F32Max(lhs as Float, rhs as Float) as Float
+    If lhx > rhs Then Return lhs
+    Return rhs
+End Function
+
+Function LongInt(value as Double) as LongInteger
+    Return value
+End Function
+
+Function F32Ceil(value as Float) as Float
+    whole = LongInt(value)
+    If value > whole Then Return whole + 1
+    return whole
+End Function
+
+Function F32Floor(value as Float) as Float
+    whole = LongInt(value)
+    If value < whole Then Return whole - 1
+    return whole
+End Function
+
+Function F32Trunc(value as LongInteger) as Float
+    return value
+End Function
 
 Function I32Eqz(value as Integer) as Integer
     If value = 0% Then

@@ -2063,7 +2063,7 @@ void CWriter::Write(const UnaryExpr& expr) {
       break;
 
     case Opcode::F32Nearest:
-      WriteSimpleUnaryExpr(expr.opcode, "F32Nearest");
+      WriteSimpleUnaryExpr(expr.opcode, "Cint");
       break;
 
     case Opcode::F64Nearest:
