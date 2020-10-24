@@ -46,7 +46,7 @@ interface WastTest {
   const fromRootOptions: execa.Options = {cwd: root, stdio: "inherit"};
   await mkdirp(testOut);
 
-  const testWast = "third_party/wabt/third_party/testsuite/f32.wast";
+  const testWast = "third_party/wabt/third_party/testsuite/f64.wast";
   const testWastFilename = path.basename(testWast);
 
   const outJsonFilename = "current.json";
@@ -90,25 +90,27 @@ interface WastTest {
       return arg.value + (arg.type === "i32" ? "%" : "&");
     }
 
-    if (arg.type === "f64") {
-      throw new Error("Unhandled f64 type");
-    }
-
     // TODO(trevor): Differentiate between nan:canonical and nan:arithmetic (find a way in Brightscript)
     if (arg.value === "nan:canonical" || arg.value === "nan:arithmetic") {
       return arg.type === "f32" ? floatNanBrs : doubleNanBrs;
     }
 
-    const buffer = new ArrayBuffer(4);
+    const buffer = new ArrayBuffer(8);
     const view = new DataView(buffer);
-    view.setUint32(0, parseInt(arg.value, 10), true);
+    const value = (() => {
+      if (arg.type === "f32") {
+        view.setUint32(0, parseInt(arg.value, 10), true);
+        return view.getFloat32(0, true);
+      }
+      view.setBigUint64(0, BigInt(arg.value), true);
+      return view.getFloat64(0, true);
+    })();
 
-    const f32 = view.getFloat32(0, true);
-    const isNegativeZero = 1 / f32 === -Infinity;
+    const isNegativeZero = value === 0 && 1 / value === -Infinity;
     if (isNegativeZero) {
       return arg.type === "f32" ? floatNegativeZeroBrs : doubleNegativeZeroBrs;
     }
-    const str = f32.toString();
+    const str = value.toString();
     if (str === "Infinity") {
       return arg.type === "f32" ? floatInfBrs : doubleInfBrs;
     }
