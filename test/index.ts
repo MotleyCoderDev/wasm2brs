@@ -25,6 +25,7 @@ interface WastAssertReturn {
   },
   expected: [WastArg];
   line: number;
+  jsonLine: number;
 }
 
 interface WastJson {
@@ -48,7 +49,8 @@ interface WastTest {
   const testWast = "third_party/wabt/third_party/testsuite/f32.wast";
   const testWastFilename = path.basename(testWast);
 
-  const outJson = path.join(testOut, "current.json");
+  const outJsonFilename = "current.json";
+  const outJson = path.join(testOut, outJsonFilename);
   await execa("third_party/wabt/bin/wast2json",
     [
       testWast,
@@ -60,6 +62,8 @@ interface WastTest {
 
   // Group all the commands under the module they belong to.
   let currentTest: WastTest = null;
+  // The commands start at this line in the json output by wast2json.
+  let currentJsonLine = 3;
   const tests: WastTest[] = [];
   for (const command of wastJson.commands) {
     if (command.type === "module") {
@@ -69,8 +73,10 @@ interface WastTest {
       };
       tests.push(currentTest);
     } else {
+      command.jsonLine = currentJsonLine;
       currentTest.commands.push(command);
     }
+    ++currentJsonLine;
   }
 
   const floatNanBrs = "FloatNan()";
@@ -132,7 +138,7 @@ interface WastTest {
           const args = command.action.args.map((arg) => toArgValue(arg)).join(",");
           const actual = `w2b_${command.action.field}(${args})`;
           const expected = toArgValue(command.expected[0]);
-          const ending = ` ' ${testWastFilename}(${command.line})\n`;
+          const ending = ` ' ${testWastFilename}(${command.line}) ${outJsonFilename}(${command.jsonLine})\n`;
           if (expected === floatNanBrs) {
             testFunction += `AssertEqualsFloatNan(${actual})${ending}`;
           } else if (expected === doubleNanBrs) {
