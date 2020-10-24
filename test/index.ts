@@ -47,7 +47,7 @@ interface WastTest {
   const outJson = path.join(testOut, "current.json");
   await execa("third_party/wabt/bin/wast2json",
     [
-      "third_party/wabt/third_party/testsuite/i64.wast",
+      "third_party/wabt/third_party/testsuite/f32.wast",
       "-o", outJson
     ],
     fromRootOptions);
@@ -69,15 +69,35 @@ interface WastTest {
     }
   }
 
+  const floatNanBrs = "FloatNan()";
   const toArgValue = (arg: WastArg) => {
     if (arg.type === "i32" || arg.type === "i64") {
       return arg.value + (arg.type === "i32" ? "%" : "&");
     }
 
+    if (arg.type === "f64") {
+      throw new Error("Unhandled f64 type");
+    }
+
+    // TODO(trevor): Differentiate between nan:canonical and nan:arithmetic, (find a way in Brightscript)
+    if (arg.value === "nan:canonical" || arg.value === "nan:arithmetic") {
+      return floatNanBrs;
+    }
+
     const buffer = new ArrayBuffer(4);
     const view = new DataView(buffer);
     view.setUint32(0, parseInt(arg.value, 10), true);
-    return view.getFloat32(0, true) + (arg.type === "f32" ? "!" : "#");
+    const floatStr = view.getFloat32(0, true).toString();
+    if (floatStr === "Infinity") {
+      return "FloatInf()";
+    }
+    if (floatStr === "-Infinity") {
+      return "-FloatInf()";
+    }
+    if (floatStr === "NaN") {
+      return floatNanBrs;
+    }
+    return floatStr + (arg.type === "f32" ? "!" : "#");
   };
 
   const outputTest = async (test: WastTest) => {
@@ -97,7 +117,7 @@ interface WastTest {
           const args = command.action.args.map((arg) => toArgValue(arg)).join(",");
           const actual = `w2b_${command.action.field}(${args})`;
           const expected = toArgValue(command.expected[0]);
-          if (expected.startsWith("NaN")) {
+          if (expected === floatNanBrs) {
             testFunction += `AssertEqualsNan(${actual})\n`;
           } else {
             testFunction += `AssertEquals(${actual}, ${expected})\n`;
@@ -115,7 +135,7 @@ interface WastTest {
       host: process.env.HOST,
       password: process.env.PASSWORD,
       deploy: process.env.HOST !== undefined && process.env.PASSWORD !== undefined,
-      ignoreErrorCodes: [1065, 1061, 1082]
+      ignoreErrorCodes: [1065, 1061, 1075, 1082]
     });
   };
 
