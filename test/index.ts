@@ -24,6 +24,7 @@ interface WastAssertReturn {
     args: WastArg[]
   },
   expected: [WastArg];
+  line: number;
 }
 
 interface WastJson {
@@ -44,10 +45,13 @@ interface WastTest {
   const fromRootOptions: execa.Options = {cwd: root, stdio: "inherit"};
   await mkdirp(testOut);
 
+  const testWast = "third_party/wabt/third_party/testsuite/f32.wast";
+  const testWastFilename = path.basename(testWast);
+
   const outJson = path.join(testOut, "current.json");
   await execa("third_party/wabt/bin/wast2json",
     [
-      "third_party/wabt/third_party/testsuite/f32.wast",
+      testWast,
       "-o", outJson
     ],
     fromRootOptions);
@@ -117,10 +121,11 @@ interface WastTest {
           const args = command.action.args.map((arg) => toArgValue(arg)).join(",");
           const actual = `w2b_${command.action.field}(${args})`;
           const expected = toArgValue(command.expected[0]);
+          const ending = ` ' ${testWastFilename}(${command.line})\n`;
           if (expected === floatNanBrs) {
-            testFunction += `AssertEqualsNan(${actual})\n`;
+            testFunction += `AssertEqualsNan(${actual})${ending}`;
           } else {
-            testFunction += `AssertEquals(${actual}, ${expected})\n`;
+            testFunction += `AssertEquals(${actual}, ${expected})${ending}`;
           }
           break;
         }
