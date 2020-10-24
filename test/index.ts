@@ -71,7 +71,7 @@ interface WastTest {
 
   const toArgValue = (arg: WastArg) => {
     if (arg.type === "i32" || arg.type === "i64") {
-      return parseInt(arg.value, 10) + (arg.type === "i32" ? "%" : "&");
+      return arg.value + (arg.type === "i32" ? "%" : "&");
     }
 
     const buffer = new ArrayBuffer(4);
