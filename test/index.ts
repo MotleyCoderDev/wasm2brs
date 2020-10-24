@@ -46,7 +46,7 @@ interface WastTest {
   const fromRootOptions: execa.Options = {cwd: root, stdio: "inherit"};
   await mkdirp(testOut);
 
-  const testWast = "third_party/wabt/third_party/testsuite/f64.wast";
+  const testWast = "third_party/wabt/third_party/testsuite/i64.wast";
   const testWastFilename = path.basename(testWast);
 
   const outJsonFilename = "current.json";
@@ -159,7 +159,7 @@ interface WastTest {
       host: process.env.HOST,
       password: process.env.PASSWORD,
       deploy: process.env.HOST !== undefined && process.env.PASSWORD !== undefined,
-      ignoreErrorCodes: [1000, 1065, 1061, 1075, 1082]
+      ignoreErrorCodes: [1000, 1065, 1061, 1075, 1082, 1086]
     });
   };
 
