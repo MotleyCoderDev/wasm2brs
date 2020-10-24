@@ -75,8 +75,10 @@ interface WastTest {
 
   const floatNanBrs = "FloatNan()";
   const floatInfBrs = "FloatInf()";
+  const floatNegativeZeroBrs = "FloatNegativeZero()";
   const doubleNanBrs = "DoubleNan()";
   const doubleInfBrs = "DoubleInf()";
+  const doubleNegativeZeroBrs = "DoubleNegativeZero()";
   const toArgValue = (arg: WastArg) => {
     if (arg.type === "i32" || arg.type === "i64") {
       return arg.value + (arg.type === "i32" ? "%" : "&");
@@ -94,7 +96,13 @@ interface WastTest {
     const buffer = new ArrayBuffer(4);
     const view = new DataView(buffer);
     view.setUint32(0, parseInt(arg.value, 10), true);
-    const str = view.getFloat32(0, true).toString();
+
+    const f32 = view.getFloat32(0, true);
+    const isNegativeZero = 1 / f32 === -Infinity;
+    if (isNegativeZero) {
+      return arg.type === "f32" ? floatNegativeZeroBrs : doubleNegativeZeroBrs;
+    }
+    const str = f32.toString();
     if (str === "Infinity") {
       return arg.type === "f32" ? floatInfBrs : doubleInfBrs;
     }
