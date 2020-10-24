@@ -38,6 +38,19 @@ interface WastTest {
 }
 
 (async () => {
+  if (process.env.WAST === undefined) {
+    console.error("Expected WAST to be set to a .wast file");
+    return;
+  }
+  if (process.env.INDEX === undefined) {
+    console.error("Expected INDEX to be set to a test index within the .wast file");
+    return;
+  }
+
+  const testWast = process.env.WAST;
+  const testIndex = parseInt(process.env.INDEX, 10);
+  const testWastFilename = path.basename(testWast);
+
   const root = path.join(__dirname, "../..");
   const rokuOut = path.join(root, "out/out.zip");
   const testOut = path.join(root, "test/out");
@@ -45,9 +58,6 @@ interface WastTest {
   const projectSource = path.join(project, "source");
   const fromRootOptions: execa.Options = {cwd: root, stdio: "inherit"};
   await mkdirp(testOut);
-
-  const testWast = "third_party/wabt/third_party/testsuite/i64.wast";
-  const testWastFilename = path.basename(testWast);
 
   const outJsonFilename = "current.json";
   const outJson = path.join(testOut, outJsonFilename);
@@ -164,5 +174,5 @@ interface WastTest {
   };
 
   console.log("Number of tests:", tests.length);
-  outputTest(tests[0]);
+  outputTest(tests[testIndex]);
 })();
