@@ -1674,13 +1674,19 @@ void CWriter::Write(const BinaryExpr& expr) {
       break;
 
     case Opcode::F32Min:
+      WritePrefixBinaryExpr(expr.opcode, "F32Min");
+      break;
+
     case Opcode::F64Min:
-      WritePrefixBinaryExpr(expr.opcode, "FMIN");
+      WritePrefixBinaryExpr(expr.opcode, "F64Min");
       break;
 
     case Opcode::F32Max:
+      WritePrefixBinaryExpr(expr.opcode, "F32Max");
+      break;
+
     case Opcode::F64Max:
-      WritePrefixBinaryExpr(expr.opcode, "FMAX");
+      WritePrefixBinaryExpr(expr.opcode, "F64Max");
       break;
 
     case Opcode::F32Copysign:
@@ -2017,51 +2023,51 @@ void CWriter::Write(const UnaryExpr& expr) {
       break;
 
     case Opcode::F32Abs:
-      WriteSimpleUnaryExpr(expr.opcode, "fabsf");
+      WriteSimpleUnaryExpr(expr.opcode, "Abs");
       break;
 
     case Opcode::F64Abs:
-      WriteSimpleUnaryExpr(expr.opcode, "fabs");
+      WriteSimpleUnaryExpr(expr.opcode, "F64Abs");
       break;
 
     case Opcode::F32Sqrt:
-      WriteSimpleUnaryExpr(expr.opcode, "sqrtf");
+      WriteSimpleUnaryExpr(expr.opcode, "Sqr");
       break;
 
     case Opcode::F64Sqrt:
-      WriteSimpleUnaryExpr(expr.opcode, "sqrt");
+      WriteSimpleUnaryExpr(expr.opcode, "F64Sqrt");
       break;
 
     case Opcode::F32Ceil:
-      WriteSimpleUnaryExpr(expr.opcode, "ceilf");
+      WriteSimpleUnaryExpr(expr.opcode, "F32Ceil");
       break;
 
     case Opcode::F64Ceil:
-      WriteSimpleUnaryExpr(expr.opcode, "ceil");
+      WriteSimpleUnaryExpr(expr.opcode, "F64Ceil");
       break;
 
     case Opcode::F32Floor:
-      WriteSimpleUnaryExpr(expr.opcode, "floorf");
+      WriteSimpleUnaryExpr(expr.opcode, "F32Floor");
       break;
 
     case Opcode::F64Floor:
-      WriteSimpleUnaryExpr(expr.opcode, "floor");
+      WriteSimpleUnaryExpr(expr.opcode, "F64Floor");
       break;
 
     case Opcode::F32Trunc:
-      WriteSimpleUnaryExpr(expr.opcode, "truncf");
+      WriteSimpleUnaryExpr(expr.opcode, "F32Trunc");
       break;
 
     case Opcode::F64Trunc:
-      WriteSimpleUnaryExpr(expr.opcode, "trunc");
+      WriteSimpleUnaryExpr(expr.opcode, "F64Trunc");
       break;
 
     case Opcode::F32Nearest:
-      WriteSimpleUnaryExpr(expr.opcode, "nearbyintf");
+      WriteSimpleUnaryExpr(expr.opcode, "F32Nearest");
       break;
 
     case Opcode::F64Nearest:
-      WriteSimpleUnaryExpr(expr.opcode, "nearbyint");
+      WriteSimpleUnaryExpr(expr.opcode, "F64Nearest");
       break;
 
     case Opcode::I32Extend8S:
