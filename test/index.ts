@@ -159,7 +159,7 @@ interface WastTest {
       host: process.env.HOST,
       password: process.env.PASSWORD,
       deploy: process.env.HOST !== undefined && process.env.PASSWORD !== undefined,
-      ignoreErrorCodes: [1065, 1061, 1075, 1082]
+      ignoreErrorCodes: [1000, 1065, 1061, 1075, 1082]
     });
   };
 
