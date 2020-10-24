@@ -139,10 +139,8 @@ interface WastTest {
           const actual = `w2b_${command.action.field}(${args})`;
           const expected = toArgValue(command.expected[0]);
           const ending = ` ' ${testWastFilename}(${command.line}) ${outJsonFilename}(${command.jsonLine})\n`;
-          if (expected === floatNanBrs) {
-            testFunction += `AssertEqualsFloatNan(${actual})${ending}`;
-          } else if (expected === doubleNanBrs) {
-            testFunction += `AssertEqualsDoubleNan(${actual})${ending}`;
+          if (expected === floatNanBrs || expected === doubleNanBrs) {
+            testFunction += `AssertEqualsNan(${actual})${ending}`;
           } else {
             testFunction += `AssertEquals(${actual}, ${expected})${ending}`;
           }

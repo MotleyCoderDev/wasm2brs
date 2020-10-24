@@ -1,3 +1,18 @@
+Function IsNegativeZero(value as Dynamic) as Boolean
+    If value.ToStr() = "-0" Then Return True
+    Return False
+End Function
+
+Function SignNoZero(value as Float) as Integer
+    If value > 0 Then Return 1
+    If value < 0 Then Return -1
+    If IsNegativeZero(value) Then Return -1
+    Return 1
+End Function
+
+Function IsNan(value as Dynamic) as Boolean
+    Return value <> value
+End Function
 
 Function FloatInf() as Float
     Return 1e39!
@@ -9,20 +24,6 @@ End Function
 
 Function FloatNegativeZero() as Float
     Return -1! / FloatInf()
-End Function
-
-Function IsFloatNan(value as Float) as Boolean
-    Return value <> value
-End Function
-
-Function FloatSign(value as Float) as Float
-    If value > 0 Then Return 1!
-    If value < 0 Then Return -1!
-    Return 0
-End Function
-
-Function AssertEqualsFloatNan(a) as Boolean
-    If Not IsFloatNan(a) Then Stop
 End Function
 
 Function DoubleInf() as Double
@@ -37,22 +38,12 @@ Function DoubleNegativeZero() as Double
     Return -1# / DoubleInf()
 End Function
 
-Function IsDoubleNan(value as Float) as Boolean
-    Return value <> value
-End Function
-
-Function DoubleSign(value as Double) as Double
-    If value > 0 Then Return 1!
-    If value < 0 Then Return -1!
-    Return 0
-End Function
-
-Function AssertEqualsDoubleNan(a) as Boolean
-    If Not IsDoubleNan(a) Then Stop
-End Function
-
 Function AssertEquals(a, b) as Boolean
     If a <> b Then Stop
+End Function
+
+Function AssertEqualsNan(a) as Boolean
+    If Not IsNan(a) Then Stop
 End Function
 
 Function I32ToUnsignedI64(value as LongInteger) as LongInteger
@@ -235,12 +226,14 @@ End Function
 
 
 Function F32Min(lhs as Float, rhs as Float) as Float
-    If lhx < rhs Then Return lhs
+    If IsNan(lhs) Or IsNan(rhs) Then Return FloatNan()
+    If lhs < rhs Then Return lhs
     Return rhs
 End Function
 
 Function F32Max(lhs as Float, rhs as Float) as Float
-    If lhx > rhs Then Return lhs
+    If IsNan(lhs) Or IsNan(rhs) Then Return FloatNan()
+    If lhs > rhs Then Return lhs
     Return rhs
 End Function
 
@@ -249,19 +242,45 @@ Function LongInt(value as Double) as LongInteger
 End Function
 
 Function F32Ceil(value as Float) as Float
+    If value > 9223372036854775807 Or value < -9223372036854775808 Or IsNan(value) Then Return value
     whole = LongInt(value)
     If value > whole Then Return whole + 1
     return whole
 End Function
 
 Function F32Floor(value as Float) as Float
+    If value > 9223372036854775807 Or value < -9223372036854775808 Or IsNan(value) Then Return value
     whole = LongInt(value)
     If value < whole Then Return whole - 1
     return whole
 End Function
 
-Function F32Trunc(value as LongInteger) as Float
-    return value
+Function F32Trunc(value as Float) as Float
+    If value > 9223372036854775807 Or value < -9223372036854775808 Or IsNan(value) Then Return value
+    return LongInt(value)
+End Function
+
+Function F32Div(lhs as Float, rhs as Float) as Float
+    If lhs = 0! And rhs = 0! Then Return FloatNan()
+    If rhs = 0! Then
+        If IsNan(lhs) Then Return FloatNan()
+        Return SignNoZero(lhs) * SignNoZero(rhs) * FloatInf() 
+    End If
+    Return lhs / rhs
+End Function
+
+Function F64Div(lhs as Double, rhs as Double) as Double
+If lhs = 0! And rhs = 0! Then Return DoubleNan()
+If rhs = 0! Then
+    If IsNan(lhs) Then Return DoubleNan()
+    Return SignNoZero(lhs) * SignNoZero(rhs) * DoubleInf() 
+End If
+Return lhs / rhs
+End Function
+
+Function F32Nearest(value as Float) as Double
+    If value > 0 Then Return F32Floor(value + 0.499999970197)
+    Return F32Ceil(value - 0.499999970197)
 End Function
 
 Function I32Eqz(value as Integer) as Integer

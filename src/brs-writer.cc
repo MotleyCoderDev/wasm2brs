@@ -1597,8 +1597,11 @@ void CWriter::Write(const BinaryExpr& expr) {
       break;
 
     case Opcode::F32Div:
+      WritePrefixBinaryExpr(expr.opcode, "F32Div");
+      break;
+
     case Opcode::F64Div:
-      WriteInfixBinaryExpr(expr.opcode, "/");
+      WritePrefixBinaryExpr(expr.opcode, "F64Div");
       break;
 
     case Opcode::I32RemS:
@@ -2063,7 +2066,7 @@ void CWriter::Write(const UnaryExpr& expr) {
       break;
 
     case Opcode::F32Nearest:
-      WriteSimpleUnaryExpr(expr.opcode, "Cint");
+      WriteSimpleUnaryExpr(expr.opcode, "F32Nearest");
       break;
 
     case Opcode::F64Nearest:
