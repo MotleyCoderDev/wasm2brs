@@ -1863,68 +1863,91 @@ void CWriter::Write(const ConvertExpr& expr) {
       break;
 
     case Opcode::I32TruncSatF32S:
+      WriteSimpleUnaryExpr(expr.opcode, "I32TruncSatF32S");
+      break;
+
     case Opcode::I64TruncSatF32S:
+      WriteSimpleUnaryExpr(expr.opcode, "I64TruncSatF32S");
+      break;
+
     case Opcode::I32TruncSatF64S:
+      WriteSimpleUnaryExpr(expr.opcode, "I32TruncSatF64S");
+      break;
+
     case Opcode::I64TruncSatF64S:
+      WriteSimpleUnaryExpr(expr.opcode, "I64TruncSatF64S");
+      break;
+
     case Opcode::I32TruncSatF32U:
+      WriteSimpleUnaryExpr(expr.opcode, "I32TruncSatF32U");
+      break;
+
     case Opcode::I64TruncSatF32U:
+      WriteSimpleUnaryExpr(expr.opcode, "I64TruncSatF32U");
+      break;
+
     case Opcode::I32TruncSatF64U:
+      WriteSimpleUnaryExpr(expr.opcode, "I32TruncSatF64U");
+      break;
+
     case Opcode::I64TruncSatF64U:
-      UNIMPLEMENTED(expr.opcode.GetName());
+      WriteSimpleUnaryExpr(expr.opcode, "I64TruncSatF64U");
       break;
 
     case Opcode::F32ConvertI32S:
-      WriteSimpleUnaryExpr(expr.opcode, "(f32)(s32)");
+      WriteSimpleUnaryExpr(expr.opcode, "F32ConvertI32S");
       break;
 
     case Opcode::F32ConvertI64S:
-      WriteSimpleUnaryExpr(expr.opcode, "(f32)(s64)");
+      WriteSimpleUnaryExpr(expr.opcode, "F32ConvertI64S");
       break;
 
     case Opcode::F32ConvertI32U:
+      WriteSimpleUnaryExpr(expr.opcode, "F32ConvertI32U");
+      break;
+
     case Opcode::F32DemoteF64:
-      WriteSimpleUnaryExpr(expr.opcode, "(f32)");
+      WriteSimpleUnaryExpr(expr.opcode, "F32DemoteF64");
       break;
 
     case Opcode::F32ConvertI64U:
-      // TODO(binji): This needs to be handled specially (see
-      // wabt_convert_uint64_to_float).
-      WriteSimpleUnaryExpr(expr.opcode, "(f32)");
+      WriteSimpleUnaryExpr(expr.opcode, "F32ConvertI64U");
       break;
 
     case Opcode::F64ConvertI32S:
-      WriteSimpleUnaryExpr(expr.opcode, "(f64)(s32)");
+      WriteSimpleUnaryExpr(expr.opcode, "F64ConvertI32S");
       break;
 
     case Opcode::F64ConvertI64S:
-      WriteSimpleUnaryExpr(expr.opcode, "(f64)(s64)");
+      WriteSimpleUnaryExpr(expr.opcode, "F64ConvertI64S");
       break;
 
     case Opcode::F64ConvertI32U:
+      WriteSimpleUnaryExpr(expr.opcode, "F64ConvertI32U");
+      break;
+
     case Opcode::F64PromoteF32:
-      WriteSimpleUnaryExpr(expr.opcode, "(f64)");
+      WriteSimpleUnaryExpr(expr.opcode, "F64PromoteF32");
       break;
 
     case Opcode::F64ConvertI64U:
-      // TODO(binji): This needs to be handled specially (see
-      // wabt_convert_uint64_to_double).
-      WriteSimpleUnaryExpr(expr.opcode, "(f64)");
+      WriteSimpleUnaryExpr(expr.opcode, "F64ConvertI64U");
       break;
 
     case Opcode::F32ReinterpretI32:
-      WriteSimpleUnaryExpr(expr.opcode, "f32_reinterpret_i32");
+      WriteSimpleUnaryExpr(expr.opcode, "F32ReinterpretI32");
       break;
 
     case Opcode::I32ReinterpretF32:
-      WriteSimpleUnaryExpr(expr.opcode, "i32_reinterpret_f32");
+      WriteSimpleUnaryExpr(expr.opcode, "I32ReinterpretF32");
       break;
 
     case Opcode::F64ReinterpretI64:
-      WriteSimpleUnaryExpr(expr.opcode, "f64_reinterpret_i64");
+      WriteSimpleUnaryExpr(expr.opcode, "F64ReinterpretI64");
       break;
 
     case Opcode::I64ReinterpretF64:
-      WriteSimpleUnaryExpr(expr.opcode, "i64_reinterpret_f64");
+      WriteSimpleUnaryExpr(expr.opcode, "I64ReinterpretF64");
       break;
 
     default:

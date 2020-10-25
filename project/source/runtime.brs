@@ -46,7 +46,9 @@ Function DoubleNegativeZero() as Double
 End Function
 
 Function AssertEquals(a, b)
-    If a <> b Then Stop
+    aStr = a.ToStr()
+    bStr = b.ToStr()
+    If aStr <> bStr Then Stop
 End Function
 
 Function AssertEqualsNan(a)
@@ -208,8 +210,8 @@ Function I32Extend8S(x as Integer) as Integer
 End Function
 
 Function I64Extend8S(x as LongInteger) as LongInteger
-    x = x Mod &H100
-    If x >= &H80 Then x -= &H100
+    x = x Mod &H100&
+    If x >= &H80& Then x -= &H100&
     Return x
 End Function
 
@@ -220,15 +222,26 @@ Function I32Extend16S(x as Integer) as Integer
 End Function
 
 Function I64Extend16S(x as LongInteger) as LongInteger
-    x = x Mod &H10000
-    If x >= &H8000 Then x -= &H10000
+    x = x Mod &H10000&
+    If x >= &H8000& Then x -= &H10000&
     Return x
 End Function
 
 Function I64Extend32S(x as LongInteger) as LongInteger
-    x = x Mod &H10000
-    If x >= &H8000 Then x -= &H10000
+    x = x Mod &H100000000&
+    If x >= &H80000000& Then x -= &H100000000&
     Return x
+End Function
+
+' TODO(trevor): Understand how this is different from I64Extend32S?
+Function I64ExtendI32S(x as LongInteger) as LongInteger
+    x = x Mod &H100000000&
+    If x >= &H80000000& Then x -= &H100000000&
+    Return x
+End Function
+
+Function I64ExtendI32U(x as LongInteger) as LongInteger
+    Return I32ToUnsignedI64(x)
 End Function
 
 
@@ -500,8 +513,144 @@ Function F64Sqrt(fg as Double) as Double
     Return Sqr(fg)
 End Function
 
-'Function I32Store(buffer As Object, index As Integer, value As Integer)
-'End Function
+Function I32WrapI64(value as LongInteger) as Integer
+    Return value
+End Function
+
+Function I32TruncF32S(value as Float) as Integer
+    Return value
+End Function
+
+Function I32TruncF32U(value as LongInteger) as Integer
+    Return value
+End Function
+
+Function I32TruncF64S(value as Double) as Integer
+    Return value
+End Function
+
+Function I32TruncF64U(value as LongInteger) as Integer
+    Return value
+End Function
+
+Function I64TruncF32S(value as Float) as LongInteger
+    Return value
+End Function
+
+Function I64TruncF32U(value as LongInteger) as LongInteger
+    Return value
+End Function
+
+Function I64TruncF64S(value as Double) as LongInteger
+    Return value
+End Function
+
+Function I64TruncF64U(value as LongInteger) as LongInteger
+    Return value
+End Function
+
+Function I32TruncSatF32S(value as Float) as Integer
+    Return value
+End Function
+
+Function I32TruncSatF32U(value as Float) as Integer
+    If value >= 4294967295! Return 4294967295%
+    If value <= 0! Return 0%
+    longInt& = value
+    Return longInt&
+End Function
+
+Function I32TruncSatF64S(value as Double) as Integer
+    Return value
+End Function
+
+Function I32TruncSatF64U(value as Double) as Integer
+    If value >= 4294967295# Return 4294967295%
+    If value <= 0# Return 0%
+    longInt& = value
+    Return longInt&
+End Function
+
+Function I64TruncSatF32S(value as Float) as LongInteger
+    If value >= 9223372036854775807! Return 9223372036854775807&
+    If value <= -9223372036854775808! Return -9223372036854775808&
+    Return value
+End Function
+
+Function I64TruncSatF32U(value as Float) as LongInteger
+    If value >= 18446744073709551615! Return 18446744073709551615&
+    If value <= 0! Return 0&
+    Return value
+End Function
+
+Function I64TruncSatF64S(value as Double) as LongInteger
+    If value >= 9223372036854775807! Return 9223372036854775807&
+    If value <= -9223372036854775808! Return -9223372036854775808&
+    Return value
+End Function
+
+Function I64TruncSatF64U(value as Double) as LongInteger
+    If value >= 18446744073709551615# Return 18446744073709551615&
+    If value <= 0# Return 0&
+    Return value
+End Function
+
+Function F32ConvertI32S(value as Integer) as Float
+    Return value
+End Function
+
+Function F32ConvertI32U(value as Integer) as Float
+    Return I32ToUnsignedI64(value)
+End Function
+
+Function F32ConvertI64S(value as LongInteger) as Float
+    Return value
+End Function
+
+Function F32ConvertI64U(value as LongInteger) as Float
+    If value < 0 Return 9223372036854775807! + (value + 9223372036854775807&)
+    Return value
+End Function
+
+Function F64ConvertI32S(value as Integer) as Double
+    Return value
+End Function
+
+Function F64ConvertI32U(value as Integer) as Double
+    Return I32ToUnsignedI64(value)
+End Function
+
+Function F64ConvertI64S(value as LongInteger) as Double
+    Return value
+End Function
+
+Function F64ConvertI64U(value as LongInteger) as Double
+    If value < 0 Return 9223372036854775807# + (value + 9223372036854775807&)
+    Return value
+End Function
+
+Function F64PromoteF32(value as Float) as Double
+    Return value
+End Function
+
+Function F32DemoteF64(value as Double) as Float
+    Return value
+End Function
+
+Function F32ReinterpretI32(value as Integer) as Float
+    buffer = CreateObject("roByteArray")
+    I32Store(buffer, 0, value)
+    Return F32Load(buffer, 0)
+End Function
+
+Function I32Store(buffer As Object, index As Integer, value As Integer)
+    ' Since buffer is already a byte array, we don't need to Mod 256
+    buffer[index] = value
+    buffer[index + 1] = (value >> 8)
+    buffer[index + 2] = (value >> 16)
+    buffer[index + 3] = (value >> 24)
+End Function
+
 'Function I64Store(buffer As Object, index As Integer, value As Integer)
 'End Function
 'Function F32Store(buffer As Object, index As Integer, value As Integer)
