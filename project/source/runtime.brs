@@ -143,16 +143,21 @@ Function I64Xor(lhs as LongInteger, rhs as LongInteger) as LongInteger
 End Function
 
 Function I32ShrS(lhs as Integer, rhs as Integer) as Integer
-    rhsWrapped = I32ToUnsignedI64(rhs) Mod 32
+    rhsWrapped = rhs And &H1F
     leftBits = 0
-    If lhs < 0 Then
-        leftBits = &HFFFFFFFF << (32 - rhsWrapped)
+    If lhs < 0 And rhsWrapped <> 0 Then
+        leftBits = &HFFFFFFFF << (32& - rhsWrapped)
     End If
     Return (lhs >> rhsWrapped) Or leftBits
 End Function
 
 Function I64ShrS(lhs as LongInteger, rhs as LongInteger) as LongInteger
-    Return lhs >> rhs
+    rhsWrapped = rhs And &H3F
+    leftBits = 0
+    If lhs < 0 And rhsWrapped <> 0 Then
+        leftBits = &HFFFFFFFFFFFFFFFF << (64& - rhsWrapped)
+    End If
+    Return (lhs >> rhsWrapped) Or leftBits
 End Function
 
 Function I32Rotl(lhs as Integer, rhs as Integer) as Integer
@@ -206,7 +211,11 @@ Function I32Clz(x as Integer) as Integer
 End Function
 
 Function I64Clz(x as LongInteger) as LongInteger
-    Return I32Clz(x)
+    hi = (x >> 32&) And &HFFFFFFFF
+    lo =  x         And &HFFFFFFFF
+    clzHi = I32Clz(hi)
+    If clzHi <> 32 Return clzHi
+    Return 32 + I32Clz(lo)
 End Function
 
 Function I32Ctz(x as Integer) as Integer
@@ -244,7 +253,11 @@ Function I32Ctz(x as Integer) as Integer
 End Function
 
 Function I64Ctz(x as LongInteger) as LongInteger
-    Return I32Ctz(value)
+    hi = (x >> 32&) And &HFFFFFFFF
+    lo =  x         And &HFFFFFFFF
+    ctzLo = I32Ctz(lo)
+    If ctzLo <> 32 Return ctzLo
+    Return 32 + I32Ctz(hi)
 End Function
 
 Function I32Popcnt(n as Integer) as Integer
@@ -254,7 +267,9 @@ Function I32Popcnt(n as Integer) as Integer
 End Function
 
 Function I64Popcnt(x as LongInteger) as LongInteger
-    Return I32Popcnt(x)
+    hi = (x >> 32&) And &HFFFFFFFF
+    lo =  x         And &HFFFFFFFF
+    Return I32Popcnt(hi) + I32Popcnt(lo)
 End Function
 
 Function I32Extend8S(x as Integer) as Integer
@@ -455,7 +470,14 @@ Function I32LtU(lhs as Integer, rhs as Integer) as Integer
     Return 0
 End Function
 Function I64LtU(lhs as LongInteger, rhs as LongInteger) as Integer
-    If lhs < rhs Return 1
+    lhsPositive = lhs >= 0
+    rhsPositive = rhs >= 0
+    If lhsPositive = rhsPositive Then
+        If lhs < rhs Return 1
+        Return 0
+    Else If lhsPositive
+        Return 1
+    End If
     Return 0
 End Function
 Function F32Lt(lhs as Float, rhs as Float) as Integer
@@ -481,8 +503,8 @@ Function I32LeU(lhs as Integer, rhs as Integer) as Integer
     Return 0
 End Function
 Function I64LeU(lhs as LongInteger, rhs as LongInteger) as Integer
-    If lhs <= rhs Return 1
-    Return 0
+    If lhs = rhs Return 1
+    Return I64LtU(lhs, rhs)
 End Function
 Function F32Le(lhs as Float, rhs as Float) as Integer
     If lhs <= rhs Return 1
@@ -507,9 +529,6 @@ Function I32GtU(lhs as Integer, rhs as Integer) as Integer
     Return 0
 End Function
 Function I64GtU(lhs as LongInteger, rhs as LongInteger) as Integer
-    ' If both are positive then we can just compare directly
-    ' If both are negative this also works too because -1 is greater than -2, and so is the (u64)-1 > (u64)-2
-    ' If rhs is positive but lhs is negative, then lhs is greater since negative numbers interpreted as unsigned are larger
     lhsPositive = lhs >= 0
     rhsPositive = rhs >= 0
     If lhsPositive = rhsPositive Then
@@ -543,8 +562,8 @@ Function I32GeU(lhs as Integer, rhs as Integer) as Integer
     Return 0
 End Function
 Function I64GeU(lhs as LongInteger, rhs as LongInteger) as Integer
-    If lhs >= rhs Return 1
-    Return 0
+    If lhs = rhs Return 1
+    Return I64GtU(lhs, rhs)
 End Function
 Function F32Ge(lhs as Float, rhs as Float) as Integer
     If lhs >= rhs Return 1
