@@ -58,16 +58,67 @@ Function AssertEqualsNan(a)
 End Function
 
 Function I32ToUnsignedI64(value as LongInteger) as LongInteger
-    If value < 0 Then value += &H100000000&
-    Return value
+    Return value And &HFFFFFFFF&
 End Function
 
 Function I32DivU(lhs as LongInteger, rhs as LongInteger) as Integer
     Return I32ToUnsignedI64(lhs) / I32ToUnsignedI64(rhs)
 End Function
 
+Function I64DivideUnsigned(dividend as LongInteger, divisor as LongInteger) as Object
+    result = {remainder: 0&, quotient: 0&}
+  
+    If divisor = 0& Then
+        ' Trap here
+        Return result
+    End If
+  
+    If I64GtU(divisor, dividend) Then
+        result.remainder = dividend
+        Return result
+    End If
+  
+    If divisor = dividend Then
+        result.quotient = 1&
+        Return result
+    End If
+  
+    num_bits = 64&
+    d = 0&
+    remainder = 0&
+    quotient = 0&
+
+    While I64GtU(divisor, remainder)
+        bit = (dividend And &H8000000000000000&) >> 63&
+        remainder = (remainder << 1&) Or bit
+        d = dividend
+        dividend = dividend << 1&
+        num_bits--
+    End While
+  
+    dividend = d
+    remainder = remainder >> 1&
+    num_bits++
+  
+    While num_bits > 0
+        bit = (dividend And &H8000000000000000&) >> 63&
+        remainder = (remainder << 1&) Or bit
+        t = remainder - divisor
+        q = (Not ((t And &H8000000000000000&) >> 63&)) And 1
+        dividend = dividend << 1&
+        quotient = (quotient << 1&) Or q
+        If q Then remainder = t
+        num_bits = num_bits - 1
+    End While
+
+    result.remainder = remainder
+    result.quotient = quotient
+    Return result
+End Function
+
 Function I64DivU(lhs as LongInteger, rhs as LongInteger) as LongInteger
-    Return lhs \ rhs
+    If lhs >= 0& And rhs >= 0& Return lhs / rhs
+    Return I64DivideUnsigned(lhs, rhs).quotient
 End Function
 
 Function I32RemU(lhs as LongInteger, rhs as LongInteger) as Integer
@@ -75,7 +126,8 @@ Function I32RemU(lhs as LongInteger, rhs as LongInteger) as Integer
 End Function
 
 Function I64RemU(lhs as LongInteger, rhs as LongInteger) as LongInteger
-    Return lhs Mod rhs
+    If lhs >= 0& And rhs >= 0& Return lhs Mod rhs
+    Return I64DivideUnsigned(lhs, rhs).remainder
 End Function
 
 Function I32Xor(lhs as Integer, rhs as Integer) as Integer
@@ -455,7 +507,17 @@ Function I32GtU(lhs as Integer, rhs as Integer) as Integer
     Return 0
 End Function
 Function I64GtU(lhs as LongInteger, rhs as LongInteger) as Integer
-    If lhs > rhs Return 1
+    ' If both are positive then we can just compare directly
+    ' If both are negative this also works too because -1 is greater than -2, and so is the (u64)-1 > (u64)-2
+    ' If rhs is positive but lhs is negative, then lhs is greater since negative numbers interpreted as unsigned are larger
+    lhsPositive = lhs >= 0
+    rhsPositive = rhs >= 0
+    If lhsPositive = rhsPositive Then
+        If lhs > rhs Return 1
+        Return 0
+    Else If rhsPositive
+        Return 1
+    End If
     Return 0
 End Function
 Function F32Gt(lhs as Float, rhs as Float) as Integer
