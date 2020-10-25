@@ -637,9 +637,63 @@ Function F32DemoteF64(value as Double) as Float
 End Function
 
 Function F32ReinterpretI32(value as Integer) as Float
-    buffer = CreateObject("roByteArray")
-    I32Store(buffer, 0, value)
-    Return F32Load(buffer, 0)
+    b3 =  value        And &HFF
+    b2 = (value >> 8)  And &HFF
+    b1 = (value >> 16) And &HFF
+    b0 = (value >> 24) And &HFF
+
+    signBit = (b0 And 1 << 7) >> 7
+    sign = (-1) ^ signBit
+
+    exponent = (((b0 And 127) << 1) Or (b1 And (1 << 7)) >> 7)
+
+    If exponent = 0 Return 0
+
+    mul = 2! ^ (exponent - 127 - 23)
+    mantissa = b3 + b2 * (2 ^ (8 * 1)) + (b1 And 127) * (2 ^ (8 * 2)) + (2 ^ 23)
+
+    If exponent = &HFF Then
+        If mantissa = 0 Then
+            Return sign * FloatInf()
+        Else
+            Return FloatNan()
+        End If
+    End If
+
+    Return sign * mantissa * mul
+End Function
+
+Function I32ReinterpretF32(value as Float) as Integer
+    If value =  FloatInf() Return &H7F800000
+    If value = -FloatInf() Return &HFF800000
+    If value =  3.4028234663852886e+38! Return &H7F7FFFFF
+    If value = -3.4028234663852886e+38! Return &HFF7FFFFF
+    If value = 0 Then
+        If IsNegativeZero(value) Return &H40000000
+        Return &HC0000000
+    End If
+
+    If IsNan(value) Return &H7FC00000
+
+    bytes = 0%
+    If value <= -0.0 Then
+        bytes = &H80000000
+        value = -value
+    End If
+
+    exponent = F32Floor(Log(value) / Log(2))
+    significand = ((value / (2 ^ exponent)) * &H00800000)
+
+    exponent += 127
+    If exponent >= &HFF Then
+        exponent = &HFF
+        significand = 0
+    Else If exponent < 0
+        exponent = 0
+    End If
+
+    bytes = bytes Or (exponent << 23)
+    Return bytes Or (significand And Not (-1 << 23))
 End Function
 
 Function I32Store(buffer As Object, index As Integer, value As Integer)
@@ -649,11 +703,11 @@ Function I32Store(buffer As Object, index As Integer, value As Integer)
     buffer[index + 2] = (value >> 16)
     buffer[index + 3] = (value >> 24)
 End Function
-
 'Function I64Store(buffer As Object, index As Integer, value As Integer)
 'End Function
-'Function F32Store(buffer As Object, index As Integer, value As Integer)
-'End Function
+Function F32Store(buffer As Object, index As Integer, value As Float)
+    I32Store(buffer, index, I32ReinterpretF32(value))
+End Function
 'Function F64Store(buffer As Object, index As Integer, value As Integer)
 'End Function
 Function I32Store8(buffer As Object, index As Integer, value As Integer)
@@ -672,33 +726,10 @@ Function I32Load(buffer as Object, index as Integer) as Integer
     Return buffer[index] + (buffer[index + 1] << 8) + (buffer[index + 2] << 16) + (buffer[index + 3] << 24)
 End Function
 Function I64Load(buffer as Object, index as Integer) as LongInteger
-    Return 0& + buffer[index] + (buffer[index + 1] << 8) + (buffer[index + 2] << 16) + (buffer[index + 3] << 24) + (buffer[index + 4] << 32&) + (buffer[index + 5] << 40&) + (buffer[index + 6] << 48&) + (buffer[index + 7] << 56&)
+    Return (buffer[index]) + (buffer[index + 1] << 8&) + (buffer[index + 2] << 16&) + (buffer[index + 3] << 24&) + (buffer[index + 4] << 32&) + (buffer[index + 5] << 40&) + (buffer[index + 6] << 48&) + (buffer[index + 7] << 56&)
 End Function
 Function F32Load(buffer as Object, index as Integer) as Float
-    b0 = buffer[index + 3]
-    b1 = buffer[index + 2]
-    b2 = buffer[index + 1]
-    b3 = buffer[index]
-
-    signBit = (b0 And 1 << 7) >> 7
-    sign = (-1) ^ signBit
-
-    exponent = (((b0 And 127) << 1) Or (b1 And (1 << 7)) >> 7)
-
-    If exponent = 0 Return 0
-
-    mul = 2 ^ (exponent - 127 - 23)
-    mantissa = b3 + b2 * (2 ^ (8 * 1)) + (b1 And 127) * (2 ^ (8 * 2)) + (2 ^ 23)
-
-    If exponent = &HFF Then
-        If mantissa = 0 Then
-            Return sign * FloatInf()
-        Else
-            Return FloatNan()
-        End If
-    End If
-
-    Return sign * mantissa * mul
+    Return F32ReinterpretI32(I32Load(buffer, index))
 End Function
 Function F64Load(buffer as Object, index as Integer) as Double
     b0 = buffer[index + 7]
@@ -726,13 +757,13 @@ Function I32Load8S(buffer as Object, index as Integer) as Integer
     Return buffer.GetSignedByte(index)
 End Function
 Function I64Load8S(buffer as Object, index as Integer) as LongInteger
-    Return 0& + buffer.GetSignedByte(index)
+    Return buffer.GetSignedByte(index)
 End Function
 Function I32Load8U(buffer As Object, index As Integer) as Integer
     Return buffer[index]
 End Function
 Function I64Load8U(buffer as Object, index as Integer) as LongInteger
-    Return 0& + buffer[index]
+    Return buffer[index]
 End Function
 Function I32Load16S(buffer as Object, index as Integer) as Integer
     x = buffer[index] + (buffer[index + 1] << 8)
@@ -740,23 +771,19 @@ Function I32Load16S(buffer as Object, index as Integer) as Integer
     Return x
 End Function
 Function I64Load16S(buffer as Object, index as Integer) as LongInteger
-    x = 0& + buffer[index] + (buffer[index + 1] << 8)
-    If x > &H7FFF Then x = x + &HFFFFFFFF00000000&
-    Return x
+    Return I32Load16S(buffer, index)
 End Function
 Function I32Load16U(buffer as Object, index as Integer) as Integer
     Return buffer[index] + (buffer[index + 1] << 8)
 End Function
 Function I64Load16U(buffer as Object, index as Integer) as LongInteger
-    Return 0& + buffer[index] + (buffer[index + 1] << 8)
+    Return I32Load16U(buffer, index)
 End Function
 Function I64Load32S(buffer as Object, index as Integer) as LongInteger
-    x = 0& + buffer[index] + (buffer[index + 1] << 8) + (buffer[index + 2] << 16) + (buffer[index + 3] << 24)
-    If x > &H7FFFFFFF Then x = x + &HFFFFFFFF00000000&
-    Return x
+    Return I32Load(buffer, index)
 End Function
 Function I64Load32U(buffer as Object, index as Integer) as LongInteger
-    Return 0& + buffer[index] + (buffer[index + 1] << 8) + (buffer[index + 2] << 16) + (buffer[index + 3] << 24)
+    Return I32ToUnsignedI64(I32Load(buffer, index))
 End Function
 
 Function GetMem() As Object
