@@ -744,6 +744,11 @@ Function F32ReinterpretI32(value as Integer) as Float
     Return sign * mantissa * mul
 End Function
 
+Function F64ReinterpretI64(value as LongInteger) as Double
+    Stop
+    Return 0
+End Function
+
 Function I32ReinterpretF32(value as Float) as Integer
     If value =  FloatInf() Return &H7F800000
     If value = -FloatInf() Return &HFF800000
@@ -777,6 +782,26 @@ Function I32ReinterpretF32(value as Float) as Integer
     Return bytes Or (significand And Not (-1 << 23))
 End Function
 
+Function I64ReinterpretF64(value as Double) as LongInteger
+    Stop
+    Return 0
+End Function
+
+Function F32Store(buffer As Object, index As Integer, value As Float)
+    I32Store(buffer, index, I32ReinterpretF32(value))
+End Function
+Function F64Store(buffer As Object, index As Integer, value As Double)
+    I64Store(buffer, index, I64ReinterpretF64(value))
+End Function
+
+
+Function I32Store8(buffer As Object, index As Integer, value As Integer)
+    buffer[index] = value
+End Function
+Function I32Store16(buffer As Object, index As Integer, value As Integer)
+    buffer[index] = value
+    buffer[index + 1] = (value >> 8)
+End Function
 Function I32Store(buffer As Object, index As Integer, value As Integer)
     ' Since buffer is already a byte array, we don't need to Mod 256
     buffer[index] = value
@@ -784,24 +809,26 @@ Function I32Store(buffer As Object, index As Integer, value As Integer)
     buffer[index + 2] = (value >> 16)
     buffer[index + 3] = (value >> 24)
 End Function
-'Function I64Store(buffer As Object, index As Integer, value As Integer)
-'End Function
-Function F32Store(buffer As Object, index As Integer, value As Float)
-    I32Store(buffer, index, I32ReinterpretF32(value))
+
+Function I64Store8(buffer As Object, index As Integer, value As LongInteger)
+    I32Store8(buffer, index, value)
 End Function
-'Function F64Store(buffer As Object, index As Integer, value As Integer)
-'End Function
-Function I32Store8(buffer As Object, index As Integer, value As Integer)
+Function I64Store16(buffer As Object, index As Integer, value As LongInteger)
+    I32Store16(buffer, index, value)
+End Function
+Function I64Store32(buffer As Object, index As Integer, value As LongInteger)
+    I32Store(buffer, index, value)
+End Function
+Function I64Store(buffer As Object, index As Integer, value As LongInteger)
     buffer[index] = value
+    buffer[index + 1] = (value >> 8&)
+    buffer[index + 2] = (value >> 16&)
+    buffer[index + 3] = (value >> 24&)
+    buffer[index + 4] = (value >> 32&)
+    buffer[index + 5] = (value >> 40&)
+    buffer[index + 6] = (value >> 48&)
+    buffer[index + 7] = (value >> 56&)
 End Function
-'Function I64Store8(buffer As Object, index As Integer, value As Integer)
-'End Function
-'Function I32Store16(buffer As Object, index As Integer, value As Integer)
-'End Function
-'Function I64Store16(buffer As Object, index As Integer, value As Integer)
-'End Function
-'Function I64Store32(buffer As Object, index As Integer, value As Integer)
-'End Function
 
 Function I32Load(buffer as Object, index as Integer) as Integer
     Return buffer[index] + (buffer[index + 1] << 8) + (buffer[index + 2] << 16) + (buffer[index + 3] << 24)
@@ -813,26 +840,7 @@ Function F32Load(buffer as Object, index as Integer) as Float
     Return F32ReinterpretI32(I32Load(buffer, index))
 End Function
 Function F64Load(buffer as Object, index as Integer) as Double
-    b0 = buffer[index + 7]
-    b1 = buffer[index + 6]
-    b2 = buffer[index + 5]
-    b3 = buffer[index + 4]
-    b4 = buffer[index + 3]
-    b5 = buffer[index + 2]
-    b6 = buffer[index + 1]
-    b7 = buffer[index]
-
-    signBit = (b0 And 1 << 7) >> 7
-    sign = (-1) ^ signBit
-
-    exponent = (((b0 And 127) << 4) Or (b1 And (15 << 4)) >> 4)
-
-    If exponent = 0 Return 0
-    If exponent = &H7FF Return sign * FloatInf()
-
-    mul = 2 ^ (exponent - 1023 - 52)
-    mantissa = b3 + b2 * (2 ^ (8 * 1)) + (b1 And 127) * (2 ^ (8 * 2)) + (2 ^ 23)
-    Return sign * mantissa * mul
+    Return F64ReinterpretI64(I64Load(buffer, index))
 End Function
 Function I32Load8S(buffer as Object, index as Integer) as Integer
     Return buffer.GetSignedByte(index)
