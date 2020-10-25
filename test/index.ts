@@ -174,5 +174,9 @@ interface WastTest {
   };
 
   console.log("Number of tests:", tests.length);
+  if (testIndex > tests.length) {
+    console.error("Invalid test", testIndex);
+    return;
+  }
   outputTest(tests[testIndex]);
 })();
