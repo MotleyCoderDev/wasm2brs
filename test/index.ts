@@ -47,7 +47,7 @@ interface WastTest {
     return;
   }
 
-  const testWast = process.env.WAST;
+  const testWast = path.resolve(process.env.WAST);
   const testIndex = parseInt(process.env.INDEX, 10);
   const testWastFilename = path.basename(testWast);
 
