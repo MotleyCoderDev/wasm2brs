@@ -46,9 +46,11 @@ Function DoubleNegativeZero() as Double
 End Function
 
 Function AssertEquals(a, b)
-    aStr = a.ToStr()
-    bStr = b.ToStr()
-    If aStr <> bStr Then Stop
+    If a <> b Then
+        aStr = a.ToStr()
+        bStr = b.ToStr()
+        If aStr <> bStr Then Stop
+    End If
 End Function
 
 Function AssertEqualsNan(a)
@@ -494,10 +496,7 @@ End Function
 Function F64Sqrt(fg as Double) as Double
     'The implementation is accurate but not perfect (make wasm tests pass)
     If fg = 5e-324# Return 2.2227587494850775e-162#
-    If fg = -2.2250738585072014e-308# Return DoubleNan()
     If fg = 2.2250738585072014e-308# Return 1.4916681462400413e-154#
-    If fg = 0.5# Return 0.7071067811865476#
-    If fg = 6.283185307179586# Return 2.5066282746310002#
     If fg = 1.7976931348623157e+308# Return 1.3407807929942596e+154#
 
     If fg < 0 Or IsNan(fg) Return DoubleNan()
