@@ -547,7 +547,7 @@ void CWriter::Write(const LocalName& name) {
 
 std::string CWriter::GetGlobalName(const std::string& name) const {
   if (global_sym_map_.count(name) != 1) {
-    std::cout << "BAD GetGlobalName " << name << std::endl << std::flush;
+    std::cout << "########################## Invalid GetGlobalName: " << name << std::endl << std::flush;
     return "BAD_" + name;
   }
   assert(global_sym_map_.count(name) == 1);
@@ -905,7 +905,6 @@ void CWriter::WriteMemories() {
     bool is_import = memory_index < module_->num_memory_imports;
     if (!is_import) {
       DefineGlobalScopeName(memory->name, "m.");
-      Write(Newline());
     }
     ++memory_index;
   }
@@ -919,16 +918,12 @@ void CWriter::WriteTables() {
   if (module_->tables.size() == module_->num_table_imports)
     return;
 
-  Write(Newline());
-
   assert(module_->tables.size() <= 1);
   Index table_index = 0;
   for (const Table* table : module_->tables) {
     bool is_import = table_index < module_->num_table_imports;
     if (!is_import) {
-      Write("static ");
-      WriteTable(DefineGlobalScopeName(table->name));
-      Write(Newline());
+      DefineGlobalScopeName(table->name, "m.");
     }
     ++table_index;
   }
@@ -971,15 +966,12 @@ void CWriter::WriteDataInitializers() {
 void CWriter::WriteElemInitializers() {
   const Table* table = module_->tables.empty() ? nullptr : module_->tables[0];
 
-  Write(Newline(), "static void InitTable(void) ", OpenBrace());
-  Write("uint32_t offset;", Newline());
+  Write(Newline(), "Function InitTable()", OpenBrace());
   if (table && module_->num_table_imports == 0) {
     uint32_t max =
         table->elem_limits.has_max ? table->elem_limits.max : UINT32_MAX;
-    Write("wasm_rt_allocate_table(", ExternalPtr(table->name), ", ",
-          table->elem_limits.initial, ", ", max, ")", Newline());
+    Write(ExternalPtr(table->name), " = []", Newline());
   }
-  Index elem_segment_index = 0;
   for (const ElemSegment* elem_segment : module_->elem_segments) {
     Write("offset = ");
     WriteInitExpr(elem_segment->offset);
@@ -993,15 +985,12 @@ void CWriter::WriteElemInitializers() {
       const Func* func = module_->GetFunc(elem_expr.var);
       Index func_type_index = module_->GetFuncTypeIndex(func->decl.type_var);
 
-      Write(ExternalRef(table->name), ".data[offset + ", i,
-            "] = (wasm_rt_elem_t){func_types[", func_type_index,
-            "], (wasm_rt_anyfunc_t)", ExternalPtr(func->name), "};", Newline());
+      Write(ExternalRef(table->name), "[offset + ", i, "] = ", ExternalPtr(func->name), Newline());
       ++i;
     }
-    ++elem_segment_index;
   }
 
-  Write(CloseBrace(), Newline());
+  Write(CloseBrace(), "End Function", Newline());
 }
 
 void CWriter::WriteInitExports() {
@@ -1088,7 +1077,7 @@ void CWriter::WriteInit() {
   //Write("InitFuncTypes()", Newline());
   Write("InitGlobals()", Newline());
   Write("InitMemory()", Newline());
-  //Write("InitTable()", Newline());
+  Write("InitTable()", Newline());
   //Write("InitExports()", Newline());
   for (Var* var : module_->starts) {
     Write(ExternalRef(module_->GetFunc(*var)->name), "()", Newline());
@@ -1314,8 +1303,12 @@ void CWriter::Write(const ExprList& exprs) {
         Index num_results = decl.GetNumResults();
         assert(type_stack_.size() > num_params);
         if (num_results > 0) {
-          assert(num_results == 1);
-          Write(StackVar(num_params, decl.GetResultType(0)), " = ");
+          if (num_results == 1) {
+            Write(StackVar(num_params, decl.GetResultType(0)));
+          } else {
+            Write("multi");
+          }
+          Write(" = ");
         }
 
         assert(module_->tables.size() == 1);
@@ -1324,14 +1317,19 @@ void CWriter::Write(const ExprList& exprs) {
         assert(decl.has_func_type);
         Index func_type_index = module_->GetFuncTypeIndex(decl.type_var);
 
-        // TODO(trevor): Not supported yet
-        Write("0 'CALL_INDIRECT(", ExternalRef(table->name), ", ");
-        WriteFuncDeclaration(decl, "(*)");
-        Write(", ", func_type_index, ", ", StackVar(0));
+        Write(ExternalRef(table->name), "[", StackVar(0), "](");
         for (Index i = 0; i < num_params; ++i) {
-          Write(", ", StackVar(num_params - i));
+          if (i != 0) {
+            Write(", ");
+          }
+          Write(StackVar(num_params - i));
         }
         Write(")", Newline());
+        if (num_results > 1) {
+          for (Index i = 0; i < num_results; ++i) {
+            Write(StackVar(num_params - i), " = multi[", i, "]", Newline());
+          }
+        }
         DropTypes(num_params + 1);
         PushTypes(decl.sig.result_types);
         break;
@@ -2227,9 +2225,9 @@ void CWriter::WriteCSource() {
   WriteGlobals();
   WriteMemories();
   WriteDataInitializers();
-  //WriteTables();
+  WriteTables();
+  WriteElemInitializers();
   WriteFuncs();
-  //WriteElemInitializers();
   //WriteExports(WriteExportsKind::Definitions);
   //WriteInitExports();
   WriteInit();
