@@ -3,6 +3,7 @@ import path from "path";
 import execa from "execa";
 import mkdirp from "mkdirp";
 import {ProgramBuilder} from "brighterscript";
+import * as rokuDeploy from "roku-deploy";
 
 interface WastModule {
   type: "module";
@@ -181,4 +182,11 @@ interface WastTest {
     return;
   }
   outputTest(tests[testIndex]);
+  if (process.env.DEPLOY) {
+    rokuDeploy.deploy({
+      host: "10.0.0.41",
+      password: "rokudev",
+      rootDir: project
+    });
+  }
 })();
