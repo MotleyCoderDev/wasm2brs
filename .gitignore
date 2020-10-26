@@ -4,3 +4,4 @@ test/node_modules
 test/bin
 test/out
 project/source/test.*.brs
+project/manifest
