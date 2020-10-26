@@ -809,8 +809,8 @@ void CWriter::WriteImports() {
 
       case ExternalKind::Memory: {
         const Memory& memory = cast<MemoryImport>(import)->memory;
-        const_cast<Memory&>(memory).name = "GetMem()";
-        const_cast<wabt::Import*>(import)->field_name = "GetMem()";
+        const_cast<Memory&>(memory).name = "MemoryGet()";
+        const_cast<wabt::Import*>(import)->field_name = "MemoryGet()";
         WriteMemory(DefineImportName(memory.name, import->module_name,
                                      MangleName(import->field_name)));
         break;
@@ -1449,8 +1449,7 @@ void CWriter::Write(const ExprList& exprs) {
         assert(module_->memories.size() == 1);
         Memory* memory = module_->memories[0];
 
-        Write(StackVar(0), " = wasm_rt_grow_memory(", ExternalPtr(memory->name),
-              ", ", StackVar(0), ")", Newline());
+        Write(StackVar(0), " = MemoryGrow(", ExternalPtr(memory->name), ", ", StackVar(0), ")", Newline());
         break;
       }
 
@@ -1459,8 +1458,7 @@ void CWriter::Write(const ExprList& exprs) {
         Memory* memory = module_->memories[0];
 
         PushType(Type::I32);
-        Write(StackVar(0), " = ", ExternalRef(memory->name), ".pages;",
-              Newline());
+        Write(StackVar(0), " = MemorySize(", ExternalRef(memory->name), ")", Newline());
         break;
       }
 
