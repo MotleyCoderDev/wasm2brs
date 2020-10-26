@@ -53,10 +53,6 @@ Function AssertEquals(a, b)
     End If
 End Function
 
-Function AssertEqualsNan(a)
-    If Not IsNan(a) Then Stop
-End Function
-
 Function I32ToUnsignedI64(value as LongInteger) as LongInteger
     Return value And &HFFFFFFFF&
 End Function
@@ -407,19 +403,13 @@ Function F64Nearest(value as Double) as Double
 End Function
 
 Function I32Eqz(value as Integer) as Integer
-    If value = 0% Then
-        Return 1%
-    Else
-        Return 0%
-    End If
+    If value = 0% Return 1%
+    Return 0%
 End Function
 
 Function I64Eqz(value as LongInteger) as LongInteger
-    If value = 0& Then
-        Return 1&
-    Else
-        Return 0&
-    End If
+    If value = 0& Return 1&
+    Return 0&
 End Function
 
 Function I32Eq(lhs as Integer, rhs as Integer) as Integer

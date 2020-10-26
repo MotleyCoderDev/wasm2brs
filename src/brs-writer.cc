@@ -326,8 +326,7 @@ void CWriter::PushLabel(LabelType label_type,
                         const FuncSignature& sig,
                         bool used) {
   // TODO(binji): Add multi-value support.
-  if ((label_type != LabelType::Func && sig.GetNumParams() != 0) ||
-      sig.GetNumResults() > 1) {
+  if ((label_type != LabelType::Func && sig.GetNumParams() != 0)) {
     UNIMPLEMENTED("multi value support");
   }
 
@@ -549,6 +548,7 @@ void CWriter::Write(const LocalName& name) {
 std::string CWriter::GetGlobalName(const std::string& name) const {
   if (global_sym_map_.count(name) != 1) {
     std::cout << "BAD GetGlobalName " << name << std::endl << std::flush;
+    return "BAD_" + name;
   }
   assert(global_sym_map_.count(name) == 1);
   auto iter = global_sym_map_.find(name);
@@ -585,7 +585,7 @@ void CWriter::Write(const GotoLabel& goto_label) {
     assert(type_stack_.size() >= label->type_stack_size);
     Index dst = type_stack_.size() - label->type_stack_size - 1;
     if (dst != 0)
-      Write(StackVar(dst, label->sig[0]), " = ", StackVar(0));
+      Write(StackVar(dst, label->sig[0]), " = ", StackVar(0), Newline());
   }
 
   if (goto_label.var.is_name()) {
@@ -658,8 +658,10 @@ void CWriter::Write(SignedType type) {
 }
 
 void CWriter::Write(const ResultType& rt) {
-  if (!rt.types.empty()) {
+  if (rt.types.size() == 1) {
     Write(rt.types[0]);
+  } else if (rt.types.size() > 1) {
+    Write("Object");
   } else {
     Write("Void");
   }
@@ -1136,9 +1138,21 @@ void CWriter::Write(const Func& func) {
   ResetTypeStack(0);
   PushTypes(func.decl.sig.result_types);
 
-  if (!func.decl.sig.result_types.empty()) {
+  size_t results = func.decl.sig.result_types.size();
+  if (results != 0) {
     // Return the top of the stack implicitly.
-    Write("Return ", StackVar(0), Newline());
+    if (results == 1) {
+      Write("Return ", StackVar(0), Newline());
+    } else {
+      Write("Return [");
+      for (int i = (int)results - 1; i >= 0; --i) {
+        Write(StackVar(i));
+        if (i != 0) {
+          Write(", ");
+        }
+      }
+      Write("]", Newline());
+    }
   }
 
   stream_ = brs_stream_;
@@ -1159,8 +1173,6 @@ void CWriter::WriteParams(const std::vector<std::string>& index_to_name) {
   for (Index i = 0; i < func_->GetNumParams(); ++i) {
     if (i != 0) {
       Write(", ");
-      if ((i % 8) == 0)
-        Write(Newline());
     }
     Write(DefineLocalScopeName(index_to_name[i]), " As ", func_->GetParamType(i));
   }
@@ -1269,8 +1281,12 @@ void CWriter::Write(const ExprList& exprs) {
         Index num_results = func.GetNumResults();
         assert(type_stack_.size() >= num_params);
         if (num_results > 0) {
-          assert(num_results == 1);
-          Write(StackVar(num_params - 1, func.GetResultType(0)), " = ");
+          if (num_results == 1) {
+            Write(StackVar(num_params - 1, func.GetResultType(0)));
+          } else {
+            Write("multi");
+          }
+          Write(" = ");
         }
 
         Write(GlobalVar(var), "(");
@@ -1281,6 +1297,11 @@ void CWriter::Write(const ExprList& exprs) {
           Write(StackVar(num_params - i - 1));
         }
         Write(")", Newline());
+        if (num_results > 1) {
+          for (Index i = 0; i < num_results; ++i) {
+            Write(StackVar(num_params - 1 - i, func.GetResultType(i)), " = multi[", i, "]", Newline());
+          }
+        }
         DropTypes(num_params);
         PushTypes(func.decl.sig.result_types);
         break;
@@ -1302,7 +1323,8 @@ void CWriter::Write(const ExprList& exprs) {
         assert(decl.has_func_type);
         Index func_type_index = module_->GetFuncTypeIndex(decl.type_var);
 
-        Write("CALL_INDIRECT(", ExternalRef(table->name), ", ");
+        // TODO(trevor): Not supported yet
+        Write("0 'CALL_INDIRECT(", ExternalRef(table->name), ", ");
         WriteFuncDeclaration(decl, "(*)");
         Write(", ", func_type_index, ", ", StackVar(0));
         for (Index i = 0; i < num_params; ++i) {
@@ -1455,7 +1477,7 @@ void CWriter::Write(const ExprList& exprs) {
 
       case ExprType::Select: {
         Type type = StackType(1);
-        Write("If Not ", StackVar(0), " Then", OpenBrace());
+        Write("If ", StackVar(0), " = 0 Then", OpenBrace());
         Write(StackVar(2), " = ", StackVar(1), Newline());
         Write(CloseBrace(), "End If", Newline());
         //Write(StackVar(2), " = ", StackVar(0), " ? ", StackVar(2), " : ",

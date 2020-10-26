@@ -23,7 +23,7 @@ interface WastAssertReturn {
     field: string;
     args: WastArg[]
   },
-  expected: [WastArg];
+  expected: WastArg[];
   line: number;
   jsonLine: number;
 }
@@ -148,13 +148,15 @@ interface WastTest {
       switch (command.type) {
         case "assert_return": {
           const args = command.action.args.map((arg) => toArgValue(arg)).join(",");
-          const actual = `w2b_${command.action.field.replace(/[^a-zA-Z0-9]/u, "_")}(${args})`;
-          const expected = toArgValue(command.expected[0]);
-          const ending = ` ' ${testWastFilename}(${command.line}) ${outJsonFilename}(${command.jsonLine})\n`;
-          if (expected === floatNanBrs || expected === doubleNanBrs) {
-            testFunction += `AssertEqualsNan(${actual})${ending}`;
-          } else {
-            testFunction += `AssertEquals(${actual}, ${expected})${ending}`;
+          testFunction += `result = w2b_${command.action.field.replace(/[^a-zA-Z0-9]/gu, "_")}(${args}) ` +
+            `' ${testWastFilename}(${command.line}) ${outJsonFilename}(${command.jsonLine})\n`;
+
+          for (const [index, arg] of command.expected.entries()) {
+            const expected = toArgValue(arg);
+            testFunction += `AssertEquals(${command.expected.length === 1
+              ? "result"
+              : `result[${index}]`
+            }, ${expected})\n`;
           }
           break;
         }
