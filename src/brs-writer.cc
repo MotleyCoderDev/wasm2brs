@@ -1287,13 +1287,13 @@ void CWriter::Write(const ExprList& exprs) {
           Write(StackVar(num_params - i - 1));
         }
         Write(")", Newline());
-        if (num_results > 1) {
-          for (Index i = 0; i < num_results; ++i) {
-            Write(StackVar(num_params - 1 - i, func.GetResultType(i)), " = multi[", i, "]", Newline());
-          }
-        }
         DropTypes(num_params);
         PushTypes(func.decl.sig.result_types);
+        if (num_results > 1) {
+          for (Index i = 0; i < num_results; ++i) {
+            Write(StackVar(num_results - i - 1, func.GetResultType(i)), " = multi[", i, "]", Newline());
+          }
+        }
         break;
       }
 
@@ -1325,13 +1325,13 @@ void CWriter::Write(const ExprList& exprs) {
           Write(StackVar(num_params - i));
         }
         Write(")", Newline());
-        if (num_results > 1) {
-          for (Index i = 0; i < num_results; ++i) {
-            Write(StackVar(num_params - i), " = multi[", i, "]", Newline());
-          }
-        }
         DropTypes(num_params + 1);
         PushTypes(decl.sig.result_types);
+        if (num_results > 1) {
+          for (Index i = 0; i < num_results; ++i) {
+            Write(StackVar(num_results - i - 1), " = multi[", i, "]", Newline());
+          }
+        }
         break;
       }
 
