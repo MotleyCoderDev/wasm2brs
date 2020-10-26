@@ -1259,18 +1259,19 @@ void CWriter::Write(const ExprList& exprs) {
       case ExprType::BrTable: {
         const auto* bt_expr = cast<BrTableExpr>(&expr);
         Index i = 0;
+        Write("switch = ", StackVar(0), Newline());
+        DropTypes(1);
         for (const Var& var : bt_expr->targets) {
           if (i != 0) {
             Write("Else ");
           }
-          Write("If ", StackVar(0), " = ", i++, " Then", OpenBrace());
+          Write("If switch = ", i++, " Then", OpenBrace());
           Write(GotoLabel(var), CloseBrace(), Newline());
         }
-        Write("Else ", OpenBrace());
+        Write("Else", OpenBrace());
         Write(GotoLabel(bt_expr->default_target), CloseBrace(), Newline());
         Write("End If", Newline());
         // Stop processing this ExprList, since the following are unreachable.
-        DropTypes(1);
         return;
       }
 
