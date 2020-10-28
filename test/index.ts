@@ -2,8 +2,9 @@ import fs from "fs";
 import path from "path";
 import execa from "execa";
 import mkdirp from "mkdirp";
-import {ProgramBuilder} from "brighterscript";
 import * as rokuDeploy from "roku-deploy";
+import net from "net";
+import * as uuid from "uuid";
 
 interface WastModule {
   type: "module";
@@ -53,10 +54,10 @@ interface WastTest {
   const testWastFilename = path.basename(testWast);
 
   const root = path.join(__dirname, "../..");
-  const rokuOut = path.join(root, "out/out.zip");
   const testOut = path.join(root, "test/out");
   const project = path.join(root, "project");
   const projectSource = path.join(project, "source");
+  const testCasesBrs = path.join(projectSource, "test.cases.brs");
   const fromRootOptions: execa.Options = {cwd: root, stdio: "inherit"};
   await mkdirp(testOut);
 
@@ -164,16 +165,7 @@ interface WastTest {
       }
     }
     testFunction += "End Function\n";
-    fs.writeFileSync(path.join(projectSource, "test.cases.brs"), testFunction);
-
-    await new ProgramBuilder().run({
-      cwd: project,
-      outFile: rokuOut,
-      host: process.env.HOST,
-      password: process.env.PASSWORD,
-      deploy: process.env.HOST !== undefined && process.env.PASSWORD !== undefined,
-      ignoreErrorCodes: [1000, 1002, 1065, 1066, 1061, 1075, 1082, 1086]
-    });
+    fs.writeFileSync(testCasesBrs, testFunction);
   };
 
   console.log("Number of tests:", tests.length);
@@ -182,11 +174,43 @@ interface WastTest {
     return;
   }
   outputTest(tests[testIndex]);
+  const id = uuid.v4();
+  fs.writeFileSync(path.join(project, "manifest"), `title=${id}`);
   if (process.env.DEPLOY) {
-    rokuDeploy.deploy({
-      host: "10.0.0.41",
-      password: "rokudev",
-      rootDir: project
+    try {
+      await rokuDeploy.deploy({
+        host: process.env.DEPLOY,
+        password: process.env.PASSWORD || "rokudev",
+        rootDir: project,
+        failOnCompileError: true
+      });
+    } catch {
+      console.error("Failed to deploy");
+    }
+
+    let str = "";
+    let writeOutput = false;
+    const socket = net.connect(8085, process.env.DEPLOY);
+    socket.on("data", async (buffer) => {
+      const text = buffer.toString();
+      str += text;
+      if (writeOutput) {
+        process.stdout.write(text);
+        if ((/Syntax Error.|------ Completed ------|Brightscript Debugger>/u).test(str)) {
+          socket.destroy();
+          const match = (/file\/line: pkg:\/source\/test.cases.brs\(([0-9]+)\)/ug).exec(str);
+          if (match) {
+            await execa("code", ["-g", `${testCasesBrs}:${match[1]}`]);
+          }
+        }
+      } else {
+        const index = str.indexOf(`------ Compiling dev '${id}' ------`);
+        if (index !== -1) {
+          str = str.substr(index);
+          process.stdout.write(str);
+          writeOutput = true;
+        }
+      }
     });
   }
 })();

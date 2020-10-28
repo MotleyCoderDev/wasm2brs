@@ -15,6 +15,7 @@ sub Main()
     Init()
     RunTests()
 
+    print "------ Completed ------"
     screen.ShowMessage("Completed")
 
     while(true)
