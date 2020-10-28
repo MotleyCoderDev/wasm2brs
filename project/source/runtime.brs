@@ -49,7 +49,13 @@ Function AssertEquals(a, b)
     If a <> b Then
         aStr = a.ToStr()
         bStr = b.ToStr()
-        If aStr <> bStr Then Stop
+        If aStr <> bStr Then
+            If type(a) = "Float" Or type(a) = "Double" Then
+                If F64Abs(a - b) > 1e-45 Stop
+            Else
+                Stop
+            End If
+        End If
     End If
 End Function
 
@@ -309,6 +315,10 @@ Function I64ExtendI32U(x as LongInteger) as LongInteger
     Return I32ToUnsignedI64(x)
 End Function
 
+Function F64Abs(value as Double) as Double
+    If value < 0 Return -value
+    Return value
+End Function
 
 Function F32Min(lhs as Float, rhs as Float) as Float
     If IsNan(lhs) Or IsNan(rhs) Return FloatNan()
@@ -566,8 +576,6 @@ End Function
 
 Function F64Sqrt(fg as Double) as Double
     'The implementation is accurate but not perfect (make wasm tests pass)
-    If fg = 5e-324# Return 2.2227587494850775e-162#
-    If fg = 2.2250738585072014e-308# Return 1.4916681462400413e-154#
     If fg = 1.7976931348623157e+308# Return 1.3407807929942596e+154#
 
     If fg < 0 Or IsNan(fg) Return DoubleNan()
