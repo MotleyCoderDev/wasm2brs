@@ -778,12 +778,15 @@ Function I32ReinterpretF32(value as Float) as Integer
     If value = -FloatInf() Return &HFF800000
     If value =  3.4028234663852886e+38! Return &H7F7FFFFF
     If value = -3.4028234663852886e+38! Return &HFF7FFFFF
+    If value =  1.401298464324817e-45! Return 1%
+    If value = -1.401298464324817e-45! Return 2147483649%
+
     If value = 0 Then
-        If IsNegativeZero(value) Return &H40000000
-        Return &HC0000000
+        If IsNegativeZero(value) Return &H80000000
+        Return &H00000000
     End If
 
-    If IsNan(value) Return &H7FC00000
+    If IsNan(value) Return &HFFFFFFFF
 
     bytes = 0%
     If value <= -0.0 Then
