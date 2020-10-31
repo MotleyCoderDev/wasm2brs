@@ -30,8 +30,12 @@ interface WastAssertReturn {
   jsonLine: number;
 }
 
+interface WastUnhandledCommand {
+  type: "assert_malformed" | "assert_invalid" | "assert_trap" | "assert_exhaustion";
+}
+
 interface WastJson {
-  commands: (WastModule | WastAssertReturn)[];
+  commands: (WastModule | WastAssertReturn | WastUnhandledCommand)[];
 }
 
 interface WastTest {
@@ -44,13 +48,8 @@ interface WastTest {
     console.error("Expected WAST to be set to a .wast file");
     return;
   }
-  if (process.env.INDEX === undefined) {
-    console.error("Expected INDEX to be set to a test index within the .wast file");
-    return;
-  }
 
   const testWast = path.resolve(process.env.WAST);
-  const testIndex = parseInt(process.env.INDEX, 10);
   const testWastFilename = path.basename(testWast);
 
   const root = path.join(__dirname, "../..");
@@ -58,6 +57,7 @@ interface WastTest {
   const project = path.join(root, "project");
   const projectSource = path.join(project, "source");
   const testCasesBrs = path.join(projectSource, "test.cases.brs");
+  const testWasmBrs = path.join(projectSource, "test.wasm.brs");
   const fromRootOptions: execa.Options = {cwd: root, stdio: "inherit"};
   await mkdirp(testOut);
 
@@ -76,20 +76,23 @@ interface WastTest {
   let currentTest: WastTest = null;
   // The commands start at this line in the json output by wast2json.
   let currentJsonLine = 3;
-  const tests: WastTest[] = [];
+  const unfilteredTests: WastTest[] = [];
   for (const command of wastJson.commands) {
     if (command.type === "module") {
       currentTest = {
         moduleFilename: command.filename,
         commands: []
       };
-      tests.push(currentTest);
-    } else {
+      unfilteredTests.push(currentTest);
+    } else if (command.type === "assert_return") {
       command.jsonLine = currentJsonLine;
       currentTest.commands.push(command);
     }
     ++currentJsonLine;
   }
+
+  // Ignore tests that have no asserts that we currently handle.
+  const tests = unfilteredTests.filter((test) => test.commands.length !== 0);
 
   const floatNanBrs = "FloatNan()";
   const floatInfBrs = "FloatInf()";
@@ -135,27 +138,37 @@ interface WastTest {
     return str + (arg.type === "f32" ? "!" : "#");
   };
 
-  const outputTest = async (test: WastTest) => {
+  let testCasesFile = "";
+  let testWasmFile = "";
+
+  let runTestsFunction = "Function RunTests()\n";
+
+  console.log("Number of modules to test:", tests.length);
+  for (const [textIndex, test] of tests.entries()) {
+    const testPrefix = `Test${textIndex}`;
     console.log("Testing module", test.moduleFilename);
-    await execa("build/wasm2brs",
+    const wasm2BrsResult = await execa("build/wasm2brs",
       [
-        "-o", path.join(projectSource, "test.wasm.brs"),
+        "--name-prefix", testPrefix,
         path.join(testOut, test.moduleFilename)
       ],
-      fromRootOptions);
+      {...fromRootOptions, stdio: "pipe"});
+    testWasmFile += `${wasm2BrsResult.stdout}\n`;
 
-    let testFunction = "Function RunTests()\n";
+    let testFunction =
+      `Function ${testPrefix}()\n` +
+      `  ${testPrefix}Init()\n`;
 
     for (const command of test.commands) {
       switch (command.type) {
         case "assert_return": {
           const args = command.action.args.map((arg) => toArgValue(arg)).join(",");
-          testFunction += `result = w2b_${command.action.field.replace(/[^a-zA-Z0-9]/gu, "_")}(${args}) ` +
+          testFunction += `  result = ${testPrefix}${command.action.field.replace(/[^a-zA-Z0-9]/gu, "_")}(${args}) ` +
             `' ${testWastFilename}(${command.line}) ${outJsonFilename}(${command.jsonLine})\n`;
 
           for (const [index, arg] of command.expected.entries()) {
             const expected = toArgValue(arg);
-            testFunction += `AssertEquals(${command.expected.length === 1
+            testFunction += `  AssertEquals(${command.expected.length === 1
               ? "result"
               : `result[${index}]`
             }, ${expected})\n`;
@@ -165,15 +178,15 @@ interface WastTest {
       }
     }
     testFunction += "End Function\n";
-    fs.writeFileSync(testCasesBrs, testFunction);
-  };
-
-  console.log("Number of tests:", tests.length);
-  if (testIndex > tests.length) {
-    console.error("Invalid test", testIndex);
-    return;
+    runTestsFunction += `  ${testPrefix}()\n`;
+    testCasesFile += testFunction;
   }
-  await outputTest(tests[testIndex]);
+  runTestsFunction += "End Function\n";
+  testCasesFile += runTestsFunction;
+  fs.writeFileSync(testCasesBrs, testCasesFile);
+  fs.writeFileSync(testWasmBrs, testWasmFile);
+
+
   const id = uuid.v4();
   fs.writeFileSync(path.join(project, "manifest"), `title=${id}`);
   if (process.env.DEPLOY) {
@@ -185,7 +198,7 @@ interface WastTest {
         failOnCompileError: true
       });
     } catch {
-      console.error("Failed to deploy");
+      console.error("Failed to deploy. Connecting to see the error...");
     }
 
     let str = "";
@@ -196,7 +209,7 @@ interface WastTest {
       str += text;
       if (writeOutput) {
         process.stdout.write(text);
-        if ((/Syntax Error.|------ Completed ------|Brightscript Debugger>/u).test(str)) {
+        if ((/ERROR compiling|Syntax Error|------ Completed ------|Brightscript Debugger>/u).test(str)) {
           process.stdout.write("\n");
           socket.destroy();
           const match = (/file\/line: pkg:\/source\/test.cases.brs\(([0-9]+)\)/ug).exec(str);

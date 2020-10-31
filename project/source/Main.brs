@@ -12,7 +12,6 @@ sub Main()
     screen.ShowMessage("Initializing")
     screen.Show()
 
-    Init()
     RunTests()
 
     print "------ Completed ------"
