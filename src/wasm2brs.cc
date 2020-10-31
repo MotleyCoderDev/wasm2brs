@@ -38,6 +38,7 @@ using namespace wabt;
 static int s_verbose;
 static std::string s_infile;
 static std::string s_outfile;
+static std::string s_prefix;
 static Features s_features;
 static WriteCOptions s_write_c_options;
 static bool s_read_debug_names = true;
@@ -77,6 +78,10 @@ static void ParseOptions(int argc, char** argv) {
                        s_infile = argument;
                        ConvertBackslashToSlash(&s_infile);
                      });
+  parser.AddOption('n', "name-prefix", "NAMEPREFIX", "The prefix to use on all function and variable names",
+                     [](const char* argument) {
+                       s_write_c_options.name_prefix = argument;
+                     });
   parser.Parse(argc, argv);
 
   // TODO(binji): currently wasm2c doesn't support any non-default feature
@@ -94,6 +99,7 @@ static void ParseOptions(int argc, char** argv) {
 }
 
 int ProgramMain(int argc, char** argv) {
+  s_write_c_options.name_prefix = "w2b_";
   Result result;
 
   InitStdio();

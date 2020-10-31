@@ -24,7 +24,9 @@ namespace wabt {
 struct Module;
 class Stream;
 
-struct WriteCOptions {};
+struct WriteCOptions {
+  std::string name_prefix;
+};
 
 Result WriteBrs(Stream* brs_stream,
                 const Module*,

@@ -127,7 +127,9 @@ class CWriter {
   CWriter(Stream* stream,
           const WriteCOptions& options)
       : options_(options),
-        brs_stream_(stream) {}
+        brs_stream_(stream) {
+    options_.name_prefix = LegalizeNameNoPrefix(options_.name_prefix);
+  }
 
   Result WriteModule(const Module&);
 
@@ -166,7 +168,8 @@ class CWriter {
                                     const TypeVector& param_types,
                                     const TypeVector& result_types);
   static std::string MangleGlobalName(string_view, Type);
-  static std::string LegalizeName(string_view);
+  static std::string LegalizeNameNoPrefix(string_view);
+  std::string LegalizeName(string_view);
   static std::string ExportName(string_view mangled_name);
   std::string DefineName(SymbolSet*, string_view, const std::string& prefix = std::string());
   std::string DefineImportName(const std::string& name,
@@ -264,7 +267,7 @@ class CWriter {
   void Write(const SimdShuffleOpExpr&);
   void Write(const LoadSplatExpr&);
 
-  const WriteCOptions& options_;
+  WriteCOptions options_;
   const Module* module_ = nullptr;
   const Func* func_ = nullptr;
   Stream* stream_ = nullptr;
@@ -422,12 +425,15 @@ std::string CWriter::ExportName(string_view mangled_name) {
   return "WASM_RT_ADD_PREFIX(" + mangled_name.to_string() + ")";
 }
 
-// static
-std::string CWriter::LegalizeName(string_view name) {
-  std::string result = "w2b_";
+std::string CWriter::LegalizeNameNoPrefix(string_view name) {
+  std::string result;
   for (size_t i = 0; i < name.size(); ++i)
     result += isalnum(name[i]) ? name[i] : '_';
   return result;
+}
+
+std::string CWriter::LegalizeName(string_view name) {
+  return options_.name_prefix + LegalizeNameNoPrefix(name);
 }
 
 std::string CWriter::DefineName(SymbolSet* set, string_view name, const std::string& prefix) {
@@ -876,7 +882,7 @@ void CWriter::WriteGlobals() {
     }
   }
 
-  Write(Newline(), "Function InitGlobals()", OpenBrace());
+  Write(Newline(), "Function ", options_.name_prefix, "InitGlobals()", OpenBrace());
   global_index = 0;
   for (const Global* global : module_->globals) {
     bool is_import = global_index < module_->num_global_imports;
@@ -936,7 +942,7 @@ void CWriter::WriteTable(const std::string& name) {
 void CWriter::WriteDataInitializers() {
   const Memory* memory = module_->memories.empty() ? nullptr : module_->memories[0];
 
-  Write(Newline(), "Function InitMemory()", OpenBrace());
+  Write(Newline(), "Function ", options_.name_prefix, "InitMemory()", OpenBrace());
   if (memory && module_->num_memory_imports == 0) {
     uint32_t max =
         memory->page_limits.has_max ? memory->page_limits.max : 65536;
@@ -966,7 +972,7 @@ void CWriter::WriteDataInitializers() {
 void CWriter::WriteElemInitializers() {
   const Table* table = module_->tables.empty() ? nullptr : module_->tables[0];
 
-  Write(Newline(), "Function InitTable()", OpenBrace());
+  Write(Newline(), "Function ", options_.name_prefix, "InitTable()", OpenBrace());
   if (table && module_->num_table_imports == 0) {
     uint32_t max =
         table->elem_limits.has_max ? table->elem_limits.max : UINT32_MAX;
@@ -1073,12 +1079,12 @@ void CWriter::WriteExports(WriteExportsKind kind) {
 }
 
 void CWriter::WriteInit() {
-  Write(Newline(), "Function Init()", OpenBrace());
+  Write(Newline(), "Function ", options_.name_prefix, "Init()", OpenBrace());
   //Write("InitFuncTypes()", Newline());
-  Write("InitGlobals()", Newline());
-  Write("InitMemory()", Newline());
-  Write("InitTable()", Newline());
-  //Write("InitExports()", Newline());
+  Write(options_.name_prefix, "InitGlobals()", Newline());
+  Write(options_.name_prefix, "InitMemory()", Newline());
+  Write(options_.name_prefix, "InitTable()", Newline());
+  //Write(options_.name_prefix, "InitExports()", Newline());
   for (Var* var : module_->starts) {
     Write(ExternalRef(module_->GetFunc(*var)->name), "()", Newline());
   }
