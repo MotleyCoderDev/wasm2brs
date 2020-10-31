@@ -726,9 +726,9 @@ Function F32ReinterpretI32(value as Integer) as Float
 
     exponent = (((b0 And 127) << 1) Or (b1 And (1 << 7)) >> 7)
 
-    If exponent = 0 Return 0
+    If exponent = 0 Return 0!
 
-    mul = 2! ^ (exponent - 127 - 23)
+    mul = 2# ^ (exponent - 127 - 23)
     mantissa = b3 + b2 * (2 ^ (8 * 1)) + (b1 And 127) * (2 ^ (8 * 2)) + (2 ^ 23)
 
     If exponent = &HFF Then
@@ -743,8 +743,34 @@ Function F32ReinterpretI32(value as Integer) as Float
 End Function
 
 Function F64ReinterpretI64(value as LongInteger) as Double
-    Stop
-    Return 0
+    b7 =  value        And &HFF
+    b6 = (value >> 8)  And &HFF
+    b5 = (value >> 16) And &HFF
+    b4 = (value >> 24) And &HFF
+    b3 = (value >> 32) And &HFF
+    b2 = (value >> 40) And &HFF
+    b1 = (value >> 48) And &HFF
+    b0 = (value >> 56) And &HFF
+
+    signBit = (b0 And 1 << 7) >> 7
+    sign = (-1) ^ signBit
+
+    exponent = (((b0 And 127) << 4) Or (b1 And (15 << 4)) >> 4)
+
+    If exponent = 0 Return 0#
+
+    mul = 2# ^ (exponent - 1023 - 52)
+    mantissa = b7 + b6 * (2 ^ (8 * 1)) + b5 * (2 ^ (8 * 2)) + b4 * (2 ^ (8 * 3)) + b3 * (2 ^ (8 * 4)) + b2 * (2 ^ (8 * 5)) + (b1 And 15) * (2 ^ (8 * 6)) + (2 ^ 52)
+
+    If exponent = &H7FF Then
+        If mantissa = 0 Then
+            Return sign * DoubleInf()
+        Else
+            Return DoubleNan()
+        End If
+    End If
+
+    Return sign * mantissa * mul
 End Function
 
 Function I32ReinterpretF32(value as Float) as Integer
