@@ -197,6 +197,7 @@ interface WastTest {
       if (writeOutput) {
         process.stdout.write(text);
         if ((/Syntax Error.|------ Completed ------|Brightscript Debugger>/u).test(str)) {
+          process.stdout.write("\n");
           socket.destroy();
           const match = (/file\/line: pkg:\/source\/test.cases.brs\(([0-9]+)\)/ug).exec(str);
           if (match) {
@@ -209,6 +210,9 @@ interface WastTest {
           str = str.substr(index);
           process.stdout.write(str);
           writeOutput = true;
+        }
+        if (str.indexOf("Console connection is already in use.") !== -1) {
+          throw new Error("Telnet connection already in use, please stop debugger to see result");
         }
       }
     });
