@@ -789,13 +789,13 @@ Function I32ReinterpretF32(value as Float) as Integer
     If IsNan(value) Return &HFFFFFFFF
 
     bytes = 0%
-    If value <= -0.0 Then
+    If value <= -0.0! Then
         bytes = &H80000000
         value = -value
     End If
 
     exponent = F32Floor(Log(value) / Log(2))
-    significand = ((value / (2 ^ exponent)) * &H00800000)
+    significand = ((value / (2 ^ exponent)) * (2 ^ 23))
 
     exponent += 127
     If exponent >= &HFF Then
@@ -810,8 +810,40 @@ Function I32ReinterpretF32(value as Float) as Integer
 End Function
 
 Function I64ReinterpretF64(value as Double) as LongInteger
-    Stop
-    Return 0
+    If value =  DoubleInf() Return &H7FF0000000000000&
+    If value = -DoubleInf() Return &HFFF0000000000000&
+    'If value =  3.4028234663852886e+38! Return &H7F7FFFFF
+    'If value = -3.4028234663852886e+38! Return &HFF7FFFFF
+    'If value =  1.401298464324817e-45! Return 1&
+    'If value = -1.401298464324817e-45! Return 2147483649&
+
+    If value = 0 Then
+        If IsNegativeZero(value) Return &H8000000000000000&
+        Return &H0000000000000000&
+    End If
+
+    If IsNan(value) Return &HFFFFFFFFFFFFFFFF&
+
+    bytes = 0&
+    If value <= -0.0# Then
+        bytes = &H8000000000000000&
+        value = -value
+    End If
+
+    exponent = F64Floor(Log(value) / Log(2))
+    If exponent = -DoubleInf() Then exponent = -1074
+    significand = ((value / (2& ^ exponent)) * (2& ^ 52&))
+
+    exponent += 1023
+    If exponent >= &H7FF Then
+        exponent = &H7FF
+        significand = 0
+    Else If exponent < 0
+        exponent = 0
+    End If
+
+    bytes = bytes Or (I64TruncF64S(exponent) << 52&)
+    Return bytes Or (significand And Not (-1& << 52&))
 End Function
 
 Function F32Store(buffer As Object, index As Integer, value As Float)
