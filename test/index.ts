@@ -173,7 +173,7 @@ interface WastTest {
     console.error("Invalid test", testIndex);
     return;
   }
-  outputTest(tests[testIndex]);
+  await outputTest(tests[testIndex]);
   const id = uuid.v4();
   fs.writeFileSync(path.join(project, "manifest"), `title=${id}`);
   if (process.env.DEPLOY) {
