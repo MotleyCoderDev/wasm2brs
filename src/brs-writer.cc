@@ -1252,6 +1252,7 @@ void CWriter::Write(const ExprList& exprs) {
         const auto* bt_expr = cast<BrTableExpr>(&expr);
         // If we only have a default target, then just jump to it.
         if (bt_expr->targets.empty()) {
+          DropTypes(1);
           Write(GotoLabel(bt_expr->default_target), Newline());
         } else {
           Index i = 0;
