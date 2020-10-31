@@ -18,11 +18,11 @@ sub Main()
     print "------ Completed ------"
     screen.ShowMessage("Completed")
 
-    while(true)
+    While True
         msg = wait(0, m.port)
         msgType = type(msg)
-        if msgType = "roSGScreenEvent"
-            if msg.isScreenClosed() then return
-        end if
-    end while
+        If msgType = "roSGScreenEvent"
+            If msg.isScreenClosed() Then Return
+        End If
+    End While
 end sub
