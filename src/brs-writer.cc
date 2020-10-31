@@ -676,7 +676,7 @@ void CWriter::Write(const ResultType& rt) {
 void CWriter::Write(const Const& const_) {
   switch (const_.type()) {
     case Type::I32:
-      Writef("%u", static_cast<int32_t>(const_.u32()));
+      Writef("%u%%", static_cast<int32_t>(const_.u32()));
       break;
 
     case Type::I64:
@@ -691,17 +691,16 @@ void CWriter::Write(const Const& const_) {
         uint32_t significand = f32_bits & 0x7fffffu;
         if (significand == 0) {
           // Infinity.
-          Writef("%sINFINITY", sign);
+          Writef("%sFloatInf()", sign);
         } else {
           // Nan.
-          Writef("f32_reinterpret_i32(0x%08x) /* %snan:0x%06x */", f32_bits,
-                 sign, significand);
+          Writef("FloatNan()");
         }
       } else if (f32_bits == 0x80000000) {
         // Negative zero. Special-cased so it isn't written as -0 below.
-        Writef("-0.f");
+        Writef("-0.0!");
       } else {
-        Writef("%.9g", Bitcast<float>(f32_bits));
+        Writef("%.9g!", Bitcast<float>(f32_bits));
       }
       break;
     }
@@ -714,18 +713,16 @@ void CWriter::Write(const Const& const_) {
         uint64_t significand = f64_bits & 0xfffffffffffffull;
         if (significand == 0) {
           // Infinity.
-          Writef("%sINFINITY", sign);
+          Writef("%sDoubleInf()", sign);
         } else {
           // Nan.
-          Writef("f64_reinterpret_i64(0x%016" PRIx64 ") /* %snan:0x%013" PRIx64
-                 " */",
-                 f64_bits, sign, significand);
+          Writef("DoubleNan()");
         }
       } else if (f64_bits == 0x8000000000000000ull) {
         // Negative zero. Special-cased so it isn't written as -0 below.
-        Writef("-0.0");
+        Writef("-0.0#");
       } else {
-        Writef("%.17g", Bitcast<double>(f64_bits));
+        Writef("%.17g#", Bitcast<double>(f64_bits));
       }
       break;
     }
