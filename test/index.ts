@@ -209,13 +209,14 @@ interface WastTest {
       str += text;
       if (writeOutput) {
         process.stdout.write(text);
-        if ((/ERROR compiling|Syntax Error|------ Completed ------|Brightscript Debugger>/u).test(str)) {
+        if ((/ERROR compiling|Syntax Error|------ Completed ------|Brightscript Debugger>/ug).test(str)) {
           process.stdout.write("\n");
           socket.destroy();
           const match = (/file\/line: pkg:\/source\/test.cases.brs\(([0-9]+)\)/ug).exec(str);
           if (match) {
             await execa("code", ["-g", `${testCasesBrs}:${match[1]}`]);
           }
+          console.log("Closing...");
         }
       } else {
         const index = str.indexOf(`------ Compiling dev '${id}' ------`);
