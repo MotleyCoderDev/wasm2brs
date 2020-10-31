@@ -760,7 +760,7 @@ Function F64ReinterpretI64(value as LongInteger) as Double
     If exponent = 0 Return 0#
 
     mul = 2# ^ (exponent - 1023 - 52)
-    mantissa = b7 + b6 * (2 ^ (8 * 1)) + b5 * (2 ^ (8 * 2)) + b4 * (2 ^ (8 * 3)) + b3 * (2 ^ (8 * 4)) + b2 * (2 ^ (8 * 5)) + (b1 And 15) * (2 ^ (8 * 6)) + (2 ^ 52)
+    mantissa = b7 + b6 * (2& ^ (8& * 1&)) + b5 * (2& ^ (8& * 2&)) + b4 * (2& ^ (8& * 3&)) + b3 * (2& ^ (8& * 4&)) + b2 * (2& ^ (8& * 5&)) + (b1 And 15) * (2& ^ (8& * 6&)) + (2& ^ 52&)
 
     If exponent = &H7FF Then
         If mantissa = 0 Then
@@ -805,17 +805,19 @@ Function I32ReinterpretF32(value as Float) as Integer
         exponent = 0
     End If
 
-    bytes = bytes Or (exponent << 23)
-    Return bytes Or (significand And Not (-1 << 23))
+    exponentWhole% = exponent
+    significandWhole% = significand
+    bytes = bytes Or (exponentWhole% << 23)
+    Return bytes Or (significandWhole% And Not (-1 << 23))
 End Function
 
 Function I64ReinterpretF64(value as Double) as LongInteger
     If value =  DoubleInf() Return &H7FF0000000000000&
     If value = -DoubleInf() Return &HFFF0000000000000&
-    'If value =  3.4028234663852886e+38! Return &H7F7FFFFF
-    'If value = -3.4028234663852886e+38! Return &HFF7FFFFF
-    'If value =  1.401298464324817e-45! Return 1&
-    'If value = -1.401298464324817e-45! Return 2147483649&
+    If value =  5e-324# Return &H0000000000000001&
+    If value = -5e-324# Return &H8000000000000001&
+    If value =  1.7976931348623157e+308# Return 9218868437227405311&
+    If value = -1.7976931348623157e+308# Return 18442240474082181119&
 
     If value = 0 Then
         If IsNegativeZero(value) Return &H8000000000000000&
@@ -842,8 +844,10 @@ Function I64ReinterpretF64(value as Double) as LongInteger
         exponent = 0
     End If
 
-    bytes = bytes Or (I64TruncF64S(exponent) << 52&)
-    Return bytes Or (significand And Not (-1& << 52&))
+    exponentWhole& = exponent
+    significandWhole& = significand
+    bytes = bytes Or (exponentWhole& << 52&)
+    Return bytes Or (significandWhole& And Not (-1& << 52&))
 End Function
 
 Function F32Store(buffer As Object, index As Integer, value As Float)
