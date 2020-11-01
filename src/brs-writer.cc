@@ -1520,7 +1520,7 @@ void CWriter::Write(const ExprList& exprs) {
         break;
 
       case ExprType::Unreachable:
-        Write("UNREACHABLE;", Newline());
+        Write("Stop 'Unreachable", Newline());
         return;
 
       case ExprType::AtomicLoad:
