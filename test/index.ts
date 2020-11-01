@@ -138,7 +138,9 @@ interface WastTest {
       return arg.type === "f32" ? `-${floatInfBrs}` : `-${doubleInfBrs}`;
     }
     if (str === "NaN") {
-      return arg.type === "f32" ? floatNanBrs : doubleNanBrs;
+      const signByte = arg.type === "f32" ? view.getUint8(3) : view.getUint8(7);
+      const isSignBitSet = signByte >= 128;
+      return `${isSignBitSet ? "-" : ""}${arg.type === "f32" ? floatNanBrs : doubleNanBrs}`;
     }
     return str + (arg.type === "f32" ? "!" : "#");
   };
