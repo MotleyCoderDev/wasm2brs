@@ -162,7 +162,7 @@ interface WastTest {
 
     let testFunction =
       `Function ${testPrefix}()\n` +
-      `  ${testPrefix}Init()\n`;
+      `  ${testPrefix}Init__()\n`;
 
     for (const command of test.commands) {
       switch (command.type) {
