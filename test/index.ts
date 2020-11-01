@@ -55,8 +55,9 @@ const project = path.join(root, "project");
 const projectSource = path.join(project, "source");
 const testCasesBrs = path.join(projectSource, "test.cases.brs");
 const testWasmBrs = path.join(projectSource, "test.wasm.brs");
+const testSuiteDir = path.join(root, "third_party/testsuite");
 
-const outputWastTests = async (wastFile: string, guid: string): Promise<true | string> => {
+const outputWastTests = async (wastFile: string, guid: string): Promise<boolean | string> => {
   const testWast = path.resolve(wastFile);
   const testWastFilename = path.basename(wastFile);
 
@@ -162,7 +163,7 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<true | s
       {...fromRootOptions, stdio: "pipe", reject: false});
 
     if (wasm2BrsResult.exitCode !== 0) {
-      return wasm2BrsResult.stderr;
+      return wasm2BrsResult.stderr || `Code ${wasm2BrsResult.exitCode || wasm2BrsResult.signal}`;
     }
     testWasmFile += `${wasm2BrsResult.stdout}\n`;
 
@@ -200,7 +201,7 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<true | s
   fs.writeFileSync(testWasmBrs, testWasmFile);
 
   fs.writeFileSync(path.join(project, "manifest"), `title=${guid}`);
-  return true;
+  return tests.length !== 0;
 };
 
 const deploy = async (guid: string) => {
@@ -240,9 +241,11 @@ const deploy = async (guid: string) => {
     if (writeOutput && (/ERROR compiling|Syntax Error|------ Completed ------|Brightscript Debugger>/ug).test(str)) {
       process.stdout.write("\n");
       socket.destroy();
-      const match = (/file\/line: pkg:\/source\/test.cases.brs\(([0-9]+)\)/ug).exec(str);
-      if (match) {
-        await execa("code", ["-g", `${testCasesBrs}:${match[1]}`]);
+      if (process.env.IDE === "1") {
+        const match = (/file\/line: pkg:\/source\/test.cases.brs\(([0-9]+)\)/ug).exec(str);
+        if (match) {
+          await execa("code", ["-g", `${testCasesBrs}:${match[1]}`]);
+        }
       }
     }
   });
@@ -251,19 +254,36 @@ const deploy = async (guid: string) => {
 const outputAndMaybeDeploy = async (wastFile: string) => {
   const guid = uuid.v4();
   const result = await outputWastTests(wastFile, guid);
-  if (result === true && process.env.DEPLOY) {
-    await deploy(guid);
+  if (result === true) {
+    if (process.env.DEPLOY) {
+      await deploy(guid);
+    } else {
+      return false;
+    }
   }
   return result;
 };
 
 (async () => {
   if (process.env.WAST === undefined) {
-    console.error("Expected WAST to be set to a .wast file");
-    return;
-  }
-  const result = await outputAndMaybeDeploy(process.env.WAST);
-  if (result !== true) {
-    console.error(result);
+    const results: string[] = [];
+    for (const file of fs.readdirSync(testSuiteDir)) {
+      if (path.extname(file) === ".wast" && file !== "names.wast") {
+        const result = await outputAndMaybeDeploy(path.join(testSuiteDir, file));
+        if (typeof result === "string") {
+          results.push(`FAIL - ${result} - ${file}`);
+        } else if (result === false) {
+          results.push(`SKIP - ${file}`);
+        } else {
+          results.push(`PASS - ${file}`);
+        }
+      }
+    }
+    console.log(results.sort().join("\n"));
+  } else {
+    const result = await outputAndMaybeDeploy(process.env.WAST);
+    if (result !== true) {
+      console.error(result);
+    }
   }
 })();
