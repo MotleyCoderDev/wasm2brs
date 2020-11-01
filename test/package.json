@@ -10,6 +10,7 @@
   "dependencies": {
     "@types/mkdirp": "^1.0.1",
     "@types/uuid": "^8.3.0",
+    "adler-32": "^1.2.0",
     "execa": "^4.0.3",
     "mkdirp": "^1.0.4",
     "roku-deploy": "^3.2.3",

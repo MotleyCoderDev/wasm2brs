@@ -5,6 +5,7 @@ import mkdirp from "mkdirp";
 import * as rokuDeploy from "roku-deploy";
 import net from "net";
 import * as uuid from "uuid";
+import ADLER32 from "adler-32";
 
 interface WastModule {
   type: "module";
@@ -145,6 +146,9 @@ interface WastTest {
     return str + (arg.type === "f32" ? "!" : "#");
   };
 
+  // Should match LegalizeName
+  const legalizeName = (name: string) => `${name.replace(/[^a-zA-Z0-9]/gu, "_")}_${ADLER32.str(name)}`;
+
   let testCasesFile = "";
   let testWasmFile = "";
 
@@ -171,7 +175,7 @@ interface WastTest {
         case "assert_return": {
           if (command.action.type === "invoke") {
             const args = command.action.args.map((arg) => toArgValue(arg)).join(",");
-            testFunction += `  result = ${testPrefix}${command.action.field.replace(/[^a-zA-Z0-9]/gu, "_")}(${args}) ` +
+            testFunction += `  result = ${testPrefix}${legalizeName(command.action.field)}(${args}) ` +
             `' ${testWastFilename}(${command.line}) ${outJsonFilename}(${command.jsonLine})\n`;
 
             for (const [index, arg] of command.expected.entries()) {

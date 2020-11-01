@@ -128,7 +128,7 @@ class CWriter {
           const WriteCOptions& options)
       : options_(options),
         brs_stream_(stream) {
-    options_.name_prefix = LegalizeNameNoPrefix(options_.name_prefix);
+    options_.name_prefix = LegalizeNameNoAddons(options_.name_prefix);
   }
 
   Result WriteModule(const Module&);
@@ -168,7 +168,7 @@ class CWriter {
                                     const TypeVector& param_types,
                                     const TypeVector& result_types);
   static std::string MangleGlobalName(string_view, Type);
-  static std::string LegalizeNameNoPrefix(string_view);
+  static std::string LegalizeNameNoAddons(string_view);
   std::string LegalizeName(string_view);
   static std::string ExportName(string_view mangled_name);
   std::string DefineName(SymbolSet*, string_view, const std::string& prefix = std::string());
@@ -425,15 +425,26 @@ std::string CWriter::ExportName(string_view mangled_name) {
   return "WASM_RT_ADD_PREFIX(" + mangled_name.to_string() + ")";
 }
 
-std::string CWriter::LegalizeNameNoPrefix(string_view name) {
+std::string CWriter::LegalizeNameNoAddons(string_view name) {
   std::string result;
   for (size_t i = 0; i < name.size(); ++i)
     result += isalnum(name[i]) ? name[i] : '_';
   return result;
 }
 
+uint32_t adler32(const uint8_t* data, size_t len) {
+  const uint32_t MOD_ADLER = 65521;
+  uint32_t a = 1, b = 0;
+  for (size_t i = 0; i < len; ++i) {
+    a = (a + data[i]) % MOD_ADLER;
+    b = (b + a) % MOD_ADLER;
+  }
+  return (b << 16) | a;
+}
+
 std::string CWriter::LegalizeName(string_view name) {
-  return options_.name_prefix + LegalizeNameNoPrefix(name);
+  return options_.name_prefix + LegalizeNameNoAddons(name) +
+    "_" + std::to_string(adler32((const uint8_t*)name.begin(), name.length()));
 }
 
 std::string CWriter::DefineName(SymbolSet* set, string_view name, const std::string& prefix) {
