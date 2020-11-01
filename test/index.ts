@@ -16,15 +16,20 @@ interface WastArg {
   value: string;
 }
 
+interface WastAssertReturnInvoke {
+  type: "invoke";
+  field: string;
+  args: WastArg[]
+}
+
+interface WastAssertReturnGet {
+  type: "get";
+}
 
 interface WastAssertReturn {
   type: "assert_return";
   filename: string;
-  action: {
-    type: "invoke";
-    field: string;
-    args: WastArg[]
-  },
+  action: WastAssertReturnInvoke | WastAssertReturnGet,
   expected: WastArg[];
   line: number;
   jsonLine: number;
@@ -84,7 +89,7 @@ interface WastTest {
         commands: []
       };
       unfilteredTests.push(currentTest);
-    } else if (command.type === "assert_return") {
+    } else if (command.type === "assert_return" && command.action.type === "invoke") {
       command.jsonLine = currentJsonLine;
       currentTest.commands.push(command);
     }
@@ -162,16 +167,18 @@ interface WastTest {
     for (const command of test.commands) {
       switch (command.type) {
         case "assert_return": {
-          const args = command.action.args.map((arg) => toArgValue(arg)).join(",");
-          testFunction += `  result = ${testPrefix}${command.action.field.replace(/[^a-zA-Z0-9]/gu, "_")}(${args}) ` +
+          if (command.action.type === "invoke") {
+            const args = command.action.args.map((arg) => toArgValue(arg)).join(",");
+            testFunction += `  result = ${testPrefix}${command.action.field.replace(/[^a-zA-Z0-9]/gu, "_")}(${args}) ` +
             `' ${testWastFilename}(${command.line}) ${outJsonFilename}(${command.jsonLine})\n`;
 
-          for (const [index, arg] of command.expected.entries()) {
-            const expected = toArgValue(arg);
-            testFunction += `  AssertEquals(${command.expected.length === 1
-              ? "result"
-              : `result[${index}]`
-            }, ${expected})\n`;
+            for (const [index, arg] of command.expected.entries()) {
+              const expected = toArgValue(arg);
+              testFunction += `  AssertEquals(${command.expected.length === 1
+                ? "result"
+                : `result[${index}]`
+              }, ${expected})\n`;
+            }
           }
           break;
         }
