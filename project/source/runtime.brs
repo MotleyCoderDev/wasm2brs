@@ -315,17 +315,22 @@ Function I64ExtendI32U(x as LongInteger) as LongInteger
     Return I32ToUnsignedI64(x)
 End Function
 
+Function GetSignBit(value) as Integer
+    If Asc(value.ToStr()) = 45 Return -1
+    Return 1
+End Function
+
 Function F32Copysign(lhs as Float, rhs as Float) as Float
-    lhsLtz = lhs <= 0!
-    rhsLtz = rhs <= 0!
-    If lhsLtz = rhsLtz Return lhs
+    lhsSign = GetSignBit(lhs)
+    rhsSign = GetSignBit(rhs)
+    If lhsSign = rhsSign Return lhs
     Return -lhs
 End Function
 
 Function F64Copysign(lhs as Double, rhs as Double) as Double
-    lhsLtz = lhs <= 0#
-    rhsLtz = rhs <= 0#
-    If lhsLtz = rhsLtz Return lhs
+    lhsSign = GetSignBit(lhs)
+    rhsSign = GetSignBit(rhs)
+    If lhsSign = rhsSign Return lhs
     Return -lhs
 End Function
 
