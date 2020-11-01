@@ -143,8 +143,12 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<boolean 
     return str + (arg.type === "f32" ? "!" : "#");
   };
 
+  const adler32 = (name: string) => {
+    const result = ADLER32.str(name);
+    return result < 0 ? result + 4294967296 : result;
+  };
   // Should match LegalizeName
-  const legalizeName = (name: string) => `${name.replace(/[^a-zA-Z0-9]/gu, "_")}_${ADLER32.str(name)}`;
+  const legalizeName = (name: string) => `${name.replace(/[^a-zA-Z0-9]/gu, "_")}_${adler32(name)}`;
 
   let testCasesFile = "";
   let testWasmFile = "";
