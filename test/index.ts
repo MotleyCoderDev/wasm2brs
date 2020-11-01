@@ -209,15 +209,6 @@ interface WastTest {
       str += text;
       if (writeOutput) {
         process.stdout.write(text);
-        if ((/ERROR compiling|Syntax Error|------ Completed ------|Brightscript Debugger>/ug).test(str)) {
-          process.stdout.write("\n");
-          socket.destroy();
-          const match = (/file\/line: pkg:\/source\/test.cases.brs\(([0-9]+)\)/ug).exec(str);
-          if (match) {
-            await execa("code", ["-g", `${testCasesBrs}:${match[1]}`]);
-          }
-          console.log("Closing...");
-        }
       } else {
         const index = str.indexOf(`------ Compiling dev '${id}' ------`);
         if (index !== -1) {
@@ -227,6 +218,15 @@ interface WastTest {
         }
         if (str.indexOf("Console connection is already in use.") !== -1) {
           throw new Error("Telnet connection already in use, please stop debugger to see result");
+        }
+      }
+
+      if (writeOutput && (/ERROR compiling|Syntax Error|------ Completed ------|Brightscript Debugger>/ug).test(str)) {
+        process.stdout.write("\n");
+        socket.destroy();
+        const match = (/file\/line: pkg:\/source\/test.cases.brs\(([0-9]+)\)/ug).exec(str);
+        if (match) {
+          await execa("code", ["-g", `${testCasesBrs}:${match[1]}`]);
         }
       }
     });
