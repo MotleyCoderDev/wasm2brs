@@ -163,7 +163,12 @@ interface WastTest {
         "--name-prefix", testPrefix,
         path.join(testOut, test.moduleFilename)
       ],
-      {...fromRootOptions, stdio: "pipe"});
+      {...fromRootOptions, stdio: "pipe", reject: false});
+
+    if (wasm2BrsResult.exitCode !== 0) {
+      console.error(wasm2BrsResult.stderr);
+      continue;
+    }
     testWasmFile += `${wasm2BrsResult.stdout}\n`;
 
     let testFunction =
