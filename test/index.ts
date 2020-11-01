@@ -49,21 +49,17 @@ interface WastTest {
   commands: WastAssertReturn[];
 }
 
-(async () => {
-  if (process.env.WAST === undefined) {
-    console.error("Expected WAST to be set to a .wast file");
-    return;
-  }
+const root = path.join(__dirname, "../..");
+const testOut = path.join(root, "test/out");
+const project = path.join(root, "project");
+const projectSource = path.join(project, "source");
+const testCasesBrs = path.join(projectSource, "test.cases.brs");
+const testWasmBrs = path.join(projectSource, "test.wasm.brs");
 
-  const testWast = path.resolve(process.env.WAST);
-  const testWastFilename = path.basename(testWast);
+const outputWastTests = async (wastFile: string, guid: string): Promise<true | string> => {
+  const testWast = path.resolve(wastFile);
+  const testWastFilename = path.basename(wastFile);
 
-  const root = path.join(__dirname, "../..");
-  const testOut = path.join(root, "test/out");
-  const project = path.join(root, "project");
-  const projectSource = path.join(project, "source");
-  const testCasesBrs = path.join(projectSource, "test.cases.brs");
-  const testWasmBrs = path.join(projectSource, "test.wasm.brs");
   const fromRootOptions: execa.Options = {cwd: root, stdio: "inherit"};
   await mkdirp(testOut);
 
@@ -166,8 +162,7 @@ interface WastTest {
       {...fromRootOptions, stdio: "pipe", reject: false});
 
     if (wasm2BrsResult.exitCode !== 0) {
-      console.error(wasm2BrsResult.stderr);
-      continue;
+      return wasm2BrsResult.stderr;
     }
     testWasmFile += `${wasm2BrsResult.stdout}\n`;
 
@@ -204,51 +199,71 @@ interface WastTest {
   fs.writeFileSync(testCasesBrs, testCasesFile);
   fs.writeFileSync(testWasmBrs, testWasmFile);
 
+  fs.writeFileSync(path.join(project, "manifest"), `title=${guid}`);
+  return true;
+};
 
-  const id = uuid.v4();
-  fs.writeFileSync(path.join(project, "manifest"), `title=${id}`);
-  if (process.env.DEPLOY) {
-    console.log("Deploying...");
-    try {
-      await rokuDeploy.deploy({
-        host: process.env.DEPLOY,
-        password: process.env.PASSWORD || "rokudev",
-        rootDir: project,
-        failOnCompileError: true
-      });
-    } catch {
-      console.error("Failed to deploy. Connecting to see the error...");
+const deploy = async (guid: string) => {
+  console.log("Deploying...");
+  try {
+    await rokuDeploy.deploy({
+      host: process.env.DEPLOY,
+      password: process.env.PASSWORD || "rokudev",
+      rootDir: project,
+      failOnCompileError: true
+    });
+  } catch {
+    console.error("Failed to deploy. Connecting to see the error...");
+  }
+
+  console.log("Connecting...");
+  let str = "";
+  let writeOutput = false;
+  const socket = net.connect(8085, process.env.DEPLOY);
+  socket.on("data", async (buffer) => {
+    const text = buffer.toString();
+    str += text;
+    if (writeOutput) {
+      process.stdout.write(text);
+    } else {
+      const index = str.indexOf(`------ Compiling dev '${guid}' ------`);
+      if (index !== -1) {
+        str = str.substr(index);
+        process.stdout.write(str);
+        writeOutput = true;
+      }
+      if (str.indexOf("Console connection is already in use.") !== -1) {
+        throw new Error("Telnet connection already in use, please stop debugger to see result");
+      }
     }
 
-    console.log("Connecting...");
-    let str = "";
-    let writeOutput = false;
-    const socket = net.connect(8085, process.env.DEPLOY);
-    socket.on("data", async (buffer) => {
-      const text = buffer.toString();
-      str += text;
-      if (writeOutput) {
-        process.stdout.write(text);
-      } else {
-        const index = str.indexOf(`------ Compiling dev '${id}' ------`);
-        if (index !== -1) {
-          str = str.substr(index);
-          process.stdout.write(str);
-          writeOutput = true;
-        }
-        if (str.indexOf("Console connection is already in use.") !== -1) {
-          throw new Error("Telnet connection already in use, please stop debugger to see result");
-        }
+    if (writeOutput && (/ERROR compiling|Syntax Error|------ Completed ------|Brightscript Debugger>/ug).test(str)) {
+      process.stdout.write("\n");
+      socket.destroy();
+      const match = (/file\/line: pkg:\/source\/test.cases.brs\(([0-9]+)\)/ug).exec(str);
+      if (match) {
+        await execa("code", ["-g", `${testCasesBrs}:${match[1]}`]);
       }
+    }
+  });
+};
 
-      if (writeOutput && (/ERROR compiling|Syntax Error|------ Completed ------|Brightscript Debugger>/ug).test(str)) {
-        process.stdout.write("\n");
-        socket.destroy();
-        const match = (/file\/line: pkg:\/source\/test.cases.brs\(([0-9]+)\)/ug).exec(str);
-        if (match) {
-          await execa("code", ["-g", `${testCasesBrs}:${match[1]}`]);
-        }
-      }
-    });
+const outputAndMaybeDeploy = async (wastFile: string) => {
+  const guid = uuid.v4();
+  const result = await outputWastTests(wastFile, guid);
+  if (result === true && process.env.DEPLOY) {
+    await deploy(guid);
+  }
+  return result;
+};
+
+(async () => {
+  if (process.env.WAST === undefined) {
+    console.error("Expected WAST to be set to a .wast file");
+    return;
+  }
+  const result = await outputAndMaybeDeploy(process.env.WAST);
+  if (result !== true) {
+    console.error(result);
   }
 })();
