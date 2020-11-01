@@ -203,6 +203,7 @@ interface WastTest {
   const id = uuid.v4();
   fs.writeFileSync(path.join(project, "manifest"), `title=${id}`);
   if (process.env.DEPLOY) {
+    console.log("Deploying...");
     try {
       await rokuDeploy.deploy({
         host: process.env.DEPLOY,
@@ -214,6 +215,7 @@ interface WastTest {
       console.error("Failed to deploy. Connecting to see the error...");
     }
 
+    console.log("Connecting...");
     let str = "";
     let writeOutput = false;
     const socket = net.connect(8085, process.env.DEPLOY);
