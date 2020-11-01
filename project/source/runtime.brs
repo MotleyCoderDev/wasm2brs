@@ -315,6 +315,20 @@ Function I64ExtendI32U(x as LongInteger) as LongInteger
     Return I32ToUnsignedI64(x)
 End Function
 
+Function F32Copysign(lhs as Float, rhs as Float) as Float
+    lhsLtz = lhs <= 0!
+    rhsLtz = rhs <= 0!
+    If lhsLtz = rhsLtz Return lhs
+    Return -lhs
+End Function
+
+Function F64Copysign(lhs as Double, rhs as Double) as Double
+    lhsLtz = lhs <= 0#
+    rhsLtz = rhs <= 0#
+    If lhsLtz = rhsLtz Return lhs
+    Return -lhs
+End Function
+
 Function F64Abs(value as Double) as Double
     If value < 0 Return -value
     Return value

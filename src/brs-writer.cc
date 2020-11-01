@@ -1721,11 +1721,11 @@ void CWriter::Write(const BinaryExpr& expr) {
       break;
 
     case Opcode::F32Copysign:
-      WritePrefixBinaryExpr(expr.opcode, "copysignf");
+      WritePrefixBinaryExpr(expr.opcode, "F32Copysign");
       break;
 
     case Opcode::F64Copysign:
-      WritePrefixBinaryExpr(expr.opcode, "copysign");
+      WritePrefixBinaryExpr(expr.opcode, "F64Copysign");
       break;
 
     default:
