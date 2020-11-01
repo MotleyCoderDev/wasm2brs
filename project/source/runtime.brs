@@ -416,14 +416,22 @@ End Function
 
 Function F32Nearest(value as Float) as Float
     If IsOutsideLongIntegerRange(value) Return value
-    If value > 0 Return F32Floor(value + 0.499999970197)
-    Return F32Ceil(value - 0.499999970197)
+    whole = LongInt(value)
+    fraction = value - whole
+    If fraction >  0.5! Return whole + 1
+    If fraction < -0.5! Return whole - 1
+    If fraction =  0.5! Or fraction = -0.5! Return whole + whole Mod 2
+    Return whole
 End Function
 
 Function F64Nearest(value as Double) as Double
     If IsOutsideLongIntegerRange(value) Return value
-    If value > 0 Return F64Floor(value + 0.499999970197)
-    Return F64Ceil(value - 0.499999970197)
+    whole = LongInt(value)
+    fraction = value - whole
+    If fraction >  0.5# Return whole + 1
+    If fraction < -0.5# Return whole - 1
+    If fraction =  0.5# Or fraction = -0.5# Return whole + whole Mod 2
+    Return whole
 End Function
 
 Function I32Eqz(value as Integer) as Integer
