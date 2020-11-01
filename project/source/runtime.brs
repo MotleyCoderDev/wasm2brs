@@ -588,7 +588,7 @@ Function F64Sqrt(fg as Double) as Double
         lstX = n
         n = (n + fg / n) / 2.0#
     End While
-    Return Sqr(fg)
+    Return n
 End Function
 
 Function I32WrapI64(value as LongInteger) as Integer
