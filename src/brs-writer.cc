@@ -33,7 +33,8 @@
 
 #define INDENT_SIZE 2
 
-#define UNIMPLEMENTED(x) printf("unimplemented: %s\n", (x)), abort()
+#define BRS_ABORT(x) (std::cerr << __FILE__ << "(" << __LINE__ << ") in " << __FUNCTION__ << ": " << x), abort()
+#define BRS_UNREACHABLE BRS_ABORT("Unreachable")
 
 namespace wabt {
 
@@ -118,7 +119,7 @@ int GetShiftMask(Type type) {
   switch (type) {
     case Type::I32: return 31;
     case Type::I64: return 63;
-    default: WABT_UNREACHABLE; return 0;
+    default: BRS_UNREACHABLE; return 0;
   }
 }
 
@@ -386,7 +387,9 @@ char CWriter::MangleType(Type type) {
     case Type::I64: return 'j';
     case Type::F32: return 'f';
     case Type::F64: return 'd';
-    default: WABT_UNREACHABLE;
+    default:
+      BRS_UNREACHABLE;
+      return '_';
   }
 }
 
@@ -650,7 +653,7 @@ void CWriter::Write(Type type) {
     case Type::F32: Write("Float"); break;
     case Type::F64: Write("Double"); break;
     default:
-      WABT_UNREACHABLE;
+      BRS_UNREACHABLE;
   }
 }
 
@@ -661,7 +664,7 @@ void CWriter::Write(TypeEnum type) {
     case Type::F32: Write("WASM_RT_F32"); break;
     case Type::F64: Write("WASM_RT_F64"); break;
     default:
-      WABT_UNREACHABLE;
+      BRS_UNREACHABLE;
   }
 }
 
@@ -670,7 +673,7 @@ void CWriter::Write(SignedType type) {
     case Type::I32: Write("Integer"); break;
     case Type::I64: Write("LongInteger"); break;
     default:
-      WABT_UNREACHABLE;
+      BRS_UNREACHABLE;
   }
 }
 
@@ -739,7 +742,7 @@ void CWriter::Write(const Const& const_) {
     }
 
     default:
-      WABT_UNREACHABLE;
+      BRS_UNREACHABLE;
   }
 }
 
@@ -759,7 +762,7 @@ void CWriter::WriteInitExpr(const ExprList& expr_list) {
       break;
 
     default:
-      WABT_UNREACHABLE;
+      BRS_UNREACHABLE;
   }
 }
 
@@ -838,7 +841,7 @@ void CWriter::WriteImports() {
       }
 
       default:
-        WABT_UNREACHABLE;
+        BRS_UNREACHABLE;
     }
 
     Write(Newline());
@@ -1075,7 +1078,7 @@ void CWriter::WriteExports(WriteExportsKind kind) {
       }
 
       default:
-        WABT_UNREACHABLE;
+        BRS_UNREACHABLE;
     }
 
     if (kind == WriteExportsKind::Initializers) {
@@ -1447,6 +1450,19 @@ void CWriter::Write(const ExprList& exprs) {
         break;
       }
 
+      case ExprType::AtomicLoad:
+      case ExprType::AtomicRmw:
+      case ExprType::AtomicRmwCmpxchg:
+      case ExprType::AtomicStore:
+      case ExprType::AtomicWait:
+      case ExprType::AtomicFence:
+      case ExprType::AtomicNotify:
+      case ExprType::BrOnExn:
+      case ExprType::Rethrow:
+      case ExprType::ReturnCall:
+      case ExprType::ReturnCallIndirect:
+      case ExprType::Throw:
+      case ExprType::Try:
       case ExprType::MemoryCopy:
       case ExprType::DataDrop:
       case ExprType::MemoryInit:
@@ -1462,7 +1478,7 @@ void CWriter::Write(const ExprList& exprs) {
       case ExprType::RefFunc:
       case ExprType::RefNull:
       case ExprType::RefIsNull:
-        UNIMPLEMENTED("...");
+        BRS_ABORT("Unsupported expression " << GetExprTypeName(expr.type()));
         break;
 
       case ExprType::MemoryGrow: {
@@ -1533,22 +1549,6 @@ void CWriter::Write(const ExprList& exprs) {
       case ExprType::Unreachable:
         Write("Stop 'Unreachable", Newline());
         return;
-
-      case ExprType::AtomicLoad:
-      case ExprType::AtomicRmw:
-      case ExprType::AtomicRmwCmpxchg:
-      case ExprType::AtomicStore:
-      case ExprType::AtomicWait:
-      case ExprType::AtomicFence:
-      case ExprType::AtomicNotify:
-      case ExprType::BrOnExn:
-      case ExprType::Rethrow:
-      case ExprType::ReturnCall:
-      case ExprType::ReturnCallIndirect:
-      case ExprType::Throw:
-      case ExprType::Try:
-        UNIMPLEMENTED("...");
-        break;
     }
   }
 }
@@ -1740,7 +1740,7 @@ void CWriter::Write(const BinaryExpr& expr) {
       break;
 
     default:
-      WABT_UNREACHABLE;
+      BRS_UNREACHABLE;
   }
 }
 
@@ -1844,7 +1844,7 @@ void CWriter::Write(const CompareExpr& expr) {
       break;
 
     default:
-      WABT_UNREACHABLE;
+      BRS_UNREACHABLE;
   }
 }
 
@@ -1990,7 +1990,7 @@ void CWriter::Write(const ConvertExpr& expr) {
       break;
 
     default:
-      WABT_UNREACHABLE;
+      BRS_UNREACHABLE;
   }
 }
 
@@ -2013,7 +2013,7 @@ void CWriter::Write(const LoadExpr& expr) {
     case Opcode::I64Load32U: func = "I64Load32U"; break;
 
     default:
-      WABT_UNREACHABLE;
+      BRS_UNREACHABLE;
   }
 
   assert(module_->memories.size() == 1);
@@ -2043,7 +2043,7 @@ void CWriter::Write(const StoreExpr& expr) {
     case Opcode::I64Store32: func = "I64Store32"; break;
 
     default:
-      WABT_UNREACHABLE;
+      BRS_UNREACHABLE;
   }
 
   assert(module_->memories.size() == 1);
@@ -2156,7 +2156,7 @@ void CWriter::Write(const UnaryExpr& expr) {
       break;
 
     default:
-      WABT_UNREACHABLE;
+      BRS_UNREACHABLE;
   }
 }
 
@@ -2171,7 +2171,7 @@ void CWriter::Write(const TernaryExpr& expr) {
       break;
     }
     default:
-      WABT_UNREACHABLE;
+      BRS_UNREACHABLE;
   }
 }
 
@@ -2205,7 +2205,7 @@ void CWriter::Write(const SimdLaneOpExpr& expr) {
       break;
     }
     default:
-      WABT_UNREACHABLE;
+      BRS_UNREACHABLE;
   }
 
   PushType(result_type);
