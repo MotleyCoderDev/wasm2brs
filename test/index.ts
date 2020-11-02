@@ -60,6 +60,7 @@ const testSuiteDir = path.join(root, "third_party/testsuite");
 const outputWastTests = async (wastFile: string, guid: string): Promise<boolean | string> => {
   const testWast = path.resolve(wastFile);
   const testWastFilename = path.basename(wastFile);
+  console.log("Outputting for", testWastFilename);
 
   const fromRootOptions: execa.Options = {cwd: root, stdio: "inherit"};
   await mkdirp(testOut);
@@ -155,10 +156,10 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<boolean 
 
   let runTestsFunction = "Function RunTests()\n";
 
-  console.log("Number of modules to test:", tests.length);
+  console.log("Number of modules:", tests.length);
   for (const [textIndex, test] of tests.entries()) {
     const testPrefix = `Test${textIndex}`;
-    console.log("Testing module", test.moduleFilename);
+    console.log("Outputting module", test.moduleFilename);
     const wasm2BrsResult = await execa("build/wasm2brs",
       [
         "--name-prefix", testPrefix,
@@ -208,7 +209,7 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<boolean 
   return tests.length !== 0;
 };
 
-const deploy = async (guid: string) => {
+const deploy = async (guid: string): Promise<true | string> => {
   console.log("Deploying...");
   try {
     await rokuDeploy.deploy({
@@ -221,49 +222,70 @@ const deploy = async (guid: string) => {
     console.error("Failed to deploy. Connecting to see the error...");
   }
 
-  console.log("Connecting...");
-  let str = "";
-  let writeOutput = false;
-  const socket = net.connect(8085, process.env.DEPLOY);
-  socket.on("data", async (buffer) => {
-    const text = buffer.toString();
-    str += text;
-    if (writeOutput) {
-      process.stdout.write(text);
-    } else {
-      const index = str.indexOf(`------ Compiling dev '${guid}' ------`);
-      if (index !== -1) {
-        str = str.substr(index);
-        process.stdout.write(str);
-        writeOutput = true;
-      }
-      if (str.indexOf("Console connection is already in use.") !== -1) {
-        throw new Error("Telnet connection already in use, please stop debugger to see result");
-      }
-    }
+  let result: true | string = true;
 
-    if (writeOutput && (/ERROR compiling|Syntax Error|------ Completed ------|Brightscript Debugger>/ug).test(str)) {
-      process.stdout.write("\n");
-      socket.destroy();
-      if (process.env.IDE === "1") {
-        const match = (/file\/line: pkg:\/source\/test.cases.brs\(([0-9]+)\)/ug).exec(str);
-        if (match) {
-          await execa("code", ["-g", `${testCasesBrs}:${match[1]}`]);
+  console.log("Connecting...");
+  await new Promise((resolve) => {
+    let str = "";
+    let writeOutput = false;
+    const socket = net.connect(8085, process.env.DEPLOY);
+    socket.on("data", async (buffer) => {
+      const text = buffer.toString();
+      str += text;
+      if (writeOutput) {
+        process.stdout.write(text);
+      } else {
+        const index = str.indexOf(`------ Compiling dev '${guid}' ------`);
+        if (index !== -1) {
+          str = str.substr(index);
+          process.stdout.write(str);
+          writeOutput = true;
+        }
+        if (str.indexOf("Console connection is already in use.") !== -1) {
+          throw new Error("Telnet connection already in use, please stop debugger to see result");
         }
       }
-    }
+
+      const end = async (testCasesLine?: string) => {
+        process.stdout.write("\n");
+        socket.destroy();
+        resolve();
+        if (process.env.IDE === "1" && testCasesLine) {
+          await execa("code", ["-g", `${testCasesBrs}:${testCasesLine}`]);
+        }
+      };
+
+      if (writeOutput) {
+        if (str.indexOf("------ Completed ------") !== -1) {
+          await end();
+          return;
+        }
+        const match = str.match(/Syntax Error.*|.*runtime error.*/u) || str.match(/ERROR compiling.*/u);
+        if (match) {
+          const [error] = match;
+          const testCasesLineRegex = /pkg:\/source\/test.cases.brs\(([0-9]+)\)/u;
+          const testCasesMatch = str.match(testCasesLineRegex);
+          if (testCasesMatch && !error.match(testCasesLineRegex)) {
+            result = `${error} : ${testCasesMatch[0]}`;
+          } else {
+            result = error;
+          }
+          await end(testCasesMatch ? testCasesMatch[1] : undefined);
+        }
+      }
+    });
   });
+  return result;
 };
 
-const outputAndMaybeDeploy = async (wastFile: string) => {
+const outputAndMaybeDeploy = async (wastFile: string): Promise<boolean | string> => {
   const guid = uuid.v4();
   const result = await outputWastTests(wastFile, guid);
   if (result === true) {
     if (process.env.DEPLOY) {
-      await deploy(guid);
-    } else {
-      return false;
+      return deploy(guid);
     }
+    return false;
   }
   return result;
 };
@@ -286,8 +308,8 @@ const outputAndMaybeDeploy = async (wastFile: string) => {
     console.log(results.sort().join("\n"));
   } else {
     const result = await outputAndMaybeDeploy(process.env.WAST);
-    if (result !== true) {
-      console.error(result);
+    if (typeof result === "string") {
+      console.error(`ERROR: ${result}`);
     }
   }
 })();
