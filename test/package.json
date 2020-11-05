@@ -9,10 +9,12 @@
   "license": "MIT",
   "dependencies": {
     "@types/mkdirp": "^1.0.1",
+    "@types/rimraf": "^3.0.0",
     "@types/uuid": "^8.3.0",
     "adler-32": "^1.2.0",
     "execa": "^4.0.3",
     "mkdirp": "^1.0.4",
+    "rimraf": "^3.0.2",
     "roku-deploy": "^3.2.3",
     "uuid": "^8.3.1"
   },

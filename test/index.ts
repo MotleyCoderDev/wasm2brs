@@ -1,11 +1,12 @@
 import fs from "fs";
 import path from "path";
 import execa from "execa";
-import mkdirp from "mkdirp";
 import * as rokuDeploy from "roku-deploy";
 import net from "net";
 import * as uuid from "uuid";
 import ADLER32 from "adler-32";
+import mkdirp from "mkdirp";
+import rimraf from "rimraf";
 
 interface WastModule {
   type: "module";
@@ -62,7 +63,7 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<boolean 
   const testWastFilename = path.basename(wastFile);
   console.log("Outputting for", testWastFilename);
 
-  const fromRootOptions: execa.Options = {cwd: root, stdio: "inherit"};
+  rimraf.sync(testOut);
   await mkdirp(testOut);
 
   const outJsonFilename = "current.json";
