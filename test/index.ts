@@ -63,17 +63,29 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<boolean 
   const testWastFilename = path.basename(wastFile);
   console.log("Outputting for", testWastFilename);
 
+  const fromRootOptions: execa.Options = {
+    cwd: root,
+    stdio: "pipe",
+    reject: false
+  };
+
   rimraf.sync(testOut);
   await mkdirp(testOut);
 
   const outJsonFilename = "current.json";
   const outJson = path.join(testOut, outJsonFilename);
-  await execa("third_party/wabt/bin/wast2json",
+  const wast2Json = await execa("third_party/wabt/bin/wast2json",
     [
+      "--disable-multi-value",
       testWast,
       "-o", outJson
     ],
     fromRootOptions);
+
+  if (wast2Json.stderr) {
+    console.error(wast2Json.stderr);
+    return wast2Json.stderr.split("\n")[0];
+  }
 
   const wastJson = JSON.parse(fs.readFileSync(outJson, "utf8")) as WastJson;
 
@@ -166,7 +178,7 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<boolean 
         "--name-prefix", testPrefix,
         path.join(testOut, test.moduleFilename)
       ],
-      {...fromRootOptions, stdio: "pipe", reject: false});
+      fromRootOptions);
 
     if (wasm2BrsResult.exitCode !== 0) {
       return wasm2BrsResult.stderr || `Code ${wasm2BrsResult.exitCode || wasm2BrsResult.signal}`;
