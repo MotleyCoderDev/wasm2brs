@@ -331,7 +331,7 @@ void CWriter::PushLabel(LabelType label_type,
                         bool used) {
   // TODO(binji): Add multi-value support.
   if ((label_type != LabelType::Func && sig.GetNumParams() != 0)) {
-    UNIMPLEMENTED("multi value support");
+    BRS_ABORT("Unsupported multiple values: label_type " << (int)label_type << ", params " << sig.GetNumParams());
   }
 
   label_stack_.emplace_back(label_type, name, sig.result_types,
