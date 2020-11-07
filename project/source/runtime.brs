@@ -828,6 +828,10 @@ Function I32ReinterpretF32(value as Float) as Integer
     If value = -FloatInf() Return &HFF800000
     If value =  3.4028234663852886e+38! Return &H7F7FFFFF
     If value = -3.4028234663852886e+38! Return &HFF7FFFFF
+    If value =  1.17549435e-38! Return &H00800000
+    If value = -1.17549435e-38! Return &H80800000
+    If value =  1.17549421e-38! Return &H007FFFFF
+    If value = -1.17549421e-38! Return &H807FFFFF
     If value =  1.401298464324817e-45! Return 1%
     If value = -1.401298464324817e-45! Return 2147483649%
 
@@ -866,6 +870,10 @@ Function I64ReinterpretF64(value as Double) as LongInteger
     If value = -DoubleInf() Return &HFFF0000000000000&
     If value =  5e-324# Return &H0000000000000001&
     If value = -5e-324# Return &H8000000000000001&
+    If value =  2.2250738585072014e-308# Return &H0010000000000000&
+    If value = -2.2250738585072014e-308# Return &H8010000000000000&
+    If value =  2.2250738585072009e-308# Return &H000FFFFFFFFFFFFF&
+    If value = -2.2250738585072009e-308# Return &H800FFFFFFFFFFFFF&
     If value =  1.7976931348623157e+308# Return 9218868437227405311&
     If value = -1.7976931348623157e+308# Return 18442240474082181119&
 
