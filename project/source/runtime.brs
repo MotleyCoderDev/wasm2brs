@@ -618,6 +618,29 @@ Function F64Sqrt(fg as Double) as Double
     Return n
 End Function
 
+Function F64Log(x as Double) as Double
+    If x <= 0 Return DoubleNan()
+
+    log32 = Log(x)
+    If log32 <> FloatInf() And log32 <> -FloatInf() Return log32
+
+    xStr = x.ToStr()
+
+    max = 709.782712893#
+    min = -744.440071921#
+
+    While True
+        guess = (max + min) / 2#
+        value = 2.71828182845904523536# ^ guess
+        If F64Abs(value - x) < 1e-5# Or value.ToStr() = xStr Return guess
+        If value > x Then
+            max = guess
+        Else
+            min = guess
+        End If
+    End While
+End Function
+
 Function I32WrapI64(value as LongInteger) as Integer
     Return value
 End Function
@@ -859,7 +882,7 @@ Function I64ReinterpretF64(value as Double) as LongInteger
         value = -value
     End If
 
-    exponent = F64Floor(Log(value) / Log(2))
+    exponent = F64Floor(F64Log(value) / Log(2))
     If exponent = -DoubleInf() Then exponent = -1074
     significand = ((value / (2& ^ exponent)) * (2& ^ 52&))
 
