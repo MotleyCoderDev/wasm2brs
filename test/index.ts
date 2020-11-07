@@ -8,46 +8,53 @@ import ADLER32 from "adler-32";
 import mkdirp from "mkdirp";
 import rimraf from "rimraf";
 
-interface WastModule {
-  type: "module";
-  filename: string;
-}
-
 interface WastArg {
   type: "i32" | "i64" | "f32" | "f64";
   value: string;
 }
 
-interface WastAssertReturnInvoke {
+interface WastActionInvoke {
   type: "invoke";
   field: string;
   args: WastArg[]
 }
 
-interface WastAssertReturnGet {
+interface WastActionGet {
   type: "get";
 }
 
-interface WastAssertReturn {
-  type: "assert_return";
-  filename: string;
-  action: WastAssertReturnInvoke | WastAssertReturnGet,
-  expected: WastArg[];
+interface WastCommand {
+  type: string;
   line: number;
   jsonLine: number;
 }
 
-interface WastUnhandledCommand {
-  type: "assert_malformed" | "assert_invalid" | "assert_trap" | "assert_exhaustion";
+interface WastModuleCommand extends WastCommand {
+  type: "module";
+  filename: string;
+}
+
+interface WastActionCommand extends WastCommand {
+  type: "action";
+  action: WastActionInvoke,
+}
+
+interface WastAssertReturnCommand extends WastCommand {
+  type: "assert_return";
+  action: WastActionInvoke | WastActionGet,
+  filename: string;
+  expected: WastArg[];
 }
 
 interface WastJson {
-  commands: (WastModule | WastAssertReturn | WastUnhandledCommand)[];
+  commands: (WastModuleCommand | WastActionCommand | WastAssertReturnCommand)[];
 }
+
+type WastTestCommand = WastAssertReturnCommand | WastActionCommand;
 
 interface WastTest {
   moduleFilename: string;
-  commands: WastAssertReturn[];
+  commands: WastTestCommand[];
 }
 
 const root = path.join(__dirname, "../..");
@@ -101,7 +108,7 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<boolean 
         commands: []
       };
       unfilteredTests.push(currentTest);
-    } else if (command.type === "assert_return" && command.action.type === "invoke") {
+    } else if (command.type === "action" || command.type === "assert_return" && command.action.type === "invoke") {
       command.jsonLine = currentJsonLine;
       currentTest.commands.push(command);
     }
@@ -189,14 +196,17 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<boolean 
       `Function ${testPrefix}()\n` +
       `  ${testPrefix}Init__()\n`;
 
+    const writeInvoke = (command: WastTestCommand, invoke: WastActionInvoke) => {
+      const args = invoke.args.map((arg) => toArgValue(arg)).join(",");
+      testFunction += `  result = ${testPrefix}${legalizeName(invoke.field)}(${args}) ` +
+      `' ${testWastFilename}(${command.line}) ${outJsonFilename}(${command.jsonLine})\n`;
+    };
+
     for (const command of test.commands) {
       switch (command.type) {
         case "assert_return": {
           if (command.action.type === "invoke") {
-            const args = command.action.args.map((arg) => toArgValue(arg)).join(",");
-            testFunction += `  result = ${testPrefix}${legalizeName(command.action.field)}(${args}) ` +
-            `' ${testWastFilename}(${command.line}) ${outJsonFilename}(${command.jsonLine})\n`;
-
+            writeInvoke(command, command.action);
             for (const [index, arg] of command.expected.entries()) {
               const expected = toArgValue(arg);
               testFunction += `  AssertEquals(${command.expected.length === 1
@@ -205,6 +215,10 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<boolean 
               }, ${expected})\n`;
             }
           }
+          break;
+        }
+        case "action": {
+          writeInvoke(command, command.action);
           break;
         }
       }
