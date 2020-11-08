@@ -1007,8 +1007,9 @@ Function MemoryGrow(memory as Object, maxPages as Integer, deltaPages as Integer
     Return previous
 End Function
 
-Function MemoryCopy(toBytes as Object, toOffset as Integer, fromBytes as Object, fromOffset as Integer, size as Integer)
+Function MemoryCopy(toBytes as Object, toOffset as Integer, fromBytes as Object, fromOffset as Integer, size as Integer) as Integer
     For i = 0 To size - 1 Step 1
         toBytes[i + toOffset] = fromBytes[i + fromOffset]
     End For
+    Return size
 End Function
