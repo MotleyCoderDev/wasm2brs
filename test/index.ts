@@ -170,8 +170,6 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<boolean 
     const result = ADLER32.str(name);
     return result < 0 ? result + 4294967296 : result;
   };
-  // Should match LegalizeName
-  const legalizeName = (name: string) => `${name.replace(/[^a-zA-Z0-9]/gu, "_")}_${adler32(name)}`;
 
   let testCasesFile = "";
   let testWasmFile = "";
@@ -180,11 +178,21 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<boolean 
 
   console.log("Number of modules:", tests.length);
   for (const [textIndex, test] of tests.entries()) {
-    const testPrefix = `Test${textIndex}`;
+    // Should match LegalizeName / LegalizeNameNoAddons
+    const legalizeNameNoAddons = (name: string) => name.replace(/[^a-zA-Z0-9]/gu, "_");
+    const moduleName = test.module.name ? legalizeNameNoAddons(test.module.name) : `Test${textIndex}`;
+    const legalizeName = (name: string) => {
+      const legalized = legalizeNameNoAddons(name);
+      const output = `${moduleName}_${legalized}`;
+      return legalized === name
+        ? output
+        : `${output}_${adler32(name)}`;
+    };
+
     console.log("Outputting module", test.module.filename);
     const wasm2BrsResult = await execa("build/wasm2brs",
       [
-        "--name-prefix", testPrefix,
+        "--name-prefix", moduleName,
         path.join(testOut, test.module.filename)
       ],
       fromRootOptions);
@@ -198,13 +206,13 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<boolean 
       `' ${testWastFilename}(${command.line}) ${outJsonFilename}(${command.jsonLine})\n`;
 
     let testFunction =
-      `Function ${testPrefix}()\n` +
-      `  ${testPrefix}Init__() ${sourceMapNewline(test.module)}`;
+      `Function ${moduleName}()\n` +
+      `  ${moduleName}Init__() ${sourceMapNewline(test.module)}`;
 
     const writeInvoke = (command: WastTestCommand, invoke: WastActionInvoke) => {
       if (invoke.module === undefined || invoke.module === test.module.name) {
         const args = invoke.args.map((arg) => toArgValue(arg)).join(",");
-        testFunction += `  result = ${testPrefix}${legalizeName(invoke.field)}(${args}) ${sourceMapNewline(command)}`;
+        testFunction += `  result = ${legalizeName(invoke.field)}(${args}) ${sourceMapNewline(command)}`;
         return true;
       }
       return false;
@@ -233,7 +241,7 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<boolean 
       }
     }
     testFunction += "End Function\n";
-    runTestsFunction += `  ${testPrefix}()\n`;
+    runTestsFunction += `  ${moduleName}()\n`;
     testCasesFile += testFunction;
   }
   runTestsFunction += "End Function\n";

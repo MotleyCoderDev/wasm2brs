@@ -163,14 +163,8 @@ class CWriter {
   static std::string Deref(const std::string&);
 
   static char MangleType(Type);
-  static std::string MangleTypes(const TypeVector&);
-  std::string MangleName(string_view);
-  std::string MangleFuncName(string_view,
-                             const TypeVector& param_types,
-                             const TypeVector& result_types);
-  std::string MangleGlobalName(string_view);
   static std::string LegalizeNameNoAddons(string_view);
-  std::string LegalizeName(string_view);
+  std::string LegalizeName(const std::string& prefix, const std::string& module_name, string_view name);
   static std::string ExportName(string_view mangled_name);
   std::string DefineName(SymbolSet*, string_view, const std::string& prefix = std::string());
   std::string DefineImportName(const std::string& name,
@@ -394,39 +388,6 @@ char CWriter::MangleType(Type type) {
 }
 
 // static
-std::string CWriter::MangleTypes(const TypeVector& types) {
-  if (types.empty())
-    return std::string("v");
-
-  std::string result;
-  for (auto type : types) {
-    result += MangleType(type);
-  }
-  return result;
-}
-
-// static
-std::string CWriter::MangleName(string_view name) {
-  const std::string legalizedName = LegalizeNameNoAddons(name);
-  if (legalizedName == name) {
-    return legalizedName;
-  }
-  return LegalizeName(name);
-}
-
-// static
-std::string CWriter::MangleFuncName(string_view name,
-                                    const TypeVector& param_types,
-                                    const TypeVector& result_types) {
-  return MangleName(name);
-}
-
-// static
-std::string CWriter::MangleGlobalName(string_view name) {
-  return "m." + MangleName(name);
-}
-
-// static
 std::string CWriter::ExportName(string_view mangled_name) {
   return mangled_name.to_string();
 }
@@ -448,13 +409,16 @@ uint32_t adler32(const uint8_t* data, size_t len) {
   return (b << 16) | a;
 }
 
-std::string CWriter::LegalizeName(string_view name) {
-  return options_.name_prefix + LegalizeNameNoAddons(name) +
-    "_" + std::to_string(adler32((const uint8_t*)name.begin(), name.length()));
+std::string CWriter::LegalizeName(const std::string& prefix, const std::string& module_name, string_view name) {
+  const std::string legalized = LegalizeNameNoAddons(name);
+  const std::string output = prefix + module_name + "_" + legalized;
+  return legalized == name
+    ? output
+    : output + "_" + std::to_string(adler32((const uint8_t*)name.begin(), name.length()));
 }
 
 std::string CWriter::DefineName(SymbolSet* set, string_view name, const std::string& prefix) {
-  std::string legal = prefix + LegalizeName(name);
+  std::string legal = LegalizeName(prefix, options_.name_prefix, name);
   if (set->find(legal) != set->end()) {
     std::string base = legal + "_";
     size_t count = 0;
@@ -803,9 +767,10 @@ void CWriter::WriteImports() {
 
   // TODO(binji): Write imports ordered by type.
   for (const Import* import : module_->imports) {
-    Write("REM import: '", import->module_name, "' '", import->field_name,
+    const std::string legal_module_name = LegalizeNameNoAddons(import->module_name);
+    Write("' import: '", import->module_name, "' '", import->field_name,
           "'", Newline());
-    Write("REM ");
+    Write("' ");
     switch (import->kind()) {
       case ExternalKind::Func: {
         const Func& func = cast<FuncImport>(import)->func;
@@ -813,8 +778,7 @@ void CWriter::WriteImports() {
             func.decl,
             DefineImportName(
                 func.name, import->module_name,
-                MangleFuncName(import->field_name, func.decl.sig.param_types,
-                               func.decl.sig.result_types)));
+                LegalizeName("", legal_module_name, import->field_name)));
         break;
       }
 
@@ -823,7 +787,7 @@ void CWriter::WriteImports() {
         WriteGlobal(global,
                     DefineImportName(
                         global.name, import->module_name,
-                        MangleGlobalName(import->field_name)));
+                        LegalizeName("m.", legal_module_name, import->field_name)));
         break;
       }
 
@@ -832,14 +796,14 @@ void CWriter::WriteImports() {
         const_cast<Memory&>(memory).name = "MemoryGet()";
         const_cast<wabt::Import*>(import)->field_name = "MemoryGet()";
         WriteMemory(DefineImportName(memory.name, import->module_name,
-                                     MangleName(import->field_name)));
+                                     LegalizeName("m.", legal_module_name, import->field_name)));
         break;
       }
 
       case ExternalKind::Table: {
         const Table& table = cast<TableImport>(import)->table;
         WriteTable(DefineImportName(table.name, import->module_name,
-                                    MangleGlobalName(import->field_name)));
+                                    LegalizeName("m.", legal_module_name, import->field_name)));
         break;
       }
 
@@ -1015,9 +979,9 @@ void CWriter::WriteElemInitializers() {
 }
 
 void CWriter::WriteInitExports() {
-  Write(Newline(), "static void InitExports(void) ", OpenBrace());
+  Write(Newline(), "Function ", options_.name_prefix, "InitExports__()", OpenBrace());
   WriteExports(WriteExportsKind::Initializers);
-  Write(CloseBrace(), Newline());
+  Write(CloseBrace(), "End Function", Newline());
 }
 
 void CWriter::WriteExports(WriteExportsKind kind) {
@@ -1028,11 +992,9 @@ void CWriter::WriteExports(WriteExportsKind kind) {
     Write(Newline());
   }
 
+  const std::string legal_module_name = LegalizeNameNoAddons(module_->name);
   for (const Export* export_ : module_->exports) {
-    Write("REM export: '", export_->name, "' ", Newline());
-    if (kind == WriteExportsKind::Declarations) {
-      Write("extern ");
-    }
+    Write("' export: '", export_->name, "' ", Newline());
 
     std::string mangled_name;
     std::string internal_name;
@@ -1041,8 +1003,7 @@ void CWriter::WriteExports(WriteExportsKind kind) {
       case ExternalKind::Func: {
         const Func* func = module_->GetFunc(export_->var);
         mangled_name =
-            ExportName(MangleFuncName(export_->name, func->decl.sig.param_types,
-                                      func->decl.sig.result_types));
+            ExportName(LegalizeName("", legal_module_name, export_->name));
         internal_name = func->name;
         if (kind != WriteExportsKind::Initializers) {
           WriteFuncDeclaration(func->decl, Deref(mangled_name));
@@ -1053,7 +1014,7 @@ void CWriter::WriteExports(WriteExportsKind kind) {
       case ExternalKind::Global: {
         const Global* global = module_->GetGlobal(export_->var);
         mangled_name =
-            ExportName(MangleGlobalName(export_->name));
+            ExportName(LegalizeName("m.", legal_module_name, export_->name));
         internal_name = global->name;
         if (kind != WriteExportsKind::Initializers) {
           WriteGlobal(*global, Deref(mangled_name));
@@ -1063,7 +1024,7 @@ void CWriter::WriteExports(WriteExportsKind kind) {
 
       case ExternalKind::Memory: {
         const Memory* memory = module_->GetMemory(export_->var);
-        mangled_name = ExportName(MangleName(export_->name));
+        mangled_name = ExportName(LegalizeName("m.", legal_module_name, export_->name));
         internal_name = memory->name;
         if (kind != WriteExportsKind::Initializers) {
           WriteMemory(Deref(mangled_name));
@@ -1073,7 +1034,7 @@ void CWriter::WriteExports(WriteExportsKind kind) {
 
       case ExternalKind::Table: {
         const Table* table = module_->GetTable(export_->var);
-        mangled_name = ExportName(MangleName(export_->name));
+        mangled_name = ExportName(LegalizeName("m.", legal_module_name, export_->name));
         internal_name = table->name;
         if (kind != WriteExportsKind::Initializers) {
           WriteTable(Deref(mangled_name));
@@ -1099,7 +1060,7 @@ void CWriter::WriteInit() {
   Write(options_.name_prefix, "InitGlobals__()", Newline());
   Write(options_.name_prefix, "InitMemory__()", Newline());
   Write(options_.name_prefix, "InitTable__()", Newline());
-  //Write(options_.name_prefix, "InitExports__()", Newline());
+  Write(options_.name_prefix, "InitExports__()", Newline());
   for (Var* var : module_->starts) {
     Write(ExternalRef(module_->GetFunc(*var)->name), "()", Newline());
   }
@@ -2249,9 +2210,9 @@ void CWriter::WriteCSource() {
   WriteDataInitializers();
   WriteTables();
   WriteElemInitializers();
+  WriteInitExports();
   WriteFuncs();
   //WriteExports(WriteExportsKind::Definitions);
-  //WriteInitExports();
   WriteInit();
 }
 

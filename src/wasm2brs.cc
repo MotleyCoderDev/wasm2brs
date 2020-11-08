@@ -99,7 +99,6 @@ static void ParseOptions(int argc, char** argv) {
 }
 
 int ProgramMain(int argc, char** argv) {
-  s_write_c_options.name_prefix = "w2b_";
   Result result;
 
   InitStdio();
@@ -132,6 +131,13 @@ int ProgramMain(int argc, char** argv) {
       }
 
       if (Succeeded(result)) {
+        if (s_write_c_options.name_prefix.empty()) {
+          if (module.name.empty()) {
+            s_write_c_options.name_prefix = "w2b_";
+          } else {
+            s_write_c_options.name_prefix = module.name;
+          }
+        }
         if (!s_outfile.empty()) {
           FileStream brs_stream(s_outfile.c_str());
           result = WriteBrs(&brs_stream, &module,
