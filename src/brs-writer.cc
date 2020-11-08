@@ -164,11 +164,11 @@ class CWriter {
 
   static char MangleType(Type);
   static std::string MangleTypes(const TypeVector&);
-  static std::string MangleName(string_view);
-  static std::string MangleFuncName(string_view,
-                                    const TypeVector& param_types,
-                                    const TypeVector& result_types);
-  static std::string MangleGlobalName(string_view, Type);
+  std::string MangleName(string_view);
+  std::string MangleFuncName(string_view,
+                             const TypeVector& param_types,
+                             const TypeVector& result_types);
+  std::string MangleGlobalName(string_view);
   static std::string LegalizeNameNoAddons(string_view);
   std::string LegalizeName(string_view);
   static std::string ExportName(string_view mangled_name);
@@ -407,25 +407,28 @@ std::string CWriter::MangleTypes(const TypeVector& types) {
 
 // static
 std::string CWriter::MangleName(string_view name) {
-  return name.to_string();
+  const std::string legalizedName = LegalizeNameNoAddons(name);
+  if (legalizedName == name) {
+    return legalizedName;
+  }
+  return LegalizeName(name);
 }
 
 // static
 std::string CWriter::MangleFuncName(string_view name,
                                     const TypeVector& param_types,
                                     const TypeVector& result_types) {
-  std::string sig = MangleTypes(result_types) + MangleTypes(param_types);
-  return name.to_string();
+  return MangleName(name);
 }
 
 // static
-std::string CWriter::MangleGlobalName(string_view name, Type type) {
-  return name.to_string();
+std::string CWriter::MangleGlobalName(string_view name) {
+  return "m." + MangleName(name);
 }
 
 // static
 std::string CWriter::ExportName(string_view mangled_name) {
-  return "WASM_RT_ADD_PREFIX(" + mangled_name.to_string() + ")";
+  return mangled_name.to_string();
 }
 
 std::string CWriter::LegalizeNameNoAddons(string_view name) {
@@ -820,7 +823,7 @@ void CWriter::WriteImports() {
         WriteGlobal(global,
                     DefineImportName(
                         global.name, import->module_name,
-                        MangleGlobalName(import->field_name, global.type)));
+                        MangleGlobalName(import->field_name)));
         break;
       }
 
@@ -836,7 +839,7 @@ void CWriter::WriteImports() {
       case ExternalKind::Table: {
         const Table& table = cast<TableImport>(import)->table;
         WriteTable(DefineImportName(table.name, import->module_name,
-                                    MangleName(import->field_name)));
+                                    MangleGlobalName(import->field_name)));
         break;
       }
 
@@ -1050,7 +1053,7 @@ void CWriter::WriteExports(WriteExportsKind kind) {
       case ExternalKind::Global: {
         const Global* global = module_->GetGlobal(export_->var);
         mangled_name =
-            ExportName(MangleGlobalName(export_->name, global->type));
+            ExportName(MangleGlobalName(export_->name));
         internal_name = global->name;
         if (kind != WriteExportsKind::Initializers) {
           WriteGlobal(*global, Deref(mangled_name));
