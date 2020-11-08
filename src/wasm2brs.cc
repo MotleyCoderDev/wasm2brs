@@ -133,7 +133,7 @@ int ProgramMain(int argc, char** argv) {
       if (Succeeded(result)) {
         if (s_write_c_options.name_prefix.empty()) {
           if (module.name.empty()) {
-            s_write_c_options.name_prefix = "w2b_";
+            s_write_c_options.name_prefix = "w2b";
           } else {
             s_write_c_options.name_prefix = module.name;
           }

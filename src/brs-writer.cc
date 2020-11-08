@@ -846,7 +846,7 @@ void CWriter::WriteGlobals() {
     }
   }
 
-  Write(Newline(), "Function ", options_.name_prefix, "InitGlobals__()", OpenBrace());
+  Write(Newline(), "Function ", options_.name_prefix, "_InitGlobals__()", OpenBrace());
   global_index = 0;
   for (const Global* global : module_->globals) {
     bool is_import = global_index < module_->num_global_imports;
@@ -906,7 +906,7 @@ void CWriter::WriteTable(const std::string& name) {
 void CWriter::WriteDataInitializers() {
   const Memory* memory = module_->memories.empty() ? nullptr : module_->memories[0];
 
-  Write(Newline(), "Function ", options_.name_prefix, "InitMemory__()", OpenBrace());
+  Write(Newline(), "Function ", options_.name_prefix, "_InitMemory__()", OpenBrace());
   if (memory && module_->num_memory_imports == 0) {
     uint32_t max =
         memory->page_limits.has_max ? memory->page_limits.max : 65536;
@@ -937,7 +937,7 @@ void CWriter::WriteDataInitializers() {
 void CWriter::WriteElemInitializers() {
   const Table* table = module_->tables.empty() ? nullptr : module_->tables[0];
 
-  Write(Newline(), "Function ", options_.name_prefix, "InitTable__()", OpenBrace());
+  Write(Newline(), "Function ", options_.name_prefix, "_InitTable__()", OpenBrace());
   if (table && module_->num_table_imports == 0) {
     uint32_t max =
         table->elem_limits.has_max ? table->elem_limits.max : UINT32_MAX;
@@ -965,7 +965,7 @@ void CWriter::WriteElemInitializers() {
 }
 
 void CWriter::WriteInitExports() {
-  Write(Newline(), "Function ", options_.name_prefix, "InitExports__()", OpenBrace());
+  Write(Newline(), "Function ", options_.name_prefix, "_InitExports__()", OpenBrace());
   WriteExports();
   Write(CloseBrace(), "End Function", Newline());
 
@@ -1045,10 +1045,10 @@ void CWriter::WriteExports() {
 void CWriter::WriteInit() {
   Write(Newline(), "Function ", options_.name_prefix, "Init__()", OpenBrace());
   //Write("InitFuncTypes()", Newline());
-  Write(options_.name_prefix, "InitGlobals__()", Newline());
-  Write(options_.name_prefix, "InitMemory__()", Newline());
-  Write(options_.name_prefix, "InitTable__()", Newline());
-  Write(options_.name_prefix, "InitExports__()", Newline());
+  Write(options_.name_prefix, "_InitGlobals__()", Newline());
+  Write(options_.name_prefix, "_InitMemory__()", Newline());
+  Write(options_.name_prefix, "_InitTable__()", Newline());
+  Write(options_.name_prefix, "_InitExports__()", Newline());
   for (Var* var : module_->starts) {
     Write(ExternalRef(module_->GetFunc(*var)->name), "()", Newline());
   }
