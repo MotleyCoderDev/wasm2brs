@@ -30,18 +30,22 @@ End Function
 
 Function wasi_snapshot_preview1_args_sizes_get(argc_pSize As Integer, argv_buf_pSize As Integer) As Integer
     StringArrayWriteSizes(m.wasi_memory, m.wasi_config.args, argc_pSize, argv_buf_pSize)
+    Return 0 ' success
 End Function
 
 Function wasi_snapshot_preview1_args_get(argv_ppU8 As Integer, argv_buf_pU8 As Integer) As Integer
     StringArrayWriteMemory(m.wasi_memory, m.wasi_config.args, argv_ppU8, argv_buf_pU8)
+    Return 0 ' success
 End Function
 
 Function wasi_snapshot_preview1_environ_sizes_get(argc_pSize As Integer, argv_buf_pSize As Integer) As Integer
     StringArrayWriteSizes(m.wasi_memory, m.wasi_config.env, argc_pSize, argv_buf_pSize)
+    Return 0 ' success
 End Function
 
 Function wasi_snapshot_preview1_environ_get(argv_ppU8 As Integer, argv_buf_pU8 As Integer) As Integer
     StringArrayWriteMemory(m.wasi_memory, m.wasi_config.env, argv_ppU8, argv_buf_pU8)
+    Return 0 ' success
 End Function
 
 Function wasi_snapshot_preview1_fd_write(fd As Integer, iovs_pCiovec As Integer, iovs_len As Integer, nwritten_pSize As Integer) As Integer
@@ -66,4 +70,28 @@ Function wasi_snapshot_preview1_fd_write(fd As Integer, iovs_pCiovec As Integer,
     End For
     I32Store(m.wasi_memory, nwritten_pSize, nwritten)
     Return 0 ' success
+End Function
+
+Function wasi_snapshot_preview1_path_open(fd As Integer, dirflags As Integer, path_pU8 As Integer, path_len_Size As Integer, oflags As Integer, fs_rights_base As LongInteger, fs_rights_inherting As LongInteger, fdflags As Integer, opened_fd_pFd As Integer) As Integer
+    path = StringFromBytes(m.wasi_memory, path_pU8, path_len_Size)
+    Stop
+    Return 11
+End Function
+
+Function wasi_snapshot_preview1_fd_close(fd As Integer) As Integer
+    Return 0 ' success
+End Function
+
+Function wasi_snapshot_preview1_path_filestat_get(fd As Integer, flags As Integer, path_pU8 As Integer, path_len_Size As Integer, buf_pFilestat As Integer) As Integer
+    path = StringFromBytes(m.wasi_memory, path_pU8, path_len_Size)
+    Stop
+    Return 11
+End Function
+
+Function wasi_snapshot_preview1_fd_prestat_get(fd As Integer, buf_pPrestat As Integer) As Integer
+    Return 8 ' badf
+End Function
+
+Function wasi_snapshot_preview1_fd_prestat_dir_name(fd As Integer, path_pU8 As Integer, path_len_Size As Integer) As Integer
+    Return 52 ' nosys
 End Function
