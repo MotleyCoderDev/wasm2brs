@@ -165,7 +165,6 @@ class CWriter {
   static char MangleType(Type);
   static std::string LegalizeNameNoAddons(string_view);
   std::string LegalizeName(const std::string& prefix, const std::string& module_name, string_view name);
-  static std::string ExportName(string_view mangled_name);
   std::string DefineName(SymbolSet*, string_view, const std::string& prefix = std::string());
   std::string DefineImportName(const std::string& name,
                                string_view module_name,
@@ -188,12 +187,6 @@ class CWriter {
   }
 
   std::string GetGlobalName(const std::string&) const;
-
-  enum class WriteExportsKind {
-    Declarations,
-    Definitions,
-    Initializers,
-  };
 
   void Write() {}
   void Write(Newline);
@@ -231,7 +224,7 @@ class CWriter {
   void WriteDataInitializers();
   void WriteElemInitializers();
   void WriteInitExports();
-  void WriteExports(WriteExportsKind);
+  void WriteExports();
   void WriteInit();
   void WriteFuncs();
   void Write(const Func&);
@@ -387,15 +380,10 @@ char CWriter::MangleType(Type type) {
   }
 }
 
-// static
-std::string CWriter::ExportName(string_view mangled_name) {
-  return mangled_name.to_string();
-}
-
 std::string CWriter::LegalizeNameNoAddons(string_view name) {
   std::string result;
   for (size_t i = 0; i < name.size(); ++i)
-    result += isalnum(name[i]) ? name[i] : '_';
+    result += isalnum(name[i]) ? tolower(name[i]) : '_';
   return result;
 }
 
@@ -768,8 +756,7 @@ void CWriter::WriteImports() {
   // TODO(binji): Write imports ordered by type.
   for (const Import* import : module_->imports) {
     const std::string legal_module_name = LegalizeNameNoAddons(import->module_name);
-    Write("' import: '", import->module_name, "' '", import->field_name,
-          "'", Newline());
+    Write("' import: '", import->module_name, "' '", import->field_name, "'", Newline());
     Write("' ");
     switch (import->kind()) {
       case ExternalKind::Func: {
@@ -793,8 +780,6 @@ void CWriter::WriteImports() {
 
       case ExternalKind::Memory: {
         const Memory& memory = cast<MemoryImport>(import)->memory;
-        const_cast<Memory&>(memory).name = "MemoryGet()";
-        const_cast<wabt::Import*>(import)->field_name = "MemoryGet()";
         WriteMemory(DefineImportName(memory.name, import->module_name,
                                      LegalizeName("m.", legal_module_name, import->field_name)));
         break;
@@ -980,65 +965,71 @@ void CWriter::WriteElemInitializers() {
 
 void CWriter::WriteInitExports() {
   Write(Newline(), "Function ", options_.name_prefix, "InitExports__()", OpenBrace());
-  WriteExports(WriteExportsKind::Initializers);
+  WriteExports();
   Write(CloseBrace(), "End Function", Newline());
+
+  // Here we only export functions since they are global and not done with m.something
+  for (const Export* export_ : module_->exports) {
+    if (export_->kind != ExternalKind::Func) {
+      continue;
+    }
+    const Func* func = module_->GetFunc(export_->var);
+    const std::string mangled_name = LegalizeName("", options_.name_prefix, export_->name);
+
+    // If the name is the same as the export, don't bother wrapping it
+    if (mangled_name == GetGlobalName(func->name)) {
+      continue;
+    }
+
+    Write("' export: '", options_.name_prefix, "' '", module_->name, "' '", export_->name, "'", Newline());
+    Write("Function ", mangled_name, "(");
+    for (Index i = 0; i < func->GetNumParams(); ++i) {
+      if (i != 0) {
+        Write(", ");
+      }
+      Write("p", i, " As ", func->GetParamType(i));
+    }
+    Write(")", OpenBrace());
+
+    Write("Return ", ExternalPtr(func->name), "(");
+    for (Index i = 0; i < func->GetNumParams(); ++i) {
+      if (i != 0) {
+        Write(", ");
+      }
+      Write("p", i);
+    }
+    Write(")", Newline());
+
+    Write(CloseBrace(), "End Function", Newline());
+  }
 }
 
-void CWriter::WriteExports(WriteExportsKind kind) {
-  if (module_->exports.empty())
-    return;
-
-  if (kind != WriteExportsKind::Initializers) {
-    Write(Newline());
-  }
-
-  const std::string legal_module_name = LegalizeNameNoAddons(module_->name);
+void CWriter::WriteExports() {
   for (const Export* export_ : module_->exports) {
-    Write("' export: '", export_->name, "' ", Newline());
+    if (export_->kind == ExternalKind::Func) {
+      continue;
+    }
 
-    std::string mangled_name;
+    Write("' export: '", options_.name_prefix, "' '", module_->name, "' '", export_->name, "'", Newline());
+    const std::string mangled_name = LegalizeName("m.", options_.name_prefix, export_->name);
     std::string internal_name;
 
     switch (export_->kind) {
-      case ExternalKind::Func: {
-        const Func* func = module_->GetFunc(export_->var);
-        mangled_name =
-            ExportName(LegalizeName("", legal_module_name, export_->name));
-        internal_name = func->name;
-        if (kind != WriteExportsKind::Initializers) {
-          WriteFuncDeclaration(func->decl, Deref(mangled_name));
-        }
-        break;
-      }
-
       case ExternalKind::Global: {
         const Global* global = module_->GetGlobal(export_->var);
-        mangled_name =
-            ExportName(LegalizeName("m.", legal_module_name, export_->name));
         internal_name = global->name;
-        if (kind != WriteExportsKind::Initializers) {
-          WriteGlobal(*global, Deref(mangled_name));
-        }
         break;
       }
 
       case ExternalKind::Memory: {
         const Memory* memory = module_->GetMemory(export_->var);
-        mangled_name = ExportName(LegalizeName("m.", legal_module_name, export_->name));
         internal_name = memory->name;
-        if (kind != WriteExportsKind::Initializers) {
-          WriteMemory(Deref(mangled_name));
-        }
         break;
       }
 
       case ExternalKind::Table: {
         const Table* table = module_->GetTable(export_->var);
-        mangled_name = ExportName(LegalizeName("m.", legal_module_name, export_->name));
         internal_name = table->name;
-        if (kind != WriteExportsKind::Initializers) {
-          WriteTable(Deref(mangled_name));
-        }
         break;
       }
 
@@ -1046,11 +1037,7 @@ void CWriter::WriteExports(WriteExportsKind kind) {
         BRS_UNREACHABLE;
     }
 
-    if (kind == WriteExportsKind::Initializers) {
-      Write(mangled_name, " = ", ExternalPtr(internal_name));
-    }
-
-    Write(Newline());
+    Write(mangled_name, " = ", ExternalPtr(internal_name), Newline());
   }
 }
 
@@ -2202,7 +2189,6 @@ void CWriter::Write(const LoadSplatExpr& expr) {
 
 void CWriter::WriteCSource() {
   stream_ = brs_stream_;
-  //WriteFuncTypes();
   WriteFuncDeclarations();
   WriteImports();
   WriteGlobals();
@@ -2212,7 +2198,6 @@ void CWriter::WriteCSource() {
   WriteElemInitializers();
   WriteInitExports();
   WriteFuncs();
-  //WriteExports(WriteExportsKind::Definitions);
   WriteInit();
 }
 

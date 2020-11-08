@@ -102,14 +102,14 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<boolean 
   let currentTest: WastTest = null;
   // The commands start at this line in the json output by wast2json.
   let currentJsonLine = 3;
-  const unfilteredTests: WastTest[] = [];
+  const tests: WastTest[] = [];
   for (const command of wastJson.commands) {
     if (command.type === "module") {
       currentTest = {
         module: command,
         commands: []
       };
-      unfilteredTests.push(currentTest);
+      tests.push(currentTest);
     } else if (command.type === "action" || command.type === "assert_return" && command.action.type === "invoke") {
       command.jsonLine = currentJsonLine;
       currentTest.commands.push(command);
@@ -117,8 +117,10 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<boolean 
     ++currentJsonLine;
   }
 
-  // Ignore tests that have no asserts that we currently handle.
-  const tests = unfilteredTests.filter((test) => test.commands.length !== 0);
+  // Only skip wast files that have no commands for all tests.
+  if (tests.every((test) => test.commands.length === 0)) {
+    return false;
+  }
 
   const floatNanBrs = "FloatNan()";
   const floatInfBrs = "FloatInf()";
@@ -179,16 +181,16 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<boolean 
   console.log("Number of modules:", tests.length);
   for (const [textIndex, test] of tests.entries()) {
     // Should match LegalizeName / LegalizeNameNoAddons
-    const legalizeNameNoAddons = (name: string) => name.replace(/[^a-zA-Z0-9]/gu, "_");
-    const moduleName = test.module.name ? legalizeNameNoAddons(test.module.name) : `Test${textIndex}`;
-    const legalizeName = (name: string) => {
+    const legalizeNameNoAddons = (name: string) => name.replace(/[^a-zA-Z0-9]/gu, "_").toLowerCase();
+    const legalizeName = (module: string, name: string) => {
       const legalized = legalizeNameNoAddons(name);
-      const output = `${moduleName}_${legalized}`;
+      const output = `${legalizeNameNoAddons(module)}_${legalized}`;
       return legalized === name
         ? output
         : `${output}_${adler32(name)}`;
     };
 
+    const moduleName = test.module.name ? legalizeNameNoAddons(test.module.name) : `Test${textIndex}`;
     console.log("Outputting module", test.module.filename);
     const wasm2BrsResult = await execa("build/wasm2brs",
       [
@@ -210,26 +212,22 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<boolean 
       `  ${moduleName}Init__() ${sourceMapNewline(test.module)}`;
 
     const writeInvoke = (command: WastTestCommand, invoke: WastActionInvoke) => {
-      if (invoke.module === undefined || invoke.module === test.module.name) {
-        const args = invoke.args.map((arg) => toArgValue(arg)).join(",");
-        testFunction += `  result = ${legalizeName(invoke.field)}(${args}) ${sourceMapNewline(command)}`;
-        return true;
-      }
-      return false;
+      const args = invoke.args.map((arg) => toArgValue(arg)).join(",");
+      testFunction +=
+        `  result = ${legalizeName(invoke.module || moduleName, invoke.field)}(${args}) ${sourceMapNewline(command)}`;
     };
 
     for (const command of test.commands) {
       switch (command.type) {
         case "assert_return": {
           if (command.action.type === "invoke") {
-            if (writeInvoke(command, command.action)) {
-              for (const [index, arg] of command.expected.entries()) {
-                const expected = toArgValue(arg);
-                testFunction += `  AssertEquals(${command.expected.length === 1
-                  ? "result"
-                  : `result[${index}]`
-                }, ${expected})\n`;
-              }
+            writeInvoke(command, command.action);
+            for (const [index, arg] of command.expected.entries()) {
+              const expected = toArgValue(arg);
+              testFunction += `  AssertEquals(${command.expected.length === 1
+                ? "result"
+                : `result[${index}]`
+              }, ${expected})\n`;
             }
           }
           break;
@@ -250,7 +248,7 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<boolean 
   fs.writeFileSync(testWasmBrs, testWasmFile);
 
   fs.writeFileSync(path.join(project, "manifest"), `title=${guid}`);
-  return tests.length !== 0;
+  return true;
 };
 
 const deploy = async (guid: string): Promise<true | string> => {

@@ -996,13 +996,6 @@ Function I64Load32U(buffer as Object, index as Integer) as LongInteger
     Return I32ToUnsignedI64(I32Load(buffer, index))
 End Function
 
-Function MemoryGet() As Object
-    If Not m.DoesExist("Mem") Then
-        m.Mem = CreateObject("roByteArray")
-    End If
-    Return m.Mem
-End Function
-
 Function MemorySize(memory as Object) As Integer
     Return memory.Count() \ 65536
 End Function
