@@ -4,3 +4,6 @@
 [submodule "third_party/testsuite"]
 	path = third_party/testsuite
 	url = https://github.com/TrevorSundberg/testsuite.git
+[submodule "third_party/musl"]
+	path = third_party/musl
+	url = https://github.com/TrevorSundberg/musl.git
