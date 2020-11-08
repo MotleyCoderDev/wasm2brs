@@ -1,4 +1,20 @@
 
+Function wasi_helper_print_consume_lines(fd as Integer, added as String, lineCallback as Function)
+    str = m.wasi_outputs[fd] + added
+    While True
+        newlineIndex = Instr(1, str, Chr(10))
+        If newlineIndex <> 0 Then
+            line = Left(str, newlineIndex - 1)
+            Print line
+            If lineCallback <> Invalid Then lineCallback(fd, line)
+            str = Mid(str, newlineIndex + 1)
+        Else
+            Exit While
+        End If
+    End While
+    m.wasi_outputs[fd] = str
+End Function
+
 Function wasi_helper_snapshot_preview1_init(memory as Object, executableFile as String, config as Object)
     m.wasi_memory = memory
     m.wasi_config = config
@@ -20,8 +36,8 @@ Function wasi_helper_snapshot_preview1_init(memory as Object, executableFile as 
 
     m.wasi_config.args.Unshift(executableFile)
 
-    m.wasi_stdout = ""
-    m.wasi_stderr = ""
+    ' Indexed by the stdout(1) / stderr(2) fd
+    m.wasi_outputs = [invalid, "", ""]
 End Function
 
 Function wasi_snapshot_preview1_proc_exit(rval As Integer) As Void
@@ -56,13 +72,7 @@ Function wasi_snapshot_preview1_fd_write(fd As Integer, iovs_pCiovec As Integer,
         nwritten += buf_len_Size
         If fd = 1 Or fd = 2 Then ' stdout Or stderr
             str = StringFromBytes(m.wasi_memory, buf_pU8, buf_len_Size)
-            If fd = 1 Then
-                m.wasi_stdout += str
-                m.wasi_stdout = PrintAndConsumeLines(m.wasi_stdout)
-            Else
-                m.wasi_stderr += str
-                m.wasi_stderr = PrintAndConsumeLines(m.wasi_stderr)
-            End If
+            m.wasi_stdout = wasi_helper_print_consume_lines(fd, str, m.wasi_print_line)
         Else
             Stop ' Need to handle writing to fds
         End If

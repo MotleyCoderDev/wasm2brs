@@ -41,17 +41,3 @@ Function StringArrayWriteMemory(memory as Object, strings as Object, argv_ppU8 A
         argv_buf_pU8 += MemoryCopyAll(memory, argv_buf_pU8, StringToBytesNullTerminated(str))
     End For
 End Function
-
-Function PrintAndConsumeLines(str as String) as String
-    While True
-        newlineIndex = Instr(1, str, Chr(10))
-        If newlineIndex <> 0 Then
-            line = Left(str, newlineIndex - 1)
-            str = Mid(str, newlineIndex + 1)
-            Print line
-        Else
-            Exit While
-        End If
-    End While
-    Return str
-End Function
