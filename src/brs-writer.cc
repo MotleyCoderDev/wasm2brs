@@ -399,7 +399,8 @@ uint32_t adler32(const uint8_t* data, size_t len) {
 
 std::string CWriter::LegalizeName(const std::string& prefix, const std::string& module_name, string_view name) {
   const std::string legalized = LegalizeNameNoAddons(name);
-  const std::string output = prefix + module_name + "_" + legalized;
+  const std::string module_prefix = module_name == "env" ? "" : module_name + "_";
+  const std::string output = prefix + module_prefix + legalized;
   return legalized == name
     ? output
     : output + "_" + std::to_string(adler32((const uint8_t*)name.begin(), name.length()));
