@@ -959,6 +959,7 @@ void CWriter::WriteDataInitializers() {
         memory->page_limits.has_max ? memory->page_limits.max : 65536;
     Write(ExternalPtr(memory->name), " = CreateObject(\"roByteArray\")", Newline());
     Write(ExternalPtr(memory->name), "[", memory->page_limits.initial * WABT_PAGE_SIZE, "] = 0", Newline());
+    Write(ExternalPtr(memory->name), "Max = ", max, Newline());
   }
 
   Index data_segment_index = 0;
@@ -971,7 +972,7 @@ void CWriter::WriteDataInitializers() {
     }
     Write("\")", Newline());
 
-    Write("MemCpy(", ExternalRef(memory->name), ", ");
+    Write("MemoryCopy(", ExternalRef(memory->name), ", ");
     WriteInitExpr(data_segment->offset);
     Write(", ", data_segment_name, ", 0, ", data_segment->data.size(), ")", Newline());
     ++data_segment_index;
@@ -1485,7 +1486,7 @@ void CWriter::Write(const ExprList& exprs) {
         assert(module_->memories.size() == 1);
         Memory* memory = module_->memories[0];
 
-        Write(StackVar(0), " = MemoryGrow(", ExternalPtr(memory->name), ", ", StackVar(0), ")", Newline());
+        Write(StackVar(0), " = MemoryGrow(", ExternalPtr(memory->name), ", ", ExternalPtr(memory->name), "Max, ", StackVar(0), ")", Newline());
         break;
       }
 

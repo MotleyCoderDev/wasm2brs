@@ -1007,13 +1007,14 @@ Function MemorySize(memory as Object) As Integer
     Return memory.Count() \ 65536
 End Function
 
-Function MemoryGrow(memory as Object, deltaPages as Integer) As Integer
+Function MemoryGrow(memory as Object, maxPages as Integer, deltaPages as Integer) As Integer
     previous = MemorySize(memory)
+    If previous + deltaPages > maxPages Return -1
     memory[memory.Count() + deltaPages * 65536] = 0
     Return previous
 End Function
 
-Function MemCpy(toBytes as Object, toOffset as Integer, fromBytes as Object, fromOffset as Integer, size as Integer)
+Function MemoryCopy(toBytes as Object, maxPages as Integer, toOffset as Integer, fromBytes as Object, fromOffset as Integer, size as Integer)
     For i = 0 To size - 1 Step 1
         toBytes[i + toOffset] = fromBytes[i + fromOffset]
     End For
