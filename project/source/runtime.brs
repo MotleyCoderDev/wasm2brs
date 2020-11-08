@@ -51,7 +51,7 @@ Function AssertEquals(a, b)
         bStr = b.ToStr()
         If aStr <> bStr Then
             If type(a) = "Float" Or type(a) = "Double" Then
-                If F64Abs(a - b) > 1e-44 Stop
+                If F64Abs(a - b) > 1e-43 Stop
             Else
                 Stop
             End If
