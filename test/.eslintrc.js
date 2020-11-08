@@ -69,6 +69,7 @@ module.exports = {
     "default-param-last": "off",
     "newline-per-chained-call": "off",
     "function-paren-newline": "off",
-    "sort-imports": "off"
+    "sort-imports": "off",
+    "max-depth": "off"
   }
 };

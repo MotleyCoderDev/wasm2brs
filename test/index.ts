@@ -15,6 +15,7 @@ interface WastArg {
 
 interface WastActionInvoke {
   type: "invoke";
+  module?: string;
   field: string;
   args: WastArg[]
 }
@@ -32,6 +33,7 @@ interface WastCommand {
 interface WastModuleCommand extends WastCommand {
   type: "module";
   filename: string;
+  name?: string;
 }
 
 interface WastActionCommand extends WastCommand {
@@ -53,7 +55,7 @@ interface WastJson {
 type WastTestCommand = WastAssertReturnCommand | WastActionCommand;
 
 interface WastTest {
-  moduleFilename: string;
+  module: WastModuleCommand;
   commands: WastTestCommand[];
 }
 
@@ -104,7 +106,7 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<boolean 
   for (const command of wastJson.commands) {
     if (command.type === "module") {
       currentTest = {
-        moduleFilename: command.filename,
+        module: command,
         commands: []
       };
       unfilteredTests.push(currentTest);
@@ -179,11 +181,11 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<boolean 
   console.log("Number of modules:", tests.length);
   for (const [textIndex, test] of tests.entries()) {
     const testPrefix = `Test${textIndex}`;
-    console.log("Outputting module", test.moduleFilename);
+    console.log("Outputting module", test.module.filename);
     const wasm2BrsResult = await execa("build/wasm2brs",
       [
         "--name-prefix", testPrefix,
-        path.join(testOut, test.moduleFilename)
+        path.join(testOut, test.module.filename)
       ],
       fromRootOptions);
 
@@ -197,22 +199,27 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<boolean 
       `  ${testPrefix}Init__()\n`;
 
     const writeInvoke = (command: WastTestCommand, invoke: WastActionInvoke) => {
-      const args = invoke.args.map((arg) => toArgValue(arg)).join(",");
-      testFunction += `  result = ${testPrefix}${legalizeName(invoke.field)}(${args}) ` +
-      `' ${testWastFilename}(${command.line}) ${outJsonFilename}(${command.jsonLine})\n`;
+      if (invoke.module === undefined || invoke.module === test.module.name) {
+        const args = invoke.args.map((arg) => toArgValue(arg)).join(",");
+        testFunction += `  result = ${testPrefix}${legalizeName(invoke.field)}(${args}) ` +
+          `' ${testWastFilename}(${command.line}) ${outJsonFilename}(${command.jsonLine})\n`;
+        return true;
+      }
+      return false;
     };
 
     for (const command of test.commands) {
       switch (command.type) {
         case "assert_return": {
           if (command.action.type === "invoke") {
-            writeInvoke(command, command.action);
-            for (const [index, arg] of command.expected.entries()) {
-              const expected = toArgValue(arg);
-              testFunction += `  AssertEquals(${command.expected.length === 1
-                ? "result"
-                : `result[${index}]`
-              }, ${expected})\n`;
+            if (writeInvoke(command, command.action)) {
+              for (const [index, arg] of command.expected.entries()) {
+                const expected = toArgValue(arg);
+                testFunction += `  AssertEquals(${command.expected.length === 1
+                  ? "result"
+                  : `result[${index}]`
+                }, ${expected})\n`;
+              }
             }
           }
           break;
