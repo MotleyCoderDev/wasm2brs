@@ -194,15 +194,17 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<boolean 
     }
     testWasmFile += `${wasm2BrsResult.stdout}\n`;
 
+    const sourceMapNewline = (command: WastCommand) =>
+      `' ${testWastFilename}(${command.line}) ${outJsonFilename}(${command.jsonLine})\n`;
+
     let testFunction =
       `Function ${testPrefix}()\n` +
-      `  ${testPrefix}Init__()\n`;
+      `  ${testPrefix}Init__() ${sourceMapNewline(test.module)}`;
 
     const writeInvoke = (command: WastTestCommand, invoke: WastActionInvoke) => {
       if (invoke.module === undefined || invoke.module === test.module.name) {
         const args = invoke.args.map((arg) => toArgValue(arg)).join(",");
-        testFunction += `  result = ${testPrefix}${legalizeName(invoke.field)}(${args}) ` +
-          `' ${testWastFilename}(${command.line}) ${outJsonFilename}(${command.jsonLine})\n`;
+        testFunction += `  result = ${testPrefix}${legalizeName(invoke.field)}(${args}) ${sourceMapNewline(command)}`;
         return true;
       }
       return false;
