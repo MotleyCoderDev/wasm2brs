@@ -1,28 +1,36 @@
-'*************************************************************
-'** Hello World example 
-'** Copyright (c) 2015 Roku, Inc.  All rights reserved.
-'** Use of the Roku Platform is subject to the Roku SDK Licence Agreement:
-'** https://docs.roku.com/doc/developersdk/en-us
-'*************************************************************
+Function print_line(fd as Integer, str as String)
+    m.output.text += str + Chr(10)
+End Function
 
 sub Main()
-    port = CreateObject("roMessagePort")
-    screen = CreateObject("roPosterScreen")
-    screen.SetMessagePort(port)
-    screen.ShowMessage("Initializing")
-    screen.Show()
+    m.port = CreateObject("roMessagePort")
+
+    sgScreen = CreateObject("roSGScreen")
+    sgScreen.SetMessagePort(m.port)
+    scene = sgScreen.CreateScene("main")
+    sgScreen.show()
+    keyboard = scene.findNode("keyboard")
+    keyboard.setFocus(True)
+    keyboard.observeField("text", m.port)
+    m.output = scene.findNode("output")
+
+    m.wasi_print_line = print_line
 
     InitSpectest()
     RunTests()
 
     print "------ Completed ------"
-    screen.ShowMessage("Completed")
 
     While True
         msg = wait(0, m.port)
-        msgType = type(msg)
-        If msgType = "roSGScreenEvent"
-            If msg.isScreenClosed() Then Return
+        If msg <> Invalid Then
+            msgType = type(msg)
+
+            If msgType = "roSGScreenEvent" Then
+                If msg.isScreenClosed() Return
+            Else If msgType = "roSGNodeEvent" Then
+                Print msg.getData()
+            End If
         End If
     End While
 end sub

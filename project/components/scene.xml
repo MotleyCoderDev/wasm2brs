@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component name="main" extends="Scene" initialFocus="keyboard">
+    <children>
+        <Label id="output" wrap="true" numLines="10" maxLines="10" width="1216" translation="[32,32]"/>
+        <Keyboard id="keyboard" translation="[190,380]"/>
+    </children>
+</component>
