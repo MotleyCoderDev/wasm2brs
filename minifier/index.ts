@@ -1,4 +1,5 @@
 import fs from "fs";
+import seedrandom from "seedrandom";
 
 const files = [
   "/home/trevor/wasm2brs/project/sourcex/test.wasm.brs",
@@ -133,9 +134,10 @@ for (;;) {
   }
 }
 
+const rand = seedrandom("seed");
 const shuffleArray = (array: any[]) => {
   for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(rand() * (i + 1));
     [array[i], array[j]] = [array[j], array[i]];
   }
 };
