@@ -120,8 +120,15 @@ if (process.env.KEEP) {
 }
 
 const regex = /\b[a-zA-Z_][a-zA-Z0-9_]*\b/ug;
-const textWithoutComments = text.replace(/('|REM).*/ug, "");
-const textWithoutFalseIdentifiers = textWithoutComments.replace(/("[^"\n]*")|(&[hH][a-fA-F0-9]+)/ug, "");
+const textWithoutCommentsOrWhitespace = text.
+  replace(/('|REM).*/ug, "").
+  replace(/^\s+/ugm, "").
+  replace(/\s+$/ugm, "").
+  replace(/  +/ugm, " ").
+  replace(/ ([^a-zA-Z0-9]{1,3}) /ugm, "$1").
+  replace(/, /ugm, ",");
+
+const textWithoutFalseIdentifiers = textWithoutCommentsOrWhitespace.replace(/("[^"\n]*")|(&[hH][a-fA-F0-9]+)/ug, "");
 for (;;) {
   const match = regex.exec(textWithoutFalseIdentifiers);
   if (match) {
@@ -151,7 +158,7 @@ for (let i = 0; i < oldIdentifiers.length; ++i) {
 
 shuffleArray(newIdentifiers);
 
-let finalText = textWithoutComments;
+let finalText = textWithoutCommentsOrWhitespace;
 for (let i = 0; i < oldIdentifiers.length; ++i) {
   const identifierRegex = new RegExp(`\\b${oldIdentifiers[i]}\\b`, "gui");
   finalText = finalText.replace(identifierRegex, newIdentifiers[i]);
