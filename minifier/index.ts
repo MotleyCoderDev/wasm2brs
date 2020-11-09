@@ -31,6 +31,7 @@ const builtinKeywords = {
   else: true,
   elseif: true,
   end: true,
+  endfor: true,
   endfunction: true,
   endif: true,
   endsub: true,
@@ -126,7 +127,8 @@ const textWithoutCommentsOrWhitespace = text.
   replace(/\s+$/ugm, "").
   replace(/  +/ugm, " ").
   replace(/ ([^a-zA-Z0-9]{1,3}) /ugm, "$1").
-  replace(/, /ugm, ",");
+  replace(/, /ugm, ",").
+  replace(/End /ug, "End");
 
 const textWithoutFalseIdentifiers = textWithoutCommentsOrWhitespace.replace(/("[^"\n]*")|(&[hH][a-fA-F0-9]+)/ug, "");
 for (;;) {
