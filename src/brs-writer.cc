@@ -29,8 +29,6 @@
 #include "src/stream.h"
 #include "src/string-view.h"
 
-#define U64_CAST ""
-
 #define INDENT_SIZE 2
 
 #define BRS_ABORT(x) (std::cerr << __FILE__ << "(" << __LINE__ << ") in " << __FUNCTION__ << ": " << x), abort()
@@ -1973,8 +1971,7 @@ void CWriter::Write(const LoadExpr& expr) {
   Memory* memory = module_->memories[0];
 
   Type result_type = expr.opcode.GetResultType();
-  Write(StackVar(0, result_type), " = ", func, "(", ExternalPtr(memory->name),
-        ", " U64_CAST "(", StackVar(0), ")");
+  Write(StackVar(0, result_type), " = ", func, "(", ExternalPtr(memory->name), ", ", StackVar(0));
   if (expr.offset != 0)
     Write(" + ", expr.offset);
   Write(")", Newline());
@@ -2002,7 +1999,7 @@ void CWriter::Write(const StoreExpr& expr) {
   assert(module_->memories.size() == 1);
   Memory* memory = module_->memories[0];
 
-  Write(func, "(", ExternalPtr(memory->name), ", " U64_CAST "(", StackVar(1), ")");
+  Write(func, "(", ExternalPtr(memory->name), ", ", StackVar(1));
   if (expr.offset != 0)
     Write(" + ", expr.offset);
   Write(", ", StackVar(0), ")", Newline());
@@ -2180,7 +2177,7 @@ void CWriter::Write(const LoadSplatExpr& expr) {
 
   Type result_type = expr.opcode.GetResultType();
   Write(StackVar(0, result_type), " = ", expr.opcode.GetName(), "(",
-        ExternalPtr(memory->name), ", " U64_CAST "(", StackVar(0));
+        ExternalPtr(memory->name), ", (", StackVar(0));
   if (expr.offset != 0)
     Write(" + ", expr.offset);
   Write("));", Newline());
