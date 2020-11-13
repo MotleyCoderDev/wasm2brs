@@ -18,8 +18,7 @@ const builtinLiterals = {
   false: true,
   invalid: true,
   m: true,
-  true: true,
-  while: true
+  true: true
 };
 
 const builtinKeywords = {
@@ -61,7 +60,8 @@ const builtinKeywords = {
   tab: true,
   then: true,
   to: true,
-  type: true
+  type: true,
+  while: true
 };
 
 const builtinTypes = {
