@@ -7,11 +7,22 @@
         {
             "type": "brightscript",
             "request": "launch",
-            "name": "BrightScript Debug: Launch",
+            "name": "BrightScript Debug: Launch Project",
             "stopOnEntry": false,
             "host": "${promptForHost}",
             "password": "rokudev",
             "rootDir": "${workspaceFolder}/project",
+            "enableDebuggerAutoRecovery": false,
+            "stopDebuggerOnAppExit": false
+        },
+        {
+            "type": "brightscript",
+            "request": "launch",
+            "name": "BrightScript Debug: Launch Test Project",
+            "stopOnEntry": false,
+            "host": "${promptForHost}",
+            "password": "rokudev",
+            "rootDir": "${workspaceFolder}/testproject",
             "enableDebuggerAutoRecovery": false,
             "stopDebuggerOnAppExit": false
         }
