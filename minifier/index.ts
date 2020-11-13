@@ -160,10 +160,30 @@ for (let i = 0; i < oldIdentifiers.length; ++i) {
 
 shuffleArray(newIdentifiers);
 
-let finalText = textWithoutCommentsOrWhitespace;
+let newIdentifierText = textWithoutCommentsOrWhitespace;
 for (let i = 0; i < oldIdentifiers.length; ++i) {
   const identifierRegex = new RegExp(`\\b${oldIdentifiers[i]}\\b`, "gui");
-  finalText = finalText.replace(identifierRegex, newIdentifiers[i]);
+  newIdentifierText = newIdentifierText.replace(identifierRegex, newIdentifiers[i]);
 }
+
+// Lowercase all reserved words
+for (const reservedWord of Object.keys(reservedWords)) {
+  const reservedRegex = new RegExp(`\\b${reservedWord}\\b`, "gui");
+  newIdentifierText = newIdentifierText.replace(reservedRegex, reservedWord.toLowerCase());
+}
+
+const functionRegex = /^function.*?endfunction$/ugms;
+const functions: string[] = [];
+for (;;) {
+  const match = functionRegex.exec(newIdentifierText);
+  if (match) {
+    functions.push(match[0]);
+  } else {
+    break;
+  }
+}
+
+shuffleArray(functions);
+const finalText = functions.join("\n");
 
 fs.writeFileSync("/home/trevor/wasm2brs/project/source/test.min.brs", finalText, "utf8");
