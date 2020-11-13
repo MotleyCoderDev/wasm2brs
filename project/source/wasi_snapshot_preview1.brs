@@ -1,5 +1,5 @@
 
-Function wasi_helper_print_consume_lines(fd as Integer, added as String, lineCallback as Function)
+Function wasi_helper_print_consume_lines(fd as Integer, added as String, lineCallback as Dynamic)
     str = m.wasi_outputs[fd] + added
     While True
         newlineIndex = Instr(1, str, Chr(10))
