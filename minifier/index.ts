@@ -1,7 +1,7 @@
 import fs from "fs";
 import seedrandom from "seedrandom";
 
-export const minifyFiles = (filesContents: string[]): string => {
+export const minifyFiles = (filesContents: string[], keepIdentifiers?: string[]): string => {
   const text = filesContents.join("\n");
 
   const builtinLiterals = {
@@ -96,16 +96,22 @@ export const minifyFiles = (filesContents: string[]): string => {
     toasciistring: true
   };
 
+  const ourMembers = {
+    // eslint-disable-next-line camelcase
+    external_print_line: true
+  };
+
   const reservedWords = {
     ...builtinLiterals,
     ...builtinKeywords,
     ...builtinTypes,
     ...builtinGlobals,
-    ...builtinMembers
+    ...builtinMembers,
+    ...ourMembers
   };
 
-  if (process.env.KEEP) {
-    for (const identifier of process.env.KEEP.split(",")) {
+  if (keepIdentifiers) {
+    for (const identifier of keepIdentifiers) {
       reservedWords[identifier.toLowerCase()] = true;
     }
   }
@@ -209,6 +215,6 @@ export const minifyFiles = (filesContents: string[]): string => {
 
 if (process.env.INPUT && process.env.OUTPUT) {
   const filesContents = process.env.INPUT.split(",").map((file) => fs.readFileSync(file, "utf8"));
-  const result = minifyFiles(filesContents);
+  const result = minifyFiles(filesContents, (process.env.KEEP || "").split(","));
   fs.writeFileSync(process.env.OUTPUT, result, "utf8");
 }
