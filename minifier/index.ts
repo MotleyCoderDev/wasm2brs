@@ -180,7 +180,7 @@ interface BrsFunction {
   name: string;
 }
 const collectFunctions = (str: string) => {
-  const functionRegex = /^function.*?endfunction$/ugms;
+  const functionRegex = /^function ([a-zA-Z_][a-zA-Z0-9_]*).*?endfunction$/ugms;
   const functions: BrsFunction[] = [];
   for (;;) {
     const match = functionRegex.exec(str);
@@ -193,7 +193,20 @@ const collectFunctions = (str: string) => {
   return functions;
 };
 
-const functions = collectFunctions(newIdentifierText).map((brsFunc) => brsFunc.text);
+let unusedFunctionPass = newIdentifierText;
+for (;;) {
+  const brsFunctions = collectFunctions(unusedFunctionPass);
+  const usedIdentifiers = gatherIdentifierUsage(unusedFunctionPass);
+  const usedBrsFunctions = brsFunctions.filter((brsFunc) =>
+    usedIdentifiers[brsFunc.name] > 1 || usedIdentifiers[brsFunc.name] === undefined);
+  const numRemoved = brsFunctions.length - usedBrsFunctions.length;
+  if (numRemoved === 0) {
+    break;
+  }
+  unusedFunctionPass = usedBrsFunctions.map((brsFunc) => brsFunc.text).join("\n");
+}
+
+const functions = collectFunctions(unusedFunctionPass).map((brsFunc) => brsFunc.text);
 shuffleArray(functions);
 const finalText = functions.join("\n");
 
