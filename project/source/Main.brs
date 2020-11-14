@@ -14,7 +14,7 @@ sub Main()
     keyboard.observeField("text", m.port)
     m.output = scene.findNode("output")
 
-    m.wasi_print_line = print_line
+    m.external_print_line = print_line
 
     InitSpectest()
     RunTests()

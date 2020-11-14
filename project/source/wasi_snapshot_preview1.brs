@@ -72,7 +72,7 @@ Function wasi_snapshot_preview1_fd_write(fd As Integer, iovs_pCiovec As Integer,
         nwritten += buf_len_Size
         If fd = 1 Or fd = 2 Then ' stdout Or stderr
             str = StringFromBytes(m.wasi_memory, buf_pU8, buf_len_Size)
-            m.wasi_stdout = wasi_helper_print_consume_lines(fd, str, m.wasi_print_line)
+            m.wasi_stdout = wasi_helper_print_consume_lines(fd, str, m.external_print_line)
         Else
             Stop ' Need to handle writing to fds
         End If
