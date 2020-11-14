@@ -128,19 +128,22 @@ const textWithoutCommentsOrWhitespace = text.
   replace(/, /ugm, ",").
   replace(/End /ug, "End");
 
-const textWithoutFalseIdentifiers = textWithoutCommentsOrWhitespace.replace(/("[^"\n]*")|(&[hH][a-fA-F0-9]+)/ug, "");
-const identifierUsage: Record<string, number> = {};
-for (;;) {
-  const match = regex.exec(textWithoutFalseIdentifiers);
-  if (match) {
-    const lower = match[0].toLowerCase();
-    if (!reservedWords[lower]) {
-      identifierUsage[lower] = (identifierUsage[lower] || 0) + 1;
+const gatherIdentifierUsage = (str: string) => {
+  const textWithoutFalseIdentifiers = str.replace(/("[^"\n]*")|(&[hH][a-fA-F0-9]+)/ug, "");
+  const usage: Record<string, number> = {};
+  for (;;) {
+    const match = regex.exec(textWithoutFalseIdentifiers);
+    if (match) {
+      const lower = match[0].toLowerCase();
+      if (!reservedWords[lower]) {
+        usage[lower] = (usage[lower] || 0) + 1;
+      }
+    } else {
+      break;
     }
-  } else {
-    break;
   }
-}
+  return usage;
+};
 
 const rand = seedrandom("seed");
 const shuffleArray = (array: any[]) => {
@@ -150,6 +153,7 @@ const shuffleArray = (array: any[]) => {
   }
 };
 
+const identifierUsage = gatherIdentifierUsage(textWithoutCommentsOrWhitespace);
 const oldIdentifiers = Object.keys(identifierUsage);
 
 const newIdentifiers: string[] = [];
