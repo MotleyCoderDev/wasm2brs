@@ -12,8 +12,6 @@ const files = [
 
 const text = files.map((file) => fs.readFileSync(file, "utf8")).join("\n");
 
-const uniqueIdentifiers: Record<string, true> = {};
-
 const builtinLiterals = {
   false: true,
   invalid: true,
@@ -131,12 +129,13 @@ const textWithoutCommentsOrWhitespace = text.
   replace(/End /ug, "End");
 
 const textWithoutFalseIdentifiers = textWithoutCommentsOrWhitespace.replace(/("[^"\n]*")|(&[hH][a-fA-F0-9]+)/ug, "");
+const identifierUsage: Record<string, number> = {};
 for (;;) {
   const match = regex.exec(textWithoutFalseIdentifiers);
   if (match) {
     const lower = match[0].toLowerCase();
     if (!reservedWords[lower]) {
-      uniqueIdentifiers[lower] = true;
+      identifierUsage[lower] = (identifierUsage[lower] || 0) + 1;
     }
   } else {
     break;
@@ -151,7 +150,7 @@ const shuffleArray = (array: any[]) => {
   }
 };
 
-const oldIdentifiers = Object.keys(uniqueIdentifiers);
+const oldIdentifiers = Object.keys(identifierUsage);
 
 const newIdentifiers: string[] = [];
 for (let i = 0; i < oldIdentifiers.length; ++i) {
@@ -186,4 +185,4 @@ for (;;) {
 shuffleArray(functions);
 const finalText = functions.join("\n");
 
-fs.writeFileSync("/home/trevor/wasm2brs/testproject/source/test.min.brs", newIdentifierText, "utf8");
+fs.writeFileSync("/home/trevor/wasm2brs/testproject/source/test.min.brs", finalText, "utf8");
