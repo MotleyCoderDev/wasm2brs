@@ -7,6 +7,7 @@ import * as uuid from "uuid";
 import ADLER32 from "adler-32";
 import mkdirp from "mkdirp";
 import rimraf from "rimraf";
+import {minifyFiles} from "../minifier";
 
 interface WastArg {
   type: "i32" | "i64" | "f32" | "f64";
@@ -59,12 +60,15 @@ interface WastTest {
   commands: WastTestCommand[];
 }
 
-const root = path.join(__dirname, "../..");
+const root = path.join(__dirname, "../../..");
 const testOut = path.join(root, "test/out");
 const project = path.join(root, "project");
 const projectSource = path.join(project, "source");
 const testCasesBrs = path.join(projectSource, "test.cases.brs");
 const testWasmBrs = path.join(projectSource, "test.wasm.brs");
+const runtimeBrs = path.join(projectSource, "runtime.brs");
+const helpersBrs = path.join(projectSource, "helpers.brs");
+const wasiBrs = path.join(projectSource, "wasi_snapshot_preview1.brs");
 const testSuiteDir = path.join(root, "third_party/testsuite");
 
 const outputWastTests = async (wastFile: string, guid: string): Promise<boolean | string> => {
@@ -244,8 +248,17 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<boolean 
   }
   runTestsFunction += "End Function\n";
   testCasesFile += runTestsFunction;
-  fs.writeFileSync(testCasesBrs, testCasesFile);
-  fs.writeFileSync(testWasmBrs, testWasmFile);
+
+  if (process.env.MINIFY) {
+    const brsFiles = [runtimeBrs, helpersBrs, wasiBrs];
+    const brsContents = brsFiles.map((file) => fs.readFileSync(file, "utf8"));
+    const minified = minifyFiles([testCasesFile, testWasmFile, ...brsContents], ["RunTests"]);
+    fs.writeFileSync(testCasesBrs, minified);
+    fs.writeFileSync(testWasmBrs, "");
+  } else {
+    fs.writeFileSync(testCasesBrs, testCasesFile);
+    fs.writeFileSync(testWasmBrs, testWasmFile);
+  }
 
   fs.writeFileSync(path.join(project, "manifest"), `title=${guid}`);
   return true;
