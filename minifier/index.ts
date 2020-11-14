@@ -2,12 +2,12 @@ import fs from "fs";
 import seedrandom from "seedrandom";
 
 const files = [
-  "/home/trevor/wasm2brs/project/sourcex/test.wasm.brs",
-  "/home/trevor/wasm2brs/project/sourcex/test.cases.brs",
-  "/home/trevor/wasm2brs/project/sourcex/runtime.brs",
-  "/home/trevor/wasm2brs/project/sourcex/helpers.brs",
-  "/home/trevor/wasm2brs/project/sourcex/wasi_snapshot_preview1.brs",
-  "/home/trevor/wasm2brs/project/sourcex/spectest.brs"
+  "/home/trevor/wasm2brs/project/source/test.wasm.brs",
+  "/home/trevor/wasm2brs/project/source/test.cases.brs",
+  "/home/trevor/wasm2brs/project/source/runtime.brs",
+  "/home/trevor/wasm2brs/project/source/helpers.brs",
+  "/home/trevor/wasm2brs/project/source/wasi_snapshot_preview1.brs",
+  "/home/trevor/wasm2brs/project/source/spectest.brs"
 ];
 
 const text = files.map((file) => fs.readFileSync(file, "utf8")).join("\n");
@@ -186,4 +186,4 @@ for (;;) {
 shuffleArray(functions);
 const finalText = functions.join("\n");
 
-fs.writeFileSync("/home/trevor/wasm2brs/project/source/test.min.brs", finalText, "utf8");
+fs.writeFileSync("/home/trevor/wasm2brs/testproject/source/test.min.brs", newIdentifierText, "utf8");
