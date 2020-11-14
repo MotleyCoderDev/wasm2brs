@@ -175,17 +175,25 @@ for (const reservedWord of Object.keys(reservedWords)) {
   newIdentifierText = newIdentifierText.replace(reservedRegex, reservedWord.toLowerCase());
 }
 
-const functionRegex = /^function.*?endfunction$/ugms;
-const functions: string[] = [];
-for (;;) {
-  const match = functionRegex.exec(newIdentifierText);
-  if (match) {
-    functions.push(match[0]);
-  } else {
-    break;
-  }
+interface BrsFunction {
+  text: string;
+  name: string;
 }
+const collectFunctions = (str: string) => {
+  const functionRegex = /^function.*?endfunction$/ugms;
+  const functions: BrsFunction[] = [];
+  for (;;) {
+    const match = functionRegex.exec(str);
+    if (match) {
+      functions.push({text: match[0], name: match[1]});
+    } else {
+      break;
+    }
+  }
+  return functions;
+};
 
+const functions = collectFunctions(newIdentifierText).map((brsFunc) => brsFunc.text);
 shuffleArray(functions);
 const finalText = functions.join("\n");
 
