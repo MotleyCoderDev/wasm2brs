@@ -1,7 +1,7 @@
 import fs from "fs";
 import seedrandom from "seedrandom";
 
-export const minifyFiles = (filesContents: string[], keepIdentifiers?: string[]): string => {
+export const minifyFiles = (debug: boolean, filesContents: string[], keepIdentifiers?: string[]): string => {
   const text = filesContents.join("\n");
 
   const builtinLiterals = {
@@ -161,10 +161,12 @@ export const minifyFiles = (filesContents: string[], keepIdentifiers?: string[])
 
   const newIdentifiers: string[] = [];
   for (let i = 0; i < oldIdentifiers.length; ++i) {
-    newIdentifiers.push(`a${i}`);
+    newIdentifiers.push(`a${i}${debug ? `_${oldIdentifiers[i]}` : ""}`);
   }
 
-  shuffleArray(newIdentifiers);
+  if (!debug) {
+    shuffleArray(newIdentifiers);
+  }
 
   let newIdentifierText = textWithoutCommentsOrWhitespace;
   for (let i = 0; i < oldIdentifiers.length; ++i) {
@@ -200,8 +202,14 @@ export const minifyFiles = (filesContents: string[], keepIdentifiers?: string[])
   for (;;) {
     const brsFunctions = collectFunctions(unusedFunctionPass);
     const usedIdentifiers = gatherIdentifierUsage(unusedFunctionPass);
-    const usedBrsFunctions = brsFunctions.filter((brsFunc) =>
-      usedIdentifiers[brsFunc.name] > 1 || usedIdentifiers[brsFunc.name] === undefined);
+    const usedBrsFunctions: BrsFunction[] = [];
+    for (const brsFunc of brsFunctions) {
+      if (usedIdentifiers[brsFunc.name] > 1 || usedIdentifiers[brsFunc.name] === undefined) {
+        usedBrsFunctions.push(brsFunc);
+      } else if (debug) {
+        console.log("Unused function:", brsFunc.name);
+      }
+    }
     const numRemoved = brsFunctions.length - usedBrsFunctions.length;
     if (numRemoved === 0) {
       break;
@@ -218,6 +226,6 @@ export const minifyFiles = (filesContents: string[], keepIdentifiers?: string[])
 
 if (process.env.INPUT && process.env.OUTPUT) {
   const filesContents = process.env.INPUT.split(",").map((file) => fs.readFileSync(file, "utf8"));
-  const result = minifyFiles(filesContents, (process.env.KEEP || "").split(","));
+  const result = minifyFiles(Boolean(process.env.DEBUG), filesContents, (process.env.KEEP || "").split(","));
   fs.writeFileSync(process.env.OUTPUT, result, "utf8");
 }
