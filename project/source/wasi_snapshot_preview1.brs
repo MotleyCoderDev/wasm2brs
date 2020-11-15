@@ -31,6 +31,14 @@ Function wasi_helper_snapshot_preview1_init(memory as Object, executableFile as 
 
     ' Indexed by fds stdin(0) / stdout(1) / stderr(2)
     m.wasi_fds = [CreateObject("roByteArray"), CreateObject("roByteArray"), CreateObject("roByteArray")]
+
+    If m.wasi_config.DoesExist("stdin") Then
+        If Type(m.wasi_config.stdin) = "roString" Then
+            m.wasi_fds[0] = StringToBytes(m.wasi_config.stdin)
+        Else
+            m.wasi_fds[0] = m.wasi_config.stdin
+        End If
+    End If
 End Function
 
 Function wasi_snapshot_preview1_proc_exit(rval As Integer) As Void
@@ -76,6 +84,30 @@ Function wasi_snapshot_preview1_fd_write(fd As Integer, iovs_pCiovec As Integer,
         iovs_pCiovec += 8
     End For
     I32Store(m.wasi_memory, nwritten_pSize, nwritten)
+    Return 0 ' success
+End Function
+
+Function wasi_snapshot_preview1_fd_read(fd As Integer, iovs_pCiovec As Integer, iovs_len As Integer, nread_pSize As Integer) As Integer
+    If Not (fd = 0) Then ' Not stdin
+        Return 8 ' badf
+    End If
+
+    nread = 0
+    For i = 0 To iovs_len - 1
+        buf_pU8 = I32Load(m.wasi_memory, iovs_pCiovec)
+        buf_len_Size = I32Load(m.wasi_memory, iovs_pCiovec + 4)
+        If fd = 0 Then ' stdin
+            existingSize = m.wasi_fds[0].Count()
+            copySize = Min(buf_len_Size, existingSize)
+            MemoryCopy(m.wasi_memory, buf_pU8, m.wasi_fds[0], 0, copySize)
+            m.wasi_fds[0] = Slice(m.wasi_fds[0], copySize, existingSize - copySize)
+            nread += copySize
+        Else
+            Stop ' Need to handle reading from fds
+        End If
+        iovs_pCiovec += 8
+    End For
+    I32Store(m.wasi_memory, nread_pSize, nread)
     Return 0 ' success
 End Function
 
