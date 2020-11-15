@@ -68,6 +68,7 @@ const testCasesBrs = path.join(projectSource, "test.cases.brs");
 const testWasmBrs = path.join(projectSource, "test.wasm.brs");
 const runtimeBrs = path.join(projectSource, "runtime.brs");
 const helpersBrs = path.join(projectSource, "helpers.brs");
+const spectestBrs = path.join(projectSource, "spectest.brs");
 const wasiBrs = path.join(projectSource, "wasi_snapshot_preview1.brs");
 const testSuiteDir = path.join(root, "third_party/testsuite");
 
@@ -250,10 +251,14 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<boolean 
   testCasesFile += runTestsFunction;
 
   if (process.env.MINIFY) {
-    const brsFiles = [runtimeBrs, helpersBrs, wasiBrs];
+    const brsFiles = [runtimeBrs, helpersBrs, spectestBrs, wasiBrs];
     const brsContents = brsFiles.map((file) => fs.readFileSync(file, "utf8"));
-    const minified = minifyFiles([testCasesFile, testWasmFile, ...brsContents], ["RunTests"]);
-    fs.writeFileSync(testCasesBrs, minified);
+    const minified = minifyFiles(
+      false,
+      [testCasesFile, testWasmFile, ...brsContents],
+      ["RunTests", "InitSpectest"]
+    );
+    fs.writeFileSync(testCasesBrs, minified.replace(/initspectest/gu, "InitSpectestMinified"));
     fs.writeFileSync(testWasmBrs, "");
   } else {
     fs.writeFileSync(testCasesBrs, testCasesFile);
