@@ -50,7 +50,9 @@ Function AssertEquals(a, b)
         aStr = a.ToStr()
         bStr = b.ToStr()
         If aStr <> bStr Then
-            If type(a) = "Float" Or type(a) = "Double" Then
+            ' The minifier lowercases the strings
+            typeA = LCase(type(a))
+            If typeA = "float" Or typeA = "double" Then
                 If F64Abs(a - b) > 1e-43 Stop
             Else
                 Stop
