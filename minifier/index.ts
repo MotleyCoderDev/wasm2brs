@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 import fs from "fs";
 import seedrandom from "seedrandom";
 
@@ -74,7 +75,6 @@ export const minifyFiles = (debug: boolean, filesContents: string[], keepIdentif
     getinterface: true,
     getlastruncompileerror: true,
     getlastrunruntimeerror: true,
-    // eslint-disable-next-line camelcase
     line_num: true,
     log: true,
     instr: true,
@@ -100,8 +100,8 @@ export const minifyFiles = (debug: boolean, filesContents: string[], keepIdentif
   };
 
   const ourMembers = {
-    // eslint-disable-next-line camelcase
-    external_print_line: true
+    external_print_line: true,
+    external_output: true
   };
 
   const reservedWords = {
