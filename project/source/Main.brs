@@ -16,11 +16,10 @@ sub Main()
 
     m.external_print_line = print_line
 
-    If InitSpectestMinified <> Invalid Then
+    Try
         InitSpectestMinified()
-    Else
-        InitSpectest()
-    End If
+    Catch e
+    End Try
     RunTests()
 
     print "------ Completed ------"
