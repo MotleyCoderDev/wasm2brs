@@ -1,18 +1,7 @@
 
-Function wasi_helper_print_consume_lines(fd as Integer, added as String, lineCallback as Dynamic)
-    str = m.wasi_outputs[fd] + added
-    While True
-        newlineIndex = Instr(1, str, Chr(10))
-        If newlineIndex <> 0 Then
-            line = Left(str, newlineIndex - 1)
-            Print line
-            If lineCallback <> Invalid Then lineCallback(fd, line)
-            str = Mid(str, newlineIndex + 1)
-        Else
-            Exit While
-        End If
-    End While
-    m.wasi_outputs[fd] = str
+Function wasi_helper_output(fd as Integer, bytes as Object) as Void
+    m.wasi_fds[fd].Append(bytes)
+    m.wasi_fds[fd] = PrintAndConsumeLines(fd, m.wasi_fds[fd], m.external_print_line)
 End Function
 
 Function wasi_helper_snapshot_preview1_init(memory as Object, executableFile as String, config as Object)
@@ -36,8 +25,12 @@ Function wasi_helper_snapshot_preview1_init(memory as Object, executableFile as 
 
     m.wasi_config.args.Unshift(executableFile)
 
-    ' Indexed by the stdout(1) / stderr(2) fd
-    m.wasi_outputs = [invalid, "", ""]
+    If Not m.DoesExist("external_output") Then
+        m.external_output = wasi_helper_output
+    End If
+
+    ' Indexed by fds stdin(0) / stdout(1) / stderr(2)
+    m.wasi_fds = [CreateObject("roByteArray"), CreateObject("roByteArray"), CreateObject("roByteArray")]
 End Function
 
 Function wasi_snapshot_preview1_proc_exit(rval As Integer) As Void
@@ -65,14 +58,18 @@ Function wasi_snapshot_preview1_environ_get(argv_ppU8 As Integer, argv_buf_pU8 A
 End Function
 
 Function wasi_snapshot_preview1_fd_write(fd As Integer, iovs_pCiovec As Integer, iovs_len As Integer, nwritten_pSize As Integer) As Integer
+    If Not (fd = 1 Or fd = 2) Then ' Not stdout Or stderr
+        Return 8 ' badf
+    End If
+
     nwritten = 0
     For i = 0 To iovs_len - 1
         buf_pU8 = I32Load(m.wasi_memory, iovs_pCiovec)
         buf_len_Size = I32Load(m.wasi_memory, iovs_pCiovec + 4)
         nwritten += buf_len_Size
+        bytes = Slice(m.wasi_memory, buf_pU8, buf_len_Size)
         If fd = 1 Or fd = 2 Then ' stdout Or stderr
-            str = StringFromBytes(m.wasi_memory, buf_pU8, buf_len_Size)
-            m.wasi_stdout = wasi_helper_print_consume_lines(fd, str, m.external_print_line)
+            m.external_output(fd, bytes)
         Else
             Stop ' Need to handle writing to fds
         End If

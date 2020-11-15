@@ -12,11 +12,18 @@ Function StringToBytesNullTerminated(str as String) as Object
 End Function
 
 Function StringFromBytes(memory as Object, offset as Integer, length as Integer) as Object
-    bytes = CreateObject("roByteArray")
-    ' This is just to resize the array (not a null terminator)
-    bytes[length - 1] = 0
-    MemoryCopy(bytes, 0, memory, offset, length)
-    Return bytes.ToAsciiString()
+    Return Slice(memory, offset, length).ToAsciiString()
+End Function
+
+Function Slice(bytes as Object, offset as Integer, length as Integer) as Object
+    part = CreateObject("roByteArray")
+    MemoryCopy(part, 0, bytes, offset, length)
+    Return part
+End Function
+
+Function OptimizedSlice(bytes as Object, offset as Integer, length as Integer) as Object
+    If offset = 0 And length = bytes.Count() Return bytes
+    Return Slice(bytes, offset, length)
 End Function
 
 Function MemoryCopyAll(toBytes as Object, toOffset as Integer, fromBytes as Object) as Integer
@@ -40,4 +47,17 @@ Function StringArrayWriteMemory(memory as Object, strings as Object, argv_ppU8 A
         argv_ppU8 += 4
         argv_buf_pU8 += MemoryCopyAll(memory, argv_buf_pU8, StringToBytesNullTerminated(str))
     End For
+End Function
+
+Function PrintAndConsumeLines(fd as Integer, bytes as Object, lineCallback as Dynamic) as Object
+    start = 0
+    For i = 0 To bytes.Count() - 1
+        If bytes[i] = 10 Then
+            line = StringFromBytes(bytes, start, i - start)
+            Print line
+            If lineCallback <> Invalid Then lineCallback(fd, line)
+            start = i + 1
+        End If
+    End For
+    Return OptimizedSlice(bytes, start, bytes.Count() - start)
 End Function
