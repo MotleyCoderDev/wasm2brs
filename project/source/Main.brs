@@ -1,4 +1,4 @@
-Function print_line(fd as Integer, str as String) as Void
+Function custom_print_line(fd as Integer, str as String) as Void
     m.output.text += str + Chr(10)
 End Function
 
@@ -19,7 +19,7 @@ sub Main()
 
     m.output = scene.findNode("output")
 
-    m.external_print_line = print_line
+    m.external_print_line = custom_print_line
 
     Try
         InitSpectestMinified()

@@ -22,14 +22,24 @@ make -j
 # WASI limitations
 - Environment variables and command line arguments must be ASCII strings
 
-# Hooks
-`m.external_print_line`:
-  - Signature: `Function external_print_line(fd as Integer, str as String) as Void`
-  - Will be called every time a line is parsed by stdout or stderr.
-  - Will *NOT* be called if the user provides their own `m.external_output`, however the helper function `PrintAndConsumeLines` can emulate the same behavior.
+# API
+`Function external_append_stdin(bytesOrString as Dynamic) as Void`
+- Append an `roByteArray` or `String` to stdin
 
-`m.external_output`:
-  - Signature: `Function external_output(fd as Integer, bytes as Object) as Void`
-  - Will be called when raw bytes are written to stdout or stderr.
-  - Useful if the output of a program is binary data instead of text, or if special parsing is needed.
-  - Overriding this function will prevent `m.external_print_line` from being called, however the helper function `PrintAndConsumeLines` can emulate the same behavior.
+# Hooks
+`m.external_print_line = custom_print_line`:
+- Signature: `Function custom_print_line(fd as Integer, str as String) as Void`
+- Will be called every time a line is parsed by stdout or stderr.
+- Will *NOT* be called if the user provides their own `m.external_output`, however the helper function `PrintAndConsumeLines` can emulate the same behavior.
+
+`m.external_output = custom_output`:
+- Signature: `Function custom_output(fd as Integer, bytes as Object) as Void`
+- Will be called when raw bytes are written to stdout (fd = 1) or stderr (fd = 2).
+- Useful if the output of a program is binary data instead of text, or if special parsing is needed.
+- Overriding this function will prevent `m.external_print_line` from being called, however the helper function `PrintAndConsumeLines` can emulate the same behavior.
+
+`m.external_wait_for_stdin = custom_wait_for_stdin`:
+- Signature: `Function custom_wait_for_stdin() as Void`
+- Called when an attempt was made to read from stdin, but there was no bytes available.
+- During this callback, you should invoke `external_append_stdin`.
+- When the callback completes, the program will continue its attempt to read from stdin.
