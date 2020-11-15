@@ -127,8 +127,8 @@ export const minifyFiles = (filesContents: string[], keepIdentifiers?: string[])
     replace(/  +/ugm, " ").
     replace(/ ([^a-zA-Z0-9]{1,3}) /ugm, "$1").
     replace(/, /ugm, ",").
-    replace(/([^a-zA-Z0-9]) ([a-zA-Z_0-9])/ugm, "$1$2").
-    replace(/([a-zA-Z_0-9]) ([^a-zA-Z0-9&])/ugm, "$1$2").
+    replace(/([^a-zA-Z0-9_]) ([a-zA-Z_0-9])/ugm, "$1$2").
+    replace(/([a-zA-Z_0-9]) ([^a-zA-Z0-9_&])/ugm, "$1$2").
     replace(/End /ug, "End");
 
   const gatherIdentifierUsage = (str: string) => {
