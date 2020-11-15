@@ -71,3 +71,8 @@ Function Max(a as Dynamic, b as Dynamic) as Dynamic
     If a > b Return a
     Return b
 End Function
+
+Function IsString(value as Dynamic) as Boolean
+    runtimeType = LCase(Type(value))
+    Return runtimeType = "string" Or runtimeType = "rostring"
+End Function

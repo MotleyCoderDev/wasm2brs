@@ -5,11 +5,10 @@ Function wasi_helper_output(fd as Integer, bytes as Object) as Void
 End Function
 
 Function external_append_stdin(bytesOrString as Dynamic) as Void
-    If Type(bytesOrString) = "roString" Then
-        m.wasi_fds[0].Append(StringToBytes(bytesOrString))
-    Else
-        m.wasi_fds[0].Append(bytesOrString)
+    If IsString(bytesOrString) Then
+        bytesOrString = StringToBytes(bytesOrString)
     End If
+    m.wasi_fds[0].Append(bytesOrString)
 End Function
 
 Function wasi_helper_snapshot_preview1_init(memory as Object, executableFile as String, config as Object)
