@@ -80,7 +80,10 @@ export const minifyFiles = (filesContents: string[], keepIdentifiers?: string[])
     instr: true,
     left: true,
     mid: true,
-    chr: true
+    chr: true,
+    sqr: true,
+    abs: true,
+    lcase: true
   };
 
   const builtinMembers = {
