@@ -1,4 +1,4 @@
-Function print_line(fd as Integer, str as String)
+Function print_line(fd as Integer, str as String) as Void
     m.output.text += str + Chr(10)
 End Function
 
