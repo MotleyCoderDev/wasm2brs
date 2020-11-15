@@ -20,6 +20,7 @@
 #include <cstdlib>
 
 #include "src/apply-names.h"
+#include "src/wast-parser.h"
 #include "src/binary-reader.h"
 #include "src/binary-reader-ir.h"
 #include "src/error-formatter.h"
@@ -108,47 +109,59 @@ int ProgramMain(int argc, char** argv) {
   result = ReadFile(s_infile.c_str(), &file_data);
   if (Succeeded(result)) {
     Errors errors;
-    Module module;
-    const bool kStopOnFirstError = true;
-    const bool kFailOnCustomSectionError = true;
-    ReadBinaryOptions options(s_features, s_log_stream.get(),
-                              s_read_debug_names, kStopOnFirstError,
-                              kFailOnCustomSectionError);
-    result = ReadBinaryIr(s_infile.c_str(), file_data.data(), file_data.size(),
-                          options, &errors, &module);
+    std::unique_ptr<wabt::Module> module;
+    Location::Type location_type = Location::Type::Text;
+    if (file_data.front() == '(') {
+      std::unique_ptr<WastLexer> lexer = WastLexer::CreateBufferLexer(
+          s_infile, file_data.data(), file_data.size());
+      WastParseOptions options(s_features);
+      options.debug_parsing = s_read_debug_names;
+      result = ParseWatModule(lexer.get(), &module, &errors, &options);
+    } else {
+      location_type = Location::Type::Binary;
+      module = std::make_unique<wabt::Module>();
+      const bool kStopOnFirstError = true;
+      const bool kFailOnCustomSectionError = true;
+      ReadBinaryOptions options(s_features, s_log_stream.get(),
+                                s_read_debug_names, kStopOnFirstError,
+                                kFailOnCustomSectionError);
+      result = ReadBinaryIr(s_infile.c_str(), file_data.data(), file_data.size(),
+                            options, &errors, module.get());
+    }
+
     if (Succeeded(result)) {
       if (Succeeded(result)) {
         ValidateOptions options(s_features);
-        result = ValidateModule(&module, &errors, options);
-        result |= GenerateNames(&module);
+        result = ValidateModule(module.get(), &errors, options);
+        result |= GenerateNames(module.get());
       }
 
       if (Succeeded(result)) {
         /* TODO(binji): This shouldn't fail; if a name can't be applied
          * (because the index is invalid, say) it should just be skipped. */
-        Result dummy_result = ApplyNames(&module);
+        Result dummy_result = ApplyNames(module.get());
         WABT_USE(dummy_result);
       }
 
       if (Succeeded(result)) {
         if (s_write_c_options.name_prefix.empty()) {
-          if (module.name.empty()) {
+          if (module->name.empty()) {
             s_write_c_options.name_prefix = "w2b";
           } else {
-            s_write_c_options.name_prefix = module.name;
+            s_write_c_options.name_prefix = module->name;
           }
         }
         if (!s_outfile.empty()) {
           FileStream brs_stream(s_outfile.c_str());
-          result = WriteBrs(&brs_stream, &module,
+          result = WriteBrs(&brs_stream, module.get(),
                           s_write_c_options);
         } else {
           FileStream stream(stdout);
-          result = WriteBrs(&stream, &module, s_write_c_options);
+          result = WriteBrs(&stream, module.get(), s_write_c_options);
         }
       }
     }
-    FormatErrorsToFile(errors, Location::Type::Binary);
+    FormatErrorsToFile(errors, location_type);
   }
   return result != Result::Ok;
 }
