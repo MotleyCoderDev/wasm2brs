@@ -140,3 +140,26 @@ End Function
 Function wasi_snapshot_preview1_fd_prestat_dir_name(fd As Integer, path_pU8 As Integer, path_len_Size As Integer) As Integer
     Return 52 ' nosys
 End Function
+
+
+Function wasi_unstable_fd_prestat_get(p0 As Integer, p1 As Integer) As Integer
+    Return wasi_snapshot_preview1_fd_prestat_get(p0, p1)
+End Function
+Function wasi_unstable_fd_prestat_dir_name(p0 As Integer, p1 As Integer, p2 As Integer) As Integer
+    Return wasi_snapshot_preview1_fd_prestat_dir_name(p0, p1, p2)
+End Function
+Function wasi_unstable_proc_exit(p0 As Integer) As Void
+    wasi_snapshot_preview1_proc_exit(p0)
+End Function
+Function wasi_unstable_fd_fdstat_get(p0 As Integer, p1 As Integer) As Integer
+    Return 8 ' badf
+End Function
+Function wasi_unstable_fd_close(p0 As Integer) As Integer
+    Return wasi_snapshot_preview1_fd_close(p0)
+End Function
+Function wasi_unstable_fd_seek(p0 As Integer, p1 As LongInteger, p2 As Integer, p3 As Integer) As Integer
+    Return 8 ' badf
+End Function
+Function wasi_unstable_fd_write(p0 As Integer, p1 As Integer, p2 As Integer, p3 As Integer) As Integer
+    Return wasi_snapshot_preview1_fd_write(p0, p1, p2, p3)
+End Function

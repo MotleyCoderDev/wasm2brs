@@ -69,7 +69,7 @@ const testWasmBrs = path.join(projectSource, "test.wasm.brs");
 const runtimeBrs = path.join(projectSource, "runtime.brs");
 const helpersBrs = path.join(projectSource, "helpers.brs");
 const spectestBrs = path.join(projectSource, "spectest.brs");
-const wasiBrs = path.join(projectSource, "wasi_snapshot_preview1.brs");
+const wasiBrs = path.join(projectSource, "wasi.brs");
 const testSuiteDir = path.join(root, "third_party/testsuite");
 
 const outputWastTests = async (wastFile: string, guid: string): Promise<boolean | string> => {
