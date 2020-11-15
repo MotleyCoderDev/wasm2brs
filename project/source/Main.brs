@@ -9,9 +9,14 @@ sub Main()
     sgScreen.SetMessagePort(m.port)
     scene = sgScreen.CreateScene("main")
     sgScreen.show()
+
     keyboard = scene.findNode("keyboard")
     keyboard.setFocus(True)
     keyboard.observeField("text", m.port)
+
+    enter = scene.findNode("enter")
+    enter.observeField("buttonSelected", m.port)
+
     m.output = scene.findNode("output")
 
     m.external_print_line = print_line
@@ -32,7 +37,11 @@ sub Main()
             If msgType = "roSGScreenEvent" Then
                 If msg.isScreenClosed() Return
             Else If msgType = "roSGNodeEvent" Then
-                Print msg.getData()
+                If msg.getNode() = "enter" Then
+                    external_append_stdin(keyboard.text)
+                    keyboard.text = ""
+                Else
+                End If
             End If
         End If
     End While

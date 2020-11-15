@@ -99,6 +99,10 @@ export const minifyFiles = (debug: boolean, filesContents: string[], keepIdentif
     toasciistring: true
   };
 
+  const ourGlobals = {
+    external_append_stdin: true
+  };
+
   const ourMembers = {
     external_print_line: true,
     external_output: true
@@ -110,6 +114,7 @@ export const minifyFiles = (debug: boolean, filesContents: string[], keepIdentif
     ...builtinTypes,
     ...builtinGlobals,
     ...builtinMembers,
+    ...ourGlobals,
     ...ourMembers
   };
 

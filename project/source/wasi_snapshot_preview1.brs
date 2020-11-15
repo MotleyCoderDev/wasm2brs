@@ -4,6 +4,14 @@ Function wasi_helper_output(fd as Integer, bytes as Object) as Void
     m.wasi_fds[fd] = PrintAndConsumeLines(fd, m.wasi_fds[fd], m.external_print_line)
 End Function
 
+Function external_append_stdin(bytesOrString as Dynamic) as Void
+    If Type(bytesOrString) = "roString" Then
+        m.wasi_fds[0].Append(StringToBytes(bytesOrString))
+    Else
+        m.wasi_fds[0].Append(bytesOrString)
+    End If
+End Function
+
 Function wasi_helper_snapshot_preview1_init(memory as Object, executableFile as String, config as Object)
     m.wasi_memory = memory
     m.wasi_config = config
@@ -33,11 +41,7 @@ Function wasi_helper_snapshot_preview1_init(memory as Object, executableFile as 
     m.wasi_fds = [CreateObject("roByteArray"), CreateObject("roByteArray"), CreateObject("roByteArray")]
 
     If m.wasi_config.DoesExist("stdin") Then
-        If Type(m.wasi_config.stdin) = "roString" Then
-            m.wasi_fds[0] = StringToBytes(m.wasi_config.stdin)
-        Else
-            m.wasi_fds[0] = m.wasi_config.stdin
-        End If
+        external_append_stdin(m.wasi_config.stdin)
     End If
 End Function
 
