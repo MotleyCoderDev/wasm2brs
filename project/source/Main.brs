@@ -1,5 +1,9 @@
 Function custom_print_line(fd as Integer, str as String) as Void
-    m.output.text += str + Chr(10)
+    m.outputLines.Push(str)
+    If m.outputLines.Count() > m.output.maxLines Then
+        m.outputLines.Shift()
+    End If
+    m.output.text = m.outputLines.Join(Chr(10))
 End Function
 
 Function WaitForEvent() as Boolean
@@ -39,6 +43,8 @@ sub Main()
     scene.findNode("enter").observeField("buttonSelected", m.port)
 
     m.output = scene.findNode("output")
+    m.outputMaxLines = m.output.maxLines
+    m.outputLines = []
 
     m.external_print_line = custom_print_line
     m.external_wait_for_stdin = custom_wait_for_stdin

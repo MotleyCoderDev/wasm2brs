@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component name="main" extends="Scene" initialFocus="keyboard">
     <children>
-        <Label id="output" wrap="true" numLines="10" maxLines="10" width="1216" translation="[32,32]"/>
-        <Keyboard id="keyboard" translation="[190,280]"/>
-        <Button id="enter" showFocusFootprint="true" minWidth="923" text="Enter (Submit line to stdin)" translation="[198,580]"/>
+        <Label id="output" wrap="true" numLines="10" maxLines="8" font="font:SmallSystemFont" width="1216" translation="[32,32]"/>
+        <Keyboard id="keyboard" translation="[190,300]"/>
+        <Button id="enter" showFocusFootprint="true" minWidth="923" text="Enter (Submit line to stdin)" translation="[198,600]"/>
     </children>
     <script type="text/brightscript" uri="pkg:/components/scene.brs"/>
 </component>
