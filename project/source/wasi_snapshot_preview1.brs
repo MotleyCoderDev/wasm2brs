@@ -101,6 +101,9 @@ Function wasi_snapshot_preview1_fd_read(fd As Integer, iovs_pCiovec As Integer, 
         buf_pU8 = I32Load(m.wasi_memory, iovs_pCiovec)
         buf_len_Size = I32Load(m.wasi_memory, iovs_pCiovec + 4)
         If fd = 0 Then ' stdin
+            If m.wasi_fds[0].Count() = 0 And m.external_wait_for_stdin <> Invalid Then
+                m.external_wait_for_stdin()
+            End If
             existingSize = m.wasi_fds[0].Count()
             copySize = Min(buf_len_Size, existingSize)
             MemoryCopy(m.wasi_memory, buf_pU8, m.wasi_fds[0], 0, copySize)

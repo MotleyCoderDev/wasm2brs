@@ -105,7 +105,8 @@ export const minifyFiles = (debug: boolean, filesContents: string[], keepIdentif
 
   const ourMembers = {
     external_print_line: true,
-    external_output: true
+    external_output: true,
+    external_wait_for_stdin: true
   };
 
   const reservedWords = {
