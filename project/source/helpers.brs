@@ -61,3 +61,13 @@ Function PrintAndConsumeLines(fd as Integer, bytes as Object, lineCallback as Dy
     End For
     Return OptimizedSlice(bytes, start, bytes.Count() - start)
 End Function
+
+Function Min(a as Dynamic, b as Dynamic) as Dynamic
+    If a < b Return a
+    Return b
+End Function
+
+Function Max(a as Dynamic, b as Dynamic) as Dynamic
+    If a > b Return a
+    Return b
+End Function
