@@ -137,6 +137,8 @@ export const minifyFiles = (debug: boolean, filesContents: string[], keepIdentif
     replace(/([a-zA-Z_0-9]) ([^a-zA-Z0-9_&])/ugm, "$1$2").
     replace(/End /ug, "End");
 
+  console.log("Removed Whitespace");
+
   const gatherIdentifierUsage = (str: string) => {
     const textWithoutFalseIdentifiers = str.replace(/("[^"\n]*")|(&[hH][a-fA-F0-9]+)/ug, "");
     const usage: Record<string, number> = {};
@@ -174,17 +176,23 @@ export const minifyFiles = (debug: boolean, filesContents: string[], keepIdentif
     shuffleArray(newIdentifiers);
   }
 
+  console.log("Remapped Identifiers");
+
   let newIdentifierText = textWithoutCommentsOrWhitespace;
   for (let i = 0; i < oldIdentifiers.length; ++i) {
     const identifierRegex = new RegExp(`\\b${oldIdentifiers[i]}\\b`, "gui");
     newIdentifierText = newIdentifierText.replace(identifierRegex, newIdentifiers[i]);
   }
 
+  console.log("Replaced Identifiers");
+
   // Lowercase all reserved words
   for (const reservedWord of Object.keys(reservedWords)) {
     const reservedRegex = new RegExp(`\\b${reservedWord}\\b`, "gui");
     newIdentifierText = newIdentifierText.replace(reservedRegex, reservedWord.toLowerCase());
   }
+
+  console.log("Lowercased Reserved Words");
 
   interface BrsFunction {
     text: string;
@@ -222,6 +230,8 @@ export const minifyFiles = (debug: boolean, filesContents: string[], keepIdentif
     }
     unusedFunctionPass = usedBrsFunctions.map((brsFunc) => brsFunc.text).join("\n");
   }
+
+  console.log("Removed All Unused Functions");
 
   const functions = collectFunctions(unusedFunctionPass).map((brsFunc) => brsFunc.text);
   shuffleArray(functions);
