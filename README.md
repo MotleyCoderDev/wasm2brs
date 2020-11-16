@@ -24,6 +24,7 @@ make -j
   - BrightScript compilation becomes exponentially slower with the number of labels in a function (beyond 10000 will hard lock the device)
 - BrightScript files cannot exceed 2MB and must be broken up
   - Results in `Error loading file. (compile error &hb9) in pkg:/source/test.brs(NaN)`
+- Long jumps and exceptions are not yet supported (header `setjmp.h` does not exist)
 
 # WASI limitations
 - Environment variables, command line arguments, and stdout/stderr/stdin strings only currently support ASCII strings
