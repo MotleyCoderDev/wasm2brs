@@ -23,6 +23,7 @@ make -j
   - A function can actually have more than 256 labels, but any attempts to goto labels beyond 256 will fail with the above error
   - BrightScript compilation becomes exponentially slower with the number of labels in a function (beyond 10000 will hard lock the device)
 - BrightScript files cannot exceed 2MB and must be broken up
+  - Results in `Error loading file. (compile error &hb9) in pkg:/source/test.brs(NaN)`
 
 # WASI limitations
 - Environment variables, command line arguments, and stdout/stderr/stdin strings only currently support ASCII strings
