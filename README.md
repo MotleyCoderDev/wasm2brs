@@ -9,18 +9,23 @@ make -j
 ```
 
 # WASM / Brightscript limitations
-- Maximum number of arguments to a function is 32 (BrightScript limitation)
-- Stack depth is dependent upon BrightScript's limitations and may be less than WASM
+- Maximum number of arguments to a function is 32 due to BrightScript
+- Stack depth is dependent upon BrightScript's limitations and may be less than WASM standards
 - Floating point math is approximate (where possible we use the correct algorithm, but it may not perfectly match processors)
 - NaN value bit patterns are not represented
-- Loading and storing (or reinterpreting) f32/f64 to i32/i64 and back may lose precision / bits
-- Any float with an exponent of 0 (denormalized) is treated as 0 when loaded
+- Loading and storing (or reinterpreting) Float/Double (also called f32/f64) to i32/i64 and back may lose precision / bits
+- Any Float/Double with an exponent of 0 (denormalized) is treated as 0 when loaded
 - BrightScript has an internal limit on function size and number of local variables (around 254)
   - Results in `Variable table size exceeded. (compile error &hb0)`
   - Compiling with optimziations often alleviates the function size limit
+- BrightScript has an internal limit of 256 goto labels
+  - Results in `Label/Line Not Found. (compile error &h0e) in pkg:/source/test.brs(NaN)'label256'`
+  - A function can actually have more than 256 labels, but any attempts to goto labels beyond 256 will fail with the above error
+  - BrightScript compilation becomes exponentially slower with the number of labels in a function (beyond 10000 will hard lock the device)
+- BrightScript files cannot exceed 2MB and must be broken up
 
 # WASI limitations
-- Environment variables and command line arguments must be ASCII strings
+- Environment variables, command line arguments, and stdout/stderr/stdin strings only currently support ASCII strings
 
 # API
 `Function external_append_stdin(bytesOrString as Dynamic) as Void`
