@@ -202,6 +202,7 @@ class CWriter {
   void Write(const Var&);
   void Write(const GotoLabel&);
   void Write(const LabelDecl&);
+  void WriteLabelRaw(const LabelDecl&);
   void Write(const GlobalVar&);
   void Write(const StackVar&);
   void Write(const ResultType&);
@@ -256,6 +257,7 @@ class CWriter {
   WriteCOptions options_;
   const Module* module_ = nullptr;
   const Func* func_ = nullptr;
+  size_t label_count_ = 0;
   Stream* stream_ = nullptr;
   MemoryStream func_stream_;
   Stream* brs_stream_ = nullptr;
@@ -574,7 +576,12 @@ void CWriter::Write(const GotoLabel& goto_label) {
 
 void CWriter::Write(const LabelDecl& label) {
   if (IsTopLabelUsed())
-    Write(label.name, ":", Newline());
+    WriteLabelRaw(label);
+}
+
+void CWriter::WriteLabelRaw(const LabelDecl& label) {
+  Write(label.name, ":", Newline());
+  ++label_count_;
 }
 
 void CWriter::Write(const GlobalVar& var) {
@@ -1067,6 +1074,7 @@ void CWriter::WriteFuncs() {
 
 void CWriter::Write(const Func& func) {
   func_ = &func;
+  label_count_ = 0;
   // Copy symbols from global symbol table so we don't shadow them.
   local_syms_ = global_syms_;
   local_sym_map_.clear();
@@ -1123,6 +1131,11 @@ void CWriter::Write(const Func& func) {
 
   func_stream_.Clear();
   func_ = nullptr;
+
+  if (label_count_ > 256) {
+    std::cerr << "Function " << func.name << " had " << label_count_ << " labels (max 256 due to BrightScript)" << std::endl;
+  }
+  label_count_ = 0;
 }
 
 void CWriter::WriteParams(const std::vector<std::string>& index_to_name) {
@@ -1388,7 +1401,7 @@ void CWriter::Write(const ExprList& exprs) {
       case ExprType::Loop: {
         const Block& block = cast<LoopExpr>(&expr)->block;
         if (!block.exprs.empty()) {
-          Write(DefineLocalScopeName(block.label), ": ");
+          WriteLabelRaw(LabelDecl(DefineLocalScopeName(block.label)));
           Indent();
           size_t mark = MarkTypeStack();
           PushLabel(LabelType::Loop, block.label, block.decl.sig);
