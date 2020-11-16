@@ -163,3 +163,15 @@ End Function
 Function wasi_unstable_fd_write(p0 As Integer, p1 As Integer, p2 As Integer, p3 As Integer) As Integer
     Return wasi_snapshot_preview1_fd_write(p0, p1, p2, p3)
 End Function
+Function wasi_unstable_fd_read(p0 As Integer, p1 As Integer, p2 As Integer, p3 As Integer) As Integer
+    Return wasi_snapshot_preview1_fd_read(p0, p1, p2, p3)
+End Function
+Function wasi_unstable_environ_sizes_get(p0 As Integer, p1 As Integer) As Integer
+    Return wasi_snapshot_preview1_environ_sizes_get(p0, p1)
+End Function
+Function wasi_unstable_environ_get(p0 As Integer, p1 As Integer) As Integer
+    Return wasi_snapshot_preview1_environ_get(p0, p1)
+End Function
+Function wasi_unstable_clock_time_get(p0 As Integer, p1 As LongInteger, p2 As Integer) As Integer
+    Return 52 ' nosys
+End Function
