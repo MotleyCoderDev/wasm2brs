@@ -15,9 +15,12 @@ make -j
 - NaN value bit patterns are not represented
 - Loading and storing (or reinterpreting) Float/Double (also called f32/f64) to i32/i64 and back may lose precision / bits
 - Any Float/Double with an exponent of 0 (denormalized) is treated as 0 when loaded
-- BrightScript has an internal limit on function size and number of local variables (around 254)
-  - Results in `Variable table size exceeded. (compile error &hb0)`
+- BrightScript has an internal limit on the size of a function
+  - Results in `Internal limit size exceeded. (compile error &hae) in pkg:/source/test.brs(...)`
   - Compiling with optimziations often alleviates the function size limit
+- BrightScript has an internal limit on the number of variables in a function (around 254)
+  - Results in `Variable table size exceeded. (compile error &hb0)`
+  - Compiling with optimziations often lowers the number of variables needed
 - BrightScript has an internal limit of 256 goto labels
   - Results in `Label/Line Not Found. (compile error &h0e) in pkg:/source/test.brs(NaN)'label256'`
   - A function can actually have more than 256 labels, but any attempts to goto labels beyond 256 will fail with the above error
