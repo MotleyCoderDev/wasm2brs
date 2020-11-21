@@ -1136,6 +1136,10 @@ void CWriter::Write(const Func& func) {
     std::cerr << "Function " << func.name << " had " << label_count_ << " labels (max 256 due to BrightScript)" << std::endl;
   }
   label_count_ = 0;
+  const size_t variable_count = func.GetNumParamsAndLocals() + stack_var_sym_map_.size();
+  if (variable_count > 254) {
+    std::cerr << "Function " << func.name << " had " << variable_count << " variables (max 254 due to BrightScript)" << std::endl;
+  }
 }
 
 void CWriter::WriteParams(const std::vector<std::string>& index_to_name) {
