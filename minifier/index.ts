@@ -237,21 +237,26 @@ export const minifyFiles = (debug: boolean, filesContents: string[], keepIdentif
   const functions = collectFunctions(unusedFunctionPass).map((brsFunc) => brsFunc.text);
   shuffleArray(functions);
 
-  console.log("Splittng Into 2MB Chunks");
-  const brightScriptLimit = 1024 * 1024 * 2;
+  console.log("Splittng Into 2MB Chunks (Max 65535 lines)");
+  const brightScriptSizeLimit = 1024 * 1024 * 2;
+  const brightScriptLineLimit = 65535;
   const joinedFunctions: string[] = [];
   let joinedFunction = "";
   let joinedByteSize = 0;
+  let joinedLines = 0;
   for (const func of functions) {
     const funcWithNewline = `${func}\n`;
     const byteSize = Buffer.from(funcWithNewline).length;
-    if (joinedByteSize + byteSize > brightScriptLimit) {
+    const lines = funcWithNewline.split("\n").length;
+    if (joinedByteSize + byteSize > brightScriptSizeLimit || joinedLines + lines > brightScriptLineLimit) {
       joinedFunctions.push(joinedFunction.trim());
       joinedFunction = "";
       joinedByteSize = 0;
+      joinedLines = 0;
     }
     joinedFunction += `${func}\n`;
     joinedByteSize += byteSize;
+    joinedLines += lines;
   }
   if (joinedFunction !== "") {
     joinedFunctions.push(joinedFunction.trim());
