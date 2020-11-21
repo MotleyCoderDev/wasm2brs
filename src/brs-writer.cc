@@ -1152,13 +1152,15 @@ void CWriter::Write(const Func& func) {
   func_stream_.Clear();
   func_ = nullptr;
 
-  if (label_count_ > 256) {
-    std::cerr << "Function " << func.name << " had " << label_count_ << " labels (max 256 due to BrightScript)" << std::endl;
+  const size_t label_limit = 128;
+  if (label_count_ > label_limit) {
+    std::cerr << "Function " << func.name << " had " << label_count_ << " labels (*suggested* max " << label_limit << " due to BrightScript, hard limit is 256)" << std::endl;
   }
   label_count_ = 0;
+  const size_t variable_limit = 254;
   const size_t variable_count = func.GetNumParamsAndLocals() + stack_var_sym_map_.size();
   if (variable_count > 254) {
-    std::cerr << "Function " << func.name << " had " << variable_count << " variables (max 254 due to BrightScript)" << std::endl;
+    std::cerr << "Function " << func.name << " had " << variable_count << " variables (max " << variable_limit << " due to BrightScript)" << std::endl;
   }
 }
 
