@@ -53,6 +53,7 @@ sub Main()
         InitSpectestMinified()
     Catch e
     End Try
+    InitSpectest()
     RunTests()
 
     print "------ Completed ------"
