@@ -38,6 +38,26 @@ namespace wabt {
 
 namespace {
 
+class VarHasher {
+public:
+  size_t operator() (const Var& key) const {
+      return key.is_index()
+        ? std::hash<Index>()(key.index())
+        : std::hash<std::string>()(key.name());
+  }
+};
+
+class VarEqual {
+public:
+  bool operator() (const Var& t1, const Var& t2) const {
+    return  &t1 == &t2 ||
+            t1.type() == t2.type() &&
+            (t1.is_index()
+              ? t1.index() == t2.index()
+              : t1.name() == t2.name());
+  }
+};
+
 struct Label {
   Label(LabelType label_type,
         const std::string& name,
@@ -1232,20 +1252,61 @@ void CWriter::Write(const ExprList& exprs) {
 
       case ExprType::BrTable: {
         const auto* bt_expr = cast<BrTableExpr>(&expr);
+        // Reduce the number of If/Else If blocks (Brightscript limit) by using range checks
+        // e.g. If switch >= 1 And switch <= 10 Or switch = 15 Then
+        // Also better for performance
+        typedef std::pair<Index, Index> IndexRange;
+        std::unordered_map<Var, std::vector<IndexRange>, VarHasher, VarEqual> labels_to_indices;
+        for (Index i = 0; i < bt_expr->targets.size(); ++i) {
+          const Var& var = bt_expr->targets[i];
+          // Ignore labels with the same name as the default target (default will fall through to this anyways)
+          if (VarEqual()(var, bt_expr->default_target)) {
+            continue;
+          }
+          auto& indices = labels_to_indices[var];
+          if (indices.size() > 0) {
+            auto& last = indices.back();
+            if (i == last.second + 1) {
+              last.second = i;
+            } else {
+              indices.push_back(IndexRange(i, i));
+            }
+          } else {
+            indices.push_back(IndexRange(i, i));
+          }
+        }
+        
         // If we only have a default target, then just jump to it.
-        if (bt_expr->targets.empty()) {
+        if (labels_to_indices.empty()) {
           DropTypes(1);
           Write(GotoLabel(bt_expr->default_target), Newline());
         } else {
-          Index i = 0;
           Write("switch = ", StackVar(0), Newline());
           DropTypes(1);
-          for (const Var& var : bt_expr->targets) {
-            if (i != 0) {
+          bool wrote_first_if = false;
+          for (const auto& pair : labels_to_indices) {
+            if (wrote_first_if) {
               Write("Else ");
             }
-            Write("If switch = ", i++, " Then", OpenBrace());
-            Write(GotoLabel(var), CloseBrace(), Newline());
+            Write("If ");
+            wrote_first_if = true;
+
+            auto& indices = pair.second;
+            Index prev = -1;
+            bool wrote_first_compare = false;
+            for (auto& range : indices) {
+              if (wrote_first_compare) {
+                Write(" Or ");
+              }
+              if (range.first == range.second) {
+                Write("switch = ", range.first);
+              } else {
+                Write("switch >= ", range.first, " And switch <= ", range.second);
+              }
+              wrote_first_compare = true;
+            }
+            Write(" Then", OpenBrace());
+            Write(GotoLabel(pair.first), CloseBrace(), Newline());
           }
           Write("Else", OpenBrace());
           Write(GotoLabel(bt_expr->default_target), CloseBrace(), Newline());
