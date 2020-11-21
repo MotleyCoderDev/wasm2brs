@@ -97,7 +97,8 @@ export const minifyFiles = (debug: boolean, filesContents: string[], keepIdentif
     tostr: true,
     unshift: true,
     fromasciistring: true,
-    toasciistring: true
+    toasciistring: true,
+    append: true
   };
 
   const ourGlobals = {
