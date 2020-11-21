@@ -15,19 +15,21 @@ make -j
 - NaN value bit patterns are not represented
 - Loading and storing (or reinterpreting) Float/Double (also called f32/f64) to i32/i64 and back may lose precision / bits
 - Any Float/Double with an exponent of 0 (denormalized) is treated as 0 when loaded
-- BrightScript has an internal limit on the size of a function
+- Long jumps and exceptions are not yet supported (header `setjmp.h` does not exist)
+- For the following BrightScript errors, optimizing (O4 or Oz) helps alleviate the issues:
+- BrightScript has an internal limit on the number of `If`/`Else If` blocks in a function
   - Results in `Internal limit size exceeded. (compile error &hae) in pkg:/source/test.brs(...)`
-  - Compiling with optimziations often alleviates the function size limit
-- BrightScript has an internal limit on the number of variables in a function (around 254)
+  - By observation, allowed to have maximum 279 blocks for the first group, and then maximum 25 blocks for subsequent groups
+  - The last `Else` clause does not contribute to this limit
+  - No limit on how many groups
+- BrightScript has an internal limit of 253 variables in a function including function parameters
   - Results in `Variable table size exceeded. (compile error &hb0)`
-  - Compiling with optimziations often lowers the number of variables needed
-- BrightScript has an internal limit of 256 goto labels
+- BrightScript has an internal limit of 256 goto labels in a function
   - Results in `Label/Line Not Found. (compile error &h0e) in pkg:/source/test.brs(NaN)'label256'`
   - A function can actually have more than 256 labels, but any attempts to goto labels beyond 256 will fail with the above error
   - BrightScript compilation becomes exponentially slower with the number of labels in a function (beyond 10000 will hard lock the device)
 - BrightScript files cannot exceed 2MB and must be broken up
   - Results in `Error loading file. (compile error &hb9) in pkg:/source/test.brs(NaN)`
-- Long jumps and exceptions are not yet supported (header `setjmp.h` does not exist)
 
 # WASI limitations
 - Environment variables, command line arguments, and stdout/stderr/stdin strings only currently support ASCII strings
