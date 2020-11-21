@@ -1,8 +1,9 @@
 /* eslint-disable camelcase */
 import fs from "fs";
+import path from "path";
 import seedrandom from "seedrandom";
 
-export const minifyFiles = (debug: boolean, filesContents: string[], keepIdentifiers?: string[]): string => {
+export const minifyFiles = (debug: boolean, filesContents: string[], keepIdentifiers?: string[]): string[] => {
   const text = filesContents.join("\n");
 
   const builtinLiterals = {
@@ -235,13 +236,39 @@ export const minifyFiles = (debug: boolean, filesContents: string[], keepIdentif
 
   const functions = collectFunctions(unusedFunctionPass).map((brsFunc) => brsFunc.text);
   shuffleArray(functions);
-  const finalText = functions.join("\n");
 
-  return finalText;
+  console.log("Splittng Into 2MB Chunks");
+  const brightScriptLimit = 1024 * 1024 * 2;
+  const joinedFunctions: string[] = [];
+  let joinedFunction = "";
+  let joinedByteSize = 0;
+  for (const func of functions) {
+    const funcWithNewline = `${func}\n`;
+    const byteSize = Buffer.from(funcWithNewline).length;
+    if (joinedByteSize + byteSize > brightScriptLimit) {
+      joinedFunctions.push(joinedFunction.trim());
+      joinedFunction = "";
+      joinedByteSize = 0;
+    }
+    joinedFunction += `${func}\n`;
+    joinedByteSize += byteSize;
+  }
+  if (joinedFunction !== "") {
+    joinedFunctions.push(joinedFunction.trim());
+  }
+  return joinedFunctions;
 };
 
 if (process.env.INPUT && process.env.OUTPUT) {
   const filesContents = process.env.INPUT.split(",").map((file) => fs.readFileSync(file, "utf8"));
-  const result = minifyFiles(Boolean(process.env.DEBUG), filesContents, (process.env.KEEP || "").split(","));
-  fs.writeFileSync(process.env.OUTPUT, result, "utf8");
+  const results = minifyFiles(Boolean(process.env.DEBUG), filesContents, (process.env.KEEP || "").split(","));
+  if (results.length === 1) {
+    fs.writeFileSync(process.env.OUTPUT, results[0], "utf8");
+  } else {
+    for (const [index, result] of results.entries()) {
+      const parsed = path.parse(process.env.OUTPUT);
+      const outPath = path.join(parsed.dir, `${parsed.name}.${index}${parsed.ext}`);
+      fs.writeFileSync(outPath, result, "utf8");
+    }
+  }
 }
