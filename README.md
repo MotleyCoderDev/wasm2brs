@@ -30,6 +30,7 @@ make -j
   - BrightScript compilation becomes exponentially slower with the number of labels in a function (beyond 10000 will hard lock the device)
 - BrightScript files cannot exceed 2MB and must be broken up
   - Results in `Error loading file. (compile error &hb9) in pkg:/source/test.brs(NaN)`
+- BrightScript debugger will wrap line numbers beyond 65536 (overflow)
 
 # WASI limitations
 - Environment variables, command line arguments, and stdout/stderr/stdin strings only currently support ASCII strings
