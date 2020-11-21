@@ -1252,9 +1252,10 @@ void CWriter::Write(const ExprList& exprs) {
 
       case ExprType::BrTable: {
         const auto* bt_expr = cast<BrTableExpr>(&expr);
-        // Reduce the number of If/Else If blocks (Brightscript limit) by using range checks
+        // Reduce the number of If blocks (Brightscript limit) by using range checks
         // e.g. If switch >= 1 And switch <= 10 Or switch = 15 Then
         // Also better for performance
+        // Note that we now don't use Else because we found it causes the issue with BrightScript limits
         typedef std::pair<Index, Index> IndexRange;
         std::unordered_map<Var, std::vector<IndexRange>, VarHasher, VarEqual> labels_to_indices;
         for (Index i = 0; i < bt_expr->targets.size(); ++i) {
@@ -1283,13 +1284,8 @@ void CWriter::Write(const ExprList& exprs) {
         } else {
           Write("switch = ", StackVar(0), Newline());
           DropTypes(1);
-          bool wrote_first_if = false;
           for (const auto& pair : labels_to_indices) {
-            if (wrote_first_if) {
-              Write("Else ");
-            }
             Write("If ");
-            wrote_first_if = true;
 
             auto& indices = pair.second;
             Index prev = -1;
@@ -1306,11 +1302,10 @@ void CWriter::Write(const ExprList& exprs) {
               wrote_first_compare = true;
             }
             Write(" Then", OpenBrace());
-            Write(GotoLabel(pair.first), CloseBrace(), Newline());
+            Write(GotoLabel(pair.first), Newline());
+            Write("End If", CloseBrace(), Newline());
           }
-          Write("Else", OpenBrace());
-          Write(GotoLabel(bt_expr->default_target), CloseBrace(), Newline());
-          Write("End If", Newline());
+          Write(GotoLabel(bt_expr->default_target), Newline());
         }
         // Stop processing this ExprList, since the following are unreachable.
         return;
