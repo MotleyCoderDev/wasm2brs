@@ -258,7 +258,10 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<boolean 
       [testCasesFile, testWasmFile, ...brsContents],
       ["RunTests", "InitSpectest"]
     );
-    fs.writeFileSync(testCasesBrs, minified.replace(/initspectest/gu, "InitSpectestMinified"));
+    if (minified.length !== 1) {
+      throw new Error("Unhandled case where minifier returned more than one file");
+    }
+    fs.writeFileSync(testCasesBrs, minified[0].replace(/initspectest/gu, "InitSpectestMinified"));
     fs.writeFileSync(testWasmBrs, "");
   } else {
     fs.writeFileSync(testCasesBrs, testCasesFile);
