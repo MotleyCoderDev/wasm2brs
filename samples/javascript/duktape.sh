@@ -6,4 +6,5 @@ python tools/configure.py \
     --source-directory src-input \
     --output-directory "$DIR/duktape" \
     --config-metadata config \
-    --option-file "$DIR/duktape.yaml"
+    --option-file "$DIR/duktape.yaml" \
+    --rom-support

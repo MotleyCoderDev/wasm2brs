@@ -4,6 +4,7 @@
 
 int main(void) {
     duk_context* ctx = duk_create_heap_default();
+    std::cout << "Write JavaScript and press enter to evaluate it" << std::endl << std::flush;
     for (;;) {
         std::string input;
         std::cin >> input;

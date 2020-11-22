@@ -1,2 +1,2 @@
 cd build
-wasimake make
+wasimake make -j
