@@ -98,7 +98,10 @@ export const minifyFiles = (debug: boolean, filesContents: string[], keepIdentif
     unshift: true,
     fromasciistring: true,
     toasciistring: true,
-    append: true
+    append: true,
+    mark: true,
+    asseconds: true,
+    getmilliseconds: true
   };
 
   const ourGlobals = {

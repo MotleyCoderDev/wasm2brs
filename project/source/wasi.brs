@@ -42,6 +42,8 @@ Function wasi_helper_snapshot_preview1_init(memory as Object, executableFile as 
     If m.wasi_config.DoesExist("stdin") Then
         external_append_stdin(m.wasi_config.stdin)
     End If
+
+    m.wasi_date = CreateObject("roDateTime")
 End Function
 
 Function wasi_snapshot_preview1_proc_exit(rval As Integer) As Void
@@ -141,6 +143,14 @@ Function wasi_snapshot_preview1_fd_prestat_dir_name(fd As Integer, path_pU8 As I
     Return 52 ' nosys
 End Function
 
+Function wasi_snapshot_preview1_clock_time_get(clockid As Integer, precision As LongInteger, time_pTimestamp64 As Integer) As Integer
+    m.wasi_date.Mark()
+    nanoseconds = I32ToUnsignedI64(m.wasi_date.AsSeconds()) * 1000000000&
+    nanoseconds += m.wasi_date.GetMilliseconds() * 1000000&
+    I64Store(m.wasi_memory, time_pTimestamp64, nanoseconds)
+    Return 0 ' success
+End Function
+
 
 Function wasi_unstable_fd_prestat_get(p0 As Integer, p1 As Integer) As Integer
     Return wasi_snapshot_preview1_fd_prestat_get(p0, p1)
@@ -173,5 +183,5 @@ Function wasi_unstable_environ_get(p0 As Integer, p1 As Integer) As Integer
     Return wasi_snapshot_preview1_environ_get(p0, p1)
 End Function
 Function wasi_unstable_clock_time_get(p0 As Integer, p1 As LongInteger, p2 As Integer) As Integer
-    Return 52 ' nosys
+    Return wasi_snapshot_preview1_clock_time_get(p0, p1, p2)
 End Function
