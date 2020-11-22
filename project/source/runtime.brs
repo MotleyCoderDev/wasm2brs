@@ -1015,3 +1015,7 @@ Function MemoryCopy(toBytes as Object, toOffset as Integer, fromBytes as Object,
     End For
     Return size
 End Function
+
+Function Unreachable()
+    Throw "Unreachable"
+End Function

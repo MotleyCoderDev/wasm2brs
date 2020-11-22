@@ -1575,7 +1575,7 @@ void CWriter::Write(const ExprList& exprs) {
         break;
 
       case ExprType::Unreachable:
-        Write("Stop 'Unreachable", Newline());
+        Write("Unreachable()", Newline());
         return;
     }
   }

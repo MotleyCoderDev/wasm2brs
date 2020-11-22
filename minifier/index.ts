@@ -17,6 +17,7 @@ export const minifyFiles = (debug: boolean, filesContents: string[], keepIdentif
     and: true,
     as: true,
     box: true,
+    catch: true,
     dim: true,
     each: true,
     else: true,
@@ -26,6 +27,7 @@ export const minifyFiles = (debug: boolean, filesContents: string[], keepIdentif
     endfunction: true,
     endif: true,
     endsub: true,
+    endtry: true,
     endwhile: true,
     exit: true,
     exitwhile: true,
@@ -51,7 +53,9 @@ export const minifyFiles = (debug: boolean, filesContents: string[], keepIdentif
     sub: true,
     tab: true,
     then: true,
+    throw: true,
     to: true,
+    try: true,
     type: true,
     while: true
   };
