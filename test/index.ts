@@ -181,7 +181,7 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<boolean 
   let testCasesFile = "";
   let testWasmFile = "";
 
-  let runTestsFunction = "Function RunTests()\n";
+  let runTestsFunction = "Function Start()\n";
 
   console.log("Number of modules:", tests.length);
   for (const [textIndex, test] of tests.entries()) {
@@ -256,7 +256,7 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<boolean 
     const minified = minifyFiles(
       false,
       [testCasesFile, testWasmFile, ...brsContents],
-      ["RunTests", "InitSpectest"]
+      ["Start", "InitSpectest"]
     );
     if (minified.length !== 1) {
       throw new Error("Unhandled case where minifier returned more than one file");

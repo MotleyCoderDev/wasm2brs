@@ -49,12 +49,26 @@ sub Main()
     m.external_print_line = custom_print_line
     m.external_wait_for_stdin = custom_wait_for_stdin
 
+    testing = False
     Try
         InitSpectestMinified()
+        testing = True
     Catch e
     End Try
-    InitSpectest()
-    RunTests()
+    Try
+        InitSpectest()
+        testing = True
+    Catch e
+    End Try
+
+    While True
+        Try
+            Start()
+        Catch e
+            Print e
+        End Try
+        If testing Then Exit While
+    End While
 
     print "------ Completed ------"
 
