@@ -7,7 +7,7 @@ int main(void) {
     std::cout << "Write JavaScript and press enter to evaluate it" << std::endl << std::flush;
     for (;;) {
         std::string input;
-        std::cin >> input;
+        std::getline(std::cin, input);
         duk_eval_string(ctx, input.c_str());
         const char* json = duk_json_encode(ctx, -1);
         std::cout << "Result: " << json << std::endl;

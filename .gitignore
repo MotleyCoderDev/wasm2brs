@@ -1,4 +1,5 @@
 build
+bld
 out
 project/source/test.*.brs
 project/manifest
