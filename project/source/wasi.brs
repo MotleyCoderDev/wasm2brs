@@ -11,7 +11,7 @@ Function external_append_stdin(bytesOrString as Dynamic) as Void
     m.wasi_fds[0].Append(bytesOrString)
 End Function
 
-Function wasi_helper_snapshot_preview1_init(memory as Object, executableFile as String, config as Object)
+Function wasi_init(memory as Object, executableFile as String, config as Object)
     m.wasi_memory = memory
     m.wasi_config = config
 
