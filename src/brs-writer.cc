@@ -940,11 +940,13 @@ void CWriter::WriteDataInitializers() {
     Write(ExternalPtr(memory->name), "Max = ", max, Newline());
   }
 
+  if (!module_->data_segments.empty()) {
+    Write("segment = CreateObject(\"roByteArray\")", Newline());
+  }
+
   Index data_segment_index = 0;
   for (const DataSegment* data_segment : module_->data_segments) {
-    const std::string data_segment_name = "data_segment_" + std::to_string(data_segment_index);
-    Write(data_segment_name, " = CreateObject(\"roByteArray\")", Newline());
-    Write(data_segment_name, ".FromHexString(\"");
+    Write("segment.FromHexString(\"");
     for (uint8_t x : data_segment->data) {
       Writef("%02x", x);
     }
@@ -952,7 +954,7 @@ void CWriter::WriteDataInitializers() {
 
     Write("MemoryCopy(", ExternalRef(memory->name), ", ");
     WriteInitExpr(data_segment->offset);
-    Write(", ", data_segment_name, ", 0, ", data_segment->data.size(), ")", Newline());
+    Write(", segment, 0, ", data_segment->data.size(), ")", Newline());
     ++data_segment_index;
   }
 
