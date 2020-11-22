@@ -268,7 +268,16 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<boolean 
     fs.writeFileSync(testWasmBrs, testWasmFile);
   }
 
-  fs.writeFileSync(path.join(project, "manifest"), `title=${guid}`);
+  fs.writeFileSync(path.join(project, "manifest"),
+    `title=${guid}\n` +
+    "major_version=1\n" +
+    "minor_version=0\n" +
+    "build_version=0\n" +
+    "mm_icon_focus_hd=pkg:/images/mm_icon_focus_hd.png\n" +
+    "mm_icon_focus_sd=pkg:/images/mm_icon_focus_sd.png\n" +
+    "splash_screen_hd=pkg:/images/splash_screen_hd.png\n" +
+    "splash_screen_sd=pkg:/images/splash_screen_sd.png\n"
+  );
   return true;
 };
 
