@@ -30,49 +30,69 @@ Function custom_wait_for_stdin() as Void
 End Function
 
 sub Main()
+    settings = {}
+    Try
+        settings = GetSettings()
+    Catch e
+    End Try
+
     m.port = CreateObject("roMessagePort")
 
-    sgScreen = CreateObject("roSGScreen")
-    sgScreen.SetMessagePort(m.port)
-    scene = sgScreen.CreateScene("main")
-    sgScreen.show()
+    If settings.Graphical Then
+        screen = CreateObject("roScreen", true, 320, 200)
+        screen.SetMessagePort(m.port)
+        screen.SetAlphaEnable(true)
+        m.screen = screen
+    Else
+        sgScreen = CreateObject("roSGScreen")
+        sgScreen.SetMessagePort(m.port)
+        scene = sgScreen.CreateScene("main")
+        sgScreen.show()
 
-    m.keyboard = scene.findNode("keyboard")
-    m.keyboard.setFocus(True)
+        m.keyboard = scene.findNode("keyboard")
+        m.keyboard.setFocus(True)
 
-    scene.findNode("enter").observeField("buttonSelected", m.port)
+        scene.findNode("enter").observeField("buttonSelected", m.port)
 
-    m.output = scene.findNode("output")
-    m.outputMaxLines = m.output.maxLines
-    m.outputLines = []
+        m.output = scene.findNode("output")
+        m.outputMaxLines = m.output.maxLines
+        m.outputLines = []
 
-    m.external_print_line = custom_print_line
-    m.external_wait_for_stdin = custom_wait_for_stdin
+        m.external_print_line = custom_print_line
+        m.external_wait_for_stdin = custom_wait_for_stdin
+    End If
 
-    testing = False
-    Try
-        InitSpectestMinified()
-        testing = True
-    Catch e
-    End Try
-    Try
-        InitSpectest()
-        testing = True
-    Catch e
-    End Try
+    If settings.CustomInit <> Invalid Then
+        settings.CustomInit()
+    End if
 
-    While True
-        Try
-            Start()
-        Catch e
-            Print e
-        End Try
-        If testing Then Exit While
-    End While
+    If settings.RestartOnFailure = True Then
+        While True
+            Try
+                Start()
+            Catch e
+                Print e
+            End Try
+        End While
+    Else
+        Start()
+    End If
 
-    print "------ Completed ------"
+    Print "------ Completed ------"
 
     While True
         If WaitForEvent() = False Return
     End While
 end sub
+
+Function DrawScreen(memory as Object, pointer as Integer)
+    If pointer Mod 4 <> 0 Then Throw "Pixel pointer must be 4 byte aligned"
+    w = m.screen.GetWidth()
+    h = m.screen.GetHeight()
+    For y = 0 To h - 1
+        For x = 0 To w - 1
+            m.screen.DrawRect(x, y, 1, 1, memory.GetSignedLong(pointer / 4 + (x + y * w)))
+        End For
+    End For
+    m.screen.SwapBuffers()
+End Function
