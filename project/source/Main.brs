@@ -63,7 +63,8 @@ sub Main()
     End If
 
     If settings.CustomInit <> Invalid Then
-        settings.CustomInit()
+        m.CustomInit = settings.CustomInit
+        m.CustomInit()
     End if
 
     If settings.RestartOnFailure = True Then
