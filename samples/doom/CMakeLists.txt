@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.13.4)
-project(rokudoom)
+project(doom)
 
 set(CMAKE_C_FLAGS_RELEASE "-Oz")
 set(CMAKE_CXX_FLAGS_RELEASE "-Oz")
 
-add_executable(rokudoom
+add_executable(doom
 src/am_map.c
 src/doomdef.c
 src/f_wipe.c
@@ -69,4 +69,6 @@ src/st_lib.c
 src/wi_stuff.c
 )
 
-target_compile_options(rokudoom PRIVATE "-Wno-everything")
+target_compile_options(doom PRIVATE "-Wno-everything")
+
+# Consider adding -Ofast
