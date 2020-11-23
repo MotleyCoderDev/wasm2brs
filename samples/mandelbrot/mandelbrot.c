@@ -1,5 +1,5 @@
 #define WIDTH 320
-#define HEIGHT 240
+#define HEIGHT 200
 unsigned char image[WIDTH * HEIGHT];
 
 static unsigned char color(int iteration, int offset, int scale) {

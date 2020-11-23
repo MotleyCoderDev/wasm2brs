@@ -11,14 +11,11 @@ Function Start()
 
     offset = w2b_mandelbrot(iterations, x, y, d)
 
-    print ts.TotalMilliseconds()
-
-    print "------------------------------ FINISHED MANDLEBROT"
+    print "------------------------------ FINISHED MANDLEBROT " ts.TotalMilliseconds()
 
     ts.Mark()
     DrawScreen(m.w2b_memory, offset)
-    print ts.TotalMilliseconds()
-    print "------------------------------ SWAPPED SCREEN"
+    print "------------------------------ SWAPPED SCREEN " ts.TotalMilliseconds()
 End Function
 
 Function GetSettings()
