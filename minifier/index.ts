@@ -118,6 +118,14 @@ export const minifyFiles = (debug: boolean, filesContents: string[], keepIdentif
     external_wait_for_stdin: true
   };
 
+  const standardExports = {
+    start: true,
+    getsettings: true,
+    graphical: true,
+    custominit: true,
+    restartonfailure: true
+  };
+
   const reservedWords = {
     ...builtinLiterals,
     ...builtinKeywords,
@@ -125,7 +133,8 @@ export const minifyFiles = (debug: boolean, filesContents: string[], keepIdentif
     ...builtinGlobals,
     ...builtinMembers,
     ...ourGlobals,
-    ...ourMembers
+    ...ourMembers,
+    ...standardExports
   };
 
   if (keepIdentifiers) {
