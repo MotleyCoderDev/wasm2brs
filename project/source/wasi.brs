@@ -1,14 +1,47 @@
 
+
+Function wasi_enum_filetype_directory() As Integer
+    Return 3
+End Function
+
+Function wasi_enum_filetype_regular_file() As Integer
+    Return 4
+End Function
+
 Function wasi_helper_output(fd as Integer, bytes as Object) as Void
-    m.wasi_fds[fd].Append(bytes)
-    m.wasi_fds[fd] = PrintAndConsumeLines(fd, m.wasi_fds[fd], m.external_print_line)
+    file = m.wasi_fds[fd]
+    If file = Invalid Or fd <> 1 And fd <> 2 Throw "Invalid output fd"
+    file.memory.Append(bytes)
+    file.memory = PrintAndConsumeLines(fd, file.memory, m.external_print_line)
 End Function
 
 Function external_append_stdin(bytesOrString as Dynamic) as Void
     If IsString(bytesOrString) Then
         bytesOrString = StringToBytes(bytesOrString)
     End If
-    m.wasi_fds[0].Append(bytesOrString)
+    m.wasi_fds[0].memory.Append(bytesOrString)
+End Function
+
+Function wasi_helper_create_file(path as String, filetype as Integer) as Object
+    file = { path: path, pathBytes: StringToBytes(path), filetype: filetype, fd: m.wasi_fds.Count() }
+    m.wasi_fds.Push(file)
+    Return file
+End Function
+
+Function wasi_helper_create_memory_file(path as String) as Object
+    file = wasi_helper_create_file(path, wasi_enum_filetype_regular_file())
+    file.memory = CreateObject("roByteArray")
+    file.position = 0
+    Return file
+End Function
+
+Function wasi_helper_recurse_preopen_dirs(dir as String) as Void
+    stat = m.wasi_filesystem.Stat(dir)
+    If stat.type <> "directory" Return
+    wasi_helper_create_file(dir, wasi_enum_filetype_directory())
+    For Each filename In m.wasi_filesystem.GetDirectoryListing(dir)
+        wasi_helper_recurse_preopen_dirs(dir + "/" + filename)
+    End For
 End Function
 
 Function wasi_init(memory as Object, executableFile as String, config as Object)
@@ -37,7 +70,14 @@ Function wasi_init(memory as Object, executableFile as String, config as Object)
     End If
 
     ' Indexed by fds stdin(0) / stdout(1) / stderr(2)
-    m.wasi_fds = [CreateObject("roByteArray"), CreateObject("roByteArray"), CreateObject("roByteArray")]
+    m.wasi_fds = []
+    wasi_helper_create_memory_file("/dev/stdin")
+    wasi_helper_create_memory_file("/dev/stdout")
+    wasi_helper_create_memory_file("/dev/stderr")
+
+    m.wasi_filesystem = CreateObject("roFileSystem")
+
+    wasi_helper_recurse_preopen_dirs("pkg:/")
 
     If m.wasi_config.DoesExist("stdin") Then
         external_append_stdin(m.wasi_config.stdin)
@@ -93,26 +133,21 @@ Function wasi_snapshot_preview1_fd_write(fd As Integer, iovs_pCiovec As Integer,
 End Function
 
 Function wasi_snapshot_preview1_fd_read(fd As Integer, iovs_pCiovec As Integer, iovs_len As Integer, nread_pSize As Integer) As Integer
-    If Not (fd = 0) Then ' Not stdin
-        Return 8 ' badf
-    End If
-
     nread = 0
+    file = m.wasi_fds[fd]
     For i = 0 To iovs_len - 1
         buf_pU8 = I32Load(m.wasi_memory, iovs_pCiovec)
         buf_len_Size = I32Load(m.wasi_memory, iovs_pCiovec + 4)
         If fd = 0 Then ' stdin
-            If m.wasi_fds[0].Count() = 0 And m.external_wait_for_stdin <> Invalid Then
+            If file.memory.Count() = 0 And m.external_wait_for_stdin <> Invalid Then
                 m.external_wait_for_stdin()
             End If
-            existingSize = m.wasi_fds[0].Count()
-            copySize = Min(buf_len_Size, existingSize)
-            MemoryCopy(m.wasi_memory, buf_pU8, m.wasi_fds[0], 0, copySize)
-            m.wasi_fds[0] = Slice(m.wasi_fds[0], copySize, existingSize - copySize)
-            nread += copySize
-        Else
-            Stop ' Need to handle reading from fds
         End If
+        existingSize = file.memory.Count() - file.position
+        copySize = Min(buf_len_Size, existingSize)
+        MemoryCopy(m.wasi_memory, buf_pU8, file.memory, file.position, copySize)
+        file.position += copySize
+        nread += copySize
         iovs_pCiovec += 8
     End For
     I32Store(m.wasi_memory, nread_pSize, nread)
@@ -120,9 +155,16 @@ Function wasi_snapshot_preview1_fd_read(fd As Integer, iovs_pCiovec As Integer, 
 End Function
 
 Function wasi_snapshot_preview1_path_open(fd As Integer, dirflags As Integer, path_pU8 As Integer, path_len_Size As Integer, oflags As Integer, fs_rights_base As LongInteger, fs_rights_inherting As LongInteger, fdflags As Integer, opened_fd_pFd As Integer) As Integer
-    path = StringFromBytes(m.wasi_memory, path_pU8, path_len_Size)
-    Stop
-    Return 11
+    dir = m.wasi_fds[fd]
+    If dir = Invalid Return 8 ' badf
+    path = dir.path + StringFromBytes(m.wasi_memory, path_pU8, path_len_Size)
+    file = wasi_helper_create_memory_file(path)
+    ' Not correct as this is read only and doesn't account for directories, writes, etc.
+    If Not file.memory.ReadFile(path) Then
+        Return 8 ' badf
+    End If
+    I32Store(m.wasi_memory, opened_fd_pFd, file.fd)
+    Return 0 ' success
 End Function
 
 Function wasi_snapshot_preview1_fd_close(fd As Integer) As Integer
@@ -135,12 +177,29 @@ Function wasi_snapshot_preview1_path_filestat_get(fd As Integer, flags As Intege
     Return 11
 End Function
 
+Function wasi_snapshot_preview1_fd_fdstat_get(fd As Integer, pFdstat As Integer) As Integer
+    file = m.wasi_fds[fd]
+    If file = Invalid Return 8 ' badf
+    I32Store8(m.wasi_memory, pFdstat, file.filetype)
+    I32Store16(m.wasi_memory, pFdstat + 2, 0)
+    I64Store(m.wasi_memory, pFdstat + 8, &HFFFFFFFFFFFFFFFF&) ' rights base
+    I64Store(m.wasi_memory, pFdstat + 16, &HFFFFFFFFFFFFFFFF&) ' rights inheriting
+    Return 0 ' success
+End Function
+
 Function wasi_snapshot_preview1_fd_prestat_get(fd As Integer, buf_pPrestat As Integer) As Integer
-    Return 8 ' badf
+    file = m.wasi_fds[fd]
+    If file = Invalid Return 8 ' badf
+    I32Store8(m.wasi_memory, buf_pPrestat, 0) ' 0 means dir
+    I32Store(m.wasi_memory, buf_pPrestat + 4, file.pathBytes.Count())
+    Return 0 ' success
 End Function
 
 Function wasi_snapshot_preview1_fd_prestat_dir_name(fd As Integer, path_pU8 As Integer, path_len_Size As Integer) As Integer
-    Return 52 ' nosys
+    file = m.wasi_fds[fd]
+    If file = Invalid Return 8 ' badf
+    MemoryCopy(m.wasi_memory, path_pU8, file.pathBytes, 0, path_len_Size)
+    Return 0 ' success
 End Function
 
 Function wasi_snapshot_preview1_clock_time_get(clockid As Integer, precision As LongInteger, time_pTimestamp64 As Integer) As Integer
@@ -162,7 +221,10 @@ Function wasi_unstable_proc_exit(p0 As Integer) As Void
     wasi_snapshot_preview1_proc_exit(p0)
 End Function
 Function wasi_unstable_fd_fdstat_get(p0 As Integer, p1 As Integer) As Integer
-    Return 8 ' badf
+    Return wasi_snapshot_preview1_fd_fdstat_get(p0, p1)
+End Function
+Function wasi_unstable_path_open(p0 As Integer, p1 As Integer, p2 As Integer, p3 As Integer, p4 As Integer, p5 As LongInteger, p6 As LongInteger, p7 As Integer, p8 As Integer) As Integer
+    Return wasi_snapshot_preview1_path_open(p0, p1, p2, p3, p4, p5, p6, p7, p8)
 End Function
 Function wasi_unstable_fd_close(p0 As Integer) As Integer
     Return wasi_snapshot_preview1_fd_close(p0)
@@ -175,6 +237,13 @@ Function wasi_unstable_fd_write(p0 As Integer, p1 As Integer, p2 As Integer, p3 
 End Function
 Function wasi_unstable_fd_read(p0 As Integer, p1 As Integer, p2 As Integer, p3 As Integer) As Integer
     Return wasi_snapshot_preview1_fd_read(p0, p1, p2, p3)
+End Function
+Function wasi_unstable_args_sizes_get(p0 As Integer, p1 As Integer) As Integer
+    Return wasi_snapshot_preview1_args_sizes_get(p0, p1)
+End Function
+
+Function wasi_unstable_args_get(p0 As Integer, p1 As Integer) As Integer
+    Return wasi_snapshot_preview1_args_sizes_get(p0, p1)
 End Function
 Function wasi_unstable_environ_sizes_get(p0 As Integer, p1 As Integer) As Integer
     Return wasi_snapshot_preview1_environ_sizes_get(p0, p1)
