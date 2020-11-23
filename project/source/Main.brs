@@ -38,7 +38,7 @@ sub Main()
 
     m.port = CreateObject("roMessagePort")
 
-    If settings.Graphical Then
+    If settings.Graphical = True Then
         screen = CreateObject("roScreen", true, 320, 200)
         screen.SetMessagePort(m.port)
         screen.SetAlphaEnable(true)
