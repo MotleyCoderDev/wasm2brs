@@ -250,13 +250,17 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<boolean 
   runTestsFunction += "End Function\n";
   testCasesFile += runTestsFunction;
 
+  testCasesFile += "Function GetSettings()\n" +
+    `Return { CustomInit: ${process.env.MINIFY ? "InitSpectestMinified" : "InitSpectest"} }\n` +
+  "End Function";
+
   if (process.env.MINIFY) {
     const brsFiles = [runtimeBrs, helpersBrs, spectestBrs, wasiBrs];
     const brsContents = brsFiles.map((file) => fs.readFileSync(file, "utf8"));
     const minified = minifyFiles(
       false,
       [testCasesFile, testWasmFile, ...brsContents],
-      ["Start", "InitSpectest"]
+      ["InitSpectest"]
     );
     if (minified.length !== 1) {
       throw new Error("Unhandled case where minifier returned more than one file");
