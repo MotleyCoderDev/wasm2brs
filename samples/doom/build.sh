@@ -1,13 +1,17 @@
 set -ex
+SRC="`pwd`/../../project/source"
+DST="`pwd`/../../testproject/source"
 
 rm -rf build
 mkdir build
 cd build
 wasimake cmake ..
-wasimake make
+wasimake make -j
 cd ..
 
-SRC="`pwd`/../../project/source"
-../../../binaryen/bin/wasm-opt -O4 ./build/doom.wasm -o ./build/doom-opt.wasm
+../../../binaryen/bin/wasm-opt -g -O4 ./build/doom.wasm -o ./build/doom-opt.wasm
 ../../build/wasm2brs ./build/doom-opt.wasm > $SRC/test.wasm.brs
 cp ./doom.brs $SRC/test.cases.brs
+rm -rf $DST/test.min.*.brs
+DEBUG=1 INPUT="$SRC/helpers.brs,$SRC/runtime.brs,$SRC/wasi.brs,$SRC/test.cases.brs,$SRC/test.wasm.brs" OUTPUT="$DST/test.min.brs" npm start --prefix ../../minifier
+cp "$SRC/Main.brs" "$DST/Main.brs"
