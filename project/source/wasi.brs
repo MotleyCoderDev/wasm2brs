@@ -76,15 +76,7 @@ Function wasi_init(memory as Object, executableFile as String, config as Object)
     If Not m.wasi_config.DoesExist("args") Then
         m.wasi_config.args = []
     End If
-    If m.wasi_config.DoesExist("env") Then
-        If GetInterface(m.wasi_config.env, "ifAssociativeArray") <> invalid Then
-            envAssociative = m.wasi_config.env
-            m.wasi_config.env = []
-            For Each envName In envAssociative
-                m.wasi_config.env.Push(envName + "=" + envAssociative[envName])
-            End For
-        End If
-    Else
+    If Not m.wasi_config.DoesExist("env") Then
         m.wasi_config.env = []
     End If
 
