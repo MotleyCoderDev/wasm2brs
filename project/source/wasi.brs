@@ -1,11 +1,36 @@
 
-
 Function wasi_enum_filetype_directory() As Integer
     Return 3
 End Function
 
 Function wasi_enum_filetype_regular_file() As Integer
     Return 4
+End Function
+
+
+Function wasi_snapshot_preview1_enum_whence_set() As Integer
+    Return 0
+End Function
+
+Function wasi_snapshot_preview1_enum_whence_cur() As Integer
+    Return 1
+End Function
+
+Function wasi_snapshot_preview1_enum_whence_end() As Integer
+    Return 2
+End Function
+
+
+Function wasi_unstable_enum_whence_set() As Integer
+    Return 2
+End Function
+
+Function wasi_unstable_enum_whence_cur() As Integer
+    Return 0
+End Function
+
+Function wasi_unstable_enum_whence_end() As Integer
+    Return 1
 End Function
 
 Function wasi_helper_output(fd as Integer, bytes as Object) as Void
@@ -31,7 +56,7 @@ End Function
 Function wasi_helper_create_memory_file(path as String) as Object
     file = wasi_helper_create_file(path, wasi_enum_filetype_regular_file())
     file.memory = CreateObject("roByteArray")
-    file.position = 0
+    file.position = 0&
     Return file
 End Function
 
@@ -171,6 +196,20 @@ Function wasi_snapshot_preview1_fd_close(fd As Integer) As Integer
     Return 0 ' success
 End Function
 
+Function wasi_snapshot_preview1_fd_seek(fd As Integer, offset As LongInteger, whence As Integer, newoffset_pU64 As Integer) As Integer
+    file = m.wasi_fds[fd]
+    If file = Invalid Return 8 ' badf
+    If whence = wasi_snapshot_preview1_enum_whence_set() Then
+        file.position = offset
+    Else If whence = wasi_snapshot_preview1_enum_whence_cur() Then
+        file.position += offset
+    Else
+        file.position = file.memory.Count() + offset
+    End If
+    I64Store(m.wasi_memory, newoffset_pU64, file.position)
+    Return 0 ' success
+End Function
+
 Function wasi_snapshot_preview1_path_filestat_get(fd As Integer, flags As Integer, path_pU8 As Integer, path_len_Size As Integer, buf_pFilestat As Integer) As Integer
     path = StringFromBytes(m.wasi_memory, path_pU8, path_len_Size)
     Stop
@@ -229,8 +268,15 @@ End Function
 Function wasi_unstable_fd_close(p0 As Integer) As Integer
     Return wasi_snapshot_preview1_fd_close(p0)
 End Function
-Function wasi_unstable_fd_seek(p0 As Integer, p1 As LongInteger, p2 As Integer, p3 As Integer) As Integer
-    Return 8 ' badf
+Function wasi_unstable_fd_seek(fd As Integer, offset As LongInteger, whence As Integer, newoffset_pU64 As Integer) As Integer
+    If whence = wasi_unstable_enum_whence_set() Then
+        whence = wasi_snapshot_preview1_enum_whence_set()
+    Else If whence = wasi_unstable_enum_whence_cur() Then
+        whence = wasi_snapshot_preview1_enum_whence_cur()
+    Else
+        whence = wasi_snapshot_preview1_enum_whence_end()
+    End If
+    Return wasi_snapshot_preview1_fd_seek(fd, offset, whence, newoffset_pU64)
 End Function
 Function wasi_unstable_fd_write(p0 As Integer, p1 As Integer, p2 As Integer, p3 As Integer) As Integer
     Return wasi_snapshot_preview1_fd_write(p0, p1, p2, p3)
