@@ -2,6 +2,7 @@
 #include <stdlib.h>
 
 int main(void) {
+    printf("env: %s\n", getenv("TEST"));
     FILE* fp = fopen("pkg:/manifest", "r");
     printf("fp: %p\n", fp);
     fseek(fp, 0, SEEK_END);
