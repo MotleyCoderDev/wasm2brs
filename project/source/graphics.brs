@@ -51,8 +51,9 @@ Function wasi_experimental_create_surface(bitsPerPixel As Integer, width As Inte
     m.surfacePixelDataSize = pixelDataSize
     m.surfaceHeight = height
 
+    m.screenport = CreateObject("roMessagePort")
     m.screen = CreateObject("roScreen", true, 320, 200)
-    m.screen.SetMessagePort(m.port)
+    m.screen.SetMessagePort(m.screenport)
 End Function
 
 Function wasi_experimental_draw_surface(pixelDataOffset As Integer) as Void
@@ -62,4 +63,15 @@ Function wasi_experimental_draw_surface(pixelDataOffset As Integer) as Void
     bitmap = CreateObject("roBitmap", path)
     m.screen.DrawScaledObject(0, m.surfaceHeight, 1, -1, bitmap)
     m.screen.SwapBuffers()
+End Function
+
+Function wasi_experimental_poll_button() as Integer
+    If m.screenport <> Invalid Then
+        msg = m.screenport.GetMessage()
+        If type(msg) = "roUniversalControlEvent" Then
+            button = msg.GetInt()
+            Return button
+        End If
+    End If
+    Return &HFFFFFFFF
 End Function
