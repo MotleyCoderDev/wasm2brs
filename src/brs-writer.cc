@@ -2056,13 +2056,25 @@ void CWriter::Write(const LoadExpr& expr) {
 }
 
 void CWriter::Write(const StoreExpr& expr) {
+  assert(module_->memories.size() == 1);
+  Memory* memory = module_->memories[0];
+
+  // Special case for writing a single byte (faster than calling)
+  if (expr.opcode == Opcode::I32Store8) {
+    Write(ExternalPtr(memory->name), "[", StackVar(1));
+    if (expr.offset != 0)
+      Write(" + ", expr.offset);
+    Write("] = ", StackVar(0), Newline());
+    DropTypes(2);
+    return;
+  }
+
   const char* func = nullptr;
   switch (expr.opcode) {
     case Opcode::I32Store: func = "I32Store"; break;
     case Opcode::I64Store: func = "I64Store"; break;
     case Opcode::F32Store: func = "F32Store"; break;
     case Opcode::F64Store: func = "F64Store"; break;
-    case Opcode::I32Store8: func = "I32Store8"; break;
     case Opcode::I64Store8: func = "I64Store8"; break;
     case Opcode::I32Store16: func = "I32Store16"; break;
     case Opcode::I64Store16: func = "I64Store16"; break;
@@ -2071,9 +2083,6 @@ void CWriter::Write(const StoreExpr& expr) {
     default:
       BRS_UNREACHABLE;
   }
-
-  assert(module_->memories.size() == 1);
-  Memory* memory = module_->memories[0];
 
   Write(func, "(", ExternalPtr(memory->name), ", ", StackVar(1));
   if (expr.offset != 0)
