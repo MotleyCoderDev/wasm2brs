@@ -1647,9 +1647,6 @@ void CWriter::Write(const BinaryExpr& expr) {
       break;
 
     case Opcode::I32DivS:
-      WriteInfixBinaryExpr(expr.opcode, "\\");
-      break;
-
     case Opcode::I64DivS:
       WriteInfixBinaryExpr(expr.opcode, "\\");
       break;
