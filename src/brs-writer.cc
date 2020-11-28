@@ -2042,27 +2042,41 @@ void CWriter::Write(const StoreExpr& expr) {
   assert(module_->memories.size() == 1);
   Memory* memory = module_->memories[0];
 
-  // Special case for writing a single byte (faster than calling)
-  if (expr.opcode == Opcode::I32Store8) {
-    Write(ExternalPtr(memory->name), "[", StackVar(1));
-    if (expr.offset != 0)
-      Write(" + ", expr.offset);
-    Write("] = ", StackVar(0), Newline());
+  size_t int_size = 0;
+  switch (expr.opcode) {
+    case Opcode::I32Store: int_size = 4; break;
+    case Opcode::I64Store: int_size = 8; break;
+    case Opcode::I32Store8: int_size = 1; break;
+    case Opcode::I64Store8: int_size = 1; break;
+    case Opcode::I32Store16: int_size = 2; break;
+    case Opcode::I64Store16: int_size = 2; break;
+    case Opcode::I64Store32: int_size = 4; break;
+  }
+
+  // Special case for storing bytes (faster than calling)
+  if (int_size != 0) {
+    for (size_t i = 0; i < int_size; ++i) {
+      Write(ExternalPtr(memory->name), "[", StackVar(1));
+      wabt::Address offset = expr.offset + i;
+      if (offset != 0) {
+        Write(" + ", offset);
+      }
+      Write("] = ");
+      if (i == 0) {
+        Write(StackVar(0));
+      } else {
+        Write("(", StackVar(0), " >> ", i * 8, i >= 4 ? "&)" : ")");
+      }
+      Write(Newline());
+    }
     DropTypes(2);
     return;
   }
 
   const char* func = nullptr;
   switch (expr.opcode) {
-    case Opcode::I32Store: func = "I32Store"; break;
-    case Opcode::I64Store: func = "I64Store"; break;
     case Opcode::F32Store: func = "F32Store"; break;
     case Opcode::F64Store: func = "F64Store"; break;
-    case Opcode::I64Store8: func = "I64Store8"; break;
-    case Opcode::I32Store16: func = "I32Store16"; break;
-    case Opcode::I64Store16: func = "I64Store16"; break;
-    case Opcode::I64Store32: func = "I64Store32"; break;
-
     default:
       BRS_UNREACHABLE;
   }
