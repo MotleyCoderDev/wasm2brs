@@ -1,4 +1,7 @@
 Function custom_print_line(fd as Integer, str as String) as Void
+    If m.screen <> Invalid Then
+        Return
+    End If
     m.outputLines.Push(str)
     If m.outputLines.Count() > m.output.maxLines Then
         m.outputLines.Shift()
@@ -25,6 +28,9 @@ Function WaitForEvent() as Boolean
 End Function
 
 Function custom_wait_for_stdin() as Void
+    If m.screen <> Invalid Then
+        Return
+    End If
     ' Not correct but it works for right now
     WaitForEvent()
 End Function
