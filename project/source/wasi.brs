@@ -69,6 +69,12 @@ Function wasi_helper_recurse_preopen_dirs(dir as String) as Void
     End For
 End Function
 
+Function wasi_helper_datetime_to_nanoseconds(dateTime as Object) as LongInteger
+    nanoseconds = I32ToUnsignedI64(m.wasi_date.AsSeconds()) * 1000000000&
+    nanoseconds += m.wasi_date.GetMilliseconds() * 1000000&
+    Return nanoseconds
+End Function
+
 Function wasi_init(memory as Object, executableFile as String, config as Object)
     m.wasi_memory = memory
     m.wasi_config = config
@@ -184,6 +190,32 @@ Function wasi_snapshot_preview1_path_open(fd As Integer, dirflags As Integer, pa
     Return 0 ' success
 End Function
 
+Function wasi_snapshot_preview1_path_filestat_get(fd As Integer, flags As Integer, path_pU8 As Integer, path_len_Size As Integer, buf_pFilestat As Integer) As Integer
+    dir = m.wasi_fds[fd]
+    If dir = Invalid Return 8 ' badf
+    path = dir.path + StringFromBytes(m.wasi_memory, path_pU8, path_len_Size)
+    stats = m.wasi_filesystem.Stat(path)
+    If stats.type = Invalid Return 44 ' noent
+    If stats.type = "directory" Then
+        filetype = wasi_enum_filetype_directory()
+    Else
+        filetype = wasi_enum_filetype_regular_file()
+    End If
+    
+    ctime = wasi_helper_datetime_to_nanoseconds(stats.ctime)
+    mtime = wasi_helper_datetime_to_nanoseconds(stats.mtime)
+
+    I64Store(m.wasi_memory, buf_pFilestat + 0, 0)
+    I64Store(m.wasi_memory, buf_pFilestat + 8, 0)
+    I32Store8(m.wasi_memory, buf_pFilestat + 16, filetype)
+    I64Store(m.wasi_memory, buf_pFilestat + 24, 0)
+    I64Store(m.wasi_memory, buf_pFilestat + 32, stats.sizeex)
+    I64Store(m.wasi_memory, buf_pFilestat + 40, mtime) 'atime, but we don't have it so use mtime
+    I64Store(m.wasi_memory, buf_pFilestat + 48, mtime)
+    I64Store(m.wasi_memory, buf_pFilestat + 56, ctime)
+    Return 0
+End Function
+
 Function wasi_snapshot_preview1_fd_close(fd As Integer) As Integer
     Return 0 ' success
 End Function
@@ -200,12 +232,6 @@ Function wasi_snapshot_preview1_fd_seek(fd As Integer, offset As LongInteger, wh
     End If
     I64Store(m.wasi_memory, newoffset_pU64, file.position)
     Return 0 ' success
-End Function
-
-Function wasi_snapshot_preview1_path_filestat_get(fd As Integer, flags As Integer, path_pU8 As Integer, path_len_Size As Integer, buf_pFilestat As Integer) As Integer
-    path = StringFromBytes(m.wasi_memory, path_pU8, path_len_Size)
-    Stop
-    Return 11
 End Function
 
 Function wasi_snapshot_preview1_fd_fdstat_get(fd As Integer, pFdstat As Integer) As Integer
@@ -235,9 +261,7 @@ End Function
 
 Function wasi_snapshot_preview1_clock_time_get(clockid As Integer, precision As LongInteger, time_pTimestamp64 As Integer) As Integer
     m.wasi_date.Mark()
-    nanoseconds = I32ToUnsignedI64(m.wasi_date.AsSeconds()) * 1000000000&
-    nanoseconds += m.wasi_date.GetMilliseconds() * 1000000&
-    I64Store(m.wasi_memory, time_pTimestamp64, nanoseconds)
+    I64Store(m.wasi_memory, time_pTimestamp64, wasi_helper_datetime_to_nanoseconds(m.wasi_date))
     Return 0 ' success
 End Function
 
@@ -253,6 +277,9 @@ Function wasi_unstable_proc_exit(p0 As Integer) As Void
 End Function
 Function wasi_unstable_fd_fdstat_get(p0 As Integer, p1 As Integer) As Integer
     Return wasi_snapshot_preview1_fd_fdstat_get(p0, p1)
+End Function
+Function wasi_unstable_path_filestat_get(fd As Integer, flags As Integer, path_pU8 As Integer, path_len_Size As Integer, buf_pFilestat As Integer) As Integer
+    Return wasi_snapshot_preview1_path_filestat_get(fd, flags, path_pU8, path_len_Size, buf_pFilestat)
 End Function
 Function wasi_unstable_path_open(p0 As Integer, p1 As Integer, p2 As Integer, p3 As Integer, p4 As Integer, p5 As LongInteger, p6 As LongInteger, p7 As Integer, p8 As Integer) As Integer
     Return wasi_snapshot_preview1_path_open(p0, p1, p2, p3, p4, p5, p6, p7, p8)
