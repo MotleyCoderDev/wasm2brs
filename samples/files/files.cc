@@ -1,8 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 int main(void) {
     printf("env: %s\n", getenv("TEST"));
+    printf("access: %d\n", access("pkg:/manifest", R_OK));
+    printf("invalid access: %d\n", access("pkg:/does_not_exist", R_OK));
     FILE* fp = fopen("pkg:/manifest", "r");
     printf("fp: %p\n", fp);
     fseek(fp, 0, SEEK_END);
