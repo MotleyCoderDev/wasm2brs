@@ -38,6 +38,11 @@ unsigned char pixels[SCREENWIDTH * SCREENHEIGHT * 4];
 // Fake mouse handling.
 boolean		grabMouse;
 
+__attribute__((__import_module__("wasi_experimental"), __import_name__("create_surface")))
+extern void wasi_experimental_create_surface(int bitsPerPixel, int width, int height, void* colorTableOffset);
+
+__attribute__((__import_module__("wasi_experimental"), __import_name__("draw_surface")))
+extern void wasi_experimental_draw_surface(void* pixelDataOffset);
 
 //
 //  Translates the key 
@@ -111,9 +116,7 @@ int xlatekey(SDL_keysym *key)
 
 void I_ShutdownGraphics(void)
 {
-#if defined(REPLACE_SDL)
-  SDL_Quit();
-#endif
+    exit(0);
 }
 
 
@@ -235,6 +238,8 @@ void I_FinishUpdate (void)
 	    screens[0][ (SCREENHEIGHT-1)*SCREENWIDTH + i] = 0x0;
     }
 
+    wasi_experimental_draw_surface(screens[0]);
+
 	// TODO(trevor): Just output screens[0]
     static int counter = 0;
     printf("Output to screen frame: %d\n", counter++);
@@ -250,9 +255,9 @@ void I_ReadScreen (byte* scr)
 }
 
 struct color {
-	unsigned char r;
-	unsigned char g;
 	unsigned char b;
+	unsigned char g;
+	unsigned char r;
 	unsigned char unused;
 };
 
@@ -270,10 +275,8 @@ void I_SetPalette (byte* palette)
 	colors[i].b = gammatable[usegamma][*palette++];
 	colors[i].unused = 0;
     }
-// Set the internal bitmap here
-#if defined(REPLACE_SDL)
-    SDL_SetColors(screen, colors, 0, 256);
-#endif
+
+    wasi_experimental_create_surface(8, SCREENWIDTH, SCREENHEIGHT, colors);
 }
 
 

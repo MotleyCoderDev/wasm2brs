@@ -1,8 +1,7 @@
 cmake_minimum_required(VERSION 3.13.4)
 project(doom)
 
-set(CMAKE_C_FLAGS_RELEASE "-Oz")
-set(CMAKE_CXX_FLAGS_RELEASE "-Oz")
+set(CMAKE_C_FLAGS "-Oz -Wl,--allow-undefined")
 
 add_executable(doom
 src/am_map.c
