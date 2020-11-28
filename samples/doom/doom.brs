@@ -3,7 +3,3 @@ Function Start()
     wasi_init(m.w2b_memory, "doom.wasm", { env: ["DOOMWADDIR=pkg:/source"] })
     w2b__start()
 End Function
-
-Function GetSettings()
-    Return { graphical: False }
-End Function

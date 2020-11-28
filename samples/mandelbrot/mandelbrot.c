@@ -1,6 +1,6 @@
 #define WIDTH 320
 #define HEIGHT 200
-unsigned char image[WIDTH * HEIGHT];
+unsigned char image[WIDTH * HEIGHT * 3];
 
 static unsigned char color(int iteration, int offset, int scale) {
   iteration = ((iteration * scale) + offset) % 1024;
@@ -38,15 +38,14 @@ void* mandelbrot(int maxIterations, double cx, double cy, double diameter) {
       const double rx = scale(cx, diameter, WIDTH, x);
       const double ry = scale(cy, verticalDiameter, HEIGHT, y);
       const int iterations = iterate(rx, ry, maxIterations);
-      const int idx = (x + y * WIDTH) * 4;
+      const int idx = (x + y * WIDTH) * 3;
       const unsigned char r = iterations == maxIterations ? 0 : color(iterations, 0, 4);
       const unsigned char g = iterations == maxIterations ? 0 : color(iterations, 128, 4);
       const unsigned char b = iterations == maxIterations ? 0 : color(iterations, 356, 4);
 
-      image[idx + 3] = r;
-      image[idx + 2] = g;
-      image[idx + 1] = b;
-      image[idx + 0] = 0xFF;
+      image[idx + 2] = r;
+      image[idx + 1] = g;
+      image[idx + 0] = b;
     }
   }
   return image;

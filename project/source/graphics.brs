@@ -1,4 +1,4 @@
-Function CreateSurface(bitsPerPixel As Integer, width As Integer, height As Integer, colorTableMemory As Object, colorTableOffset as Integer)
+Function wasi_experimental_create_surface(bitsPerPixel As Integer, width As Integer, height As Integer, colorTableOffset as Integer) as Void
     If bitsPerPixel <> 8 And bitsPerPixel <> 16 And bitsPerPixel <> 24 Then
         Throw "Invalid size for bitsPerPixel: " + bitsPerPixel.ToStr()
     End If
@@ -6,8 +6,10 @@ Function CreateSurface(bitsPerPixel As Integer, width As Integer, height As Inte
     bytesPerPixel = bitsPerPixel / 8
 
     If bitsPerPixel = 8 Then
-        colorTableSize = 4 * (2 ^ bitsPerPixel) ' rgb_
+        usedColors = 2 ^ bitsPerPixel
+        colorTableSize = 4 * usedColors ' rgb_
     Else
+        usedColors = 0
         colorTableSize = 0
     End If
 
@@ -15,8 +17,6 @@ Function CreateSurface(bitsPerPixel As Integer, width As Integer, height As Inte
     If scanLineSize Mod 4 <> 0 Then
         Throw "Scanline size (width * bitsPerPixel / 8) must be a multiple of 4, scan line size was: " + scanLineSize.ToStr()
     End If
-
-    usedColors = 2 ^ bitsPerPixel
 
     allHeadersSize = 54
     pixelDataSize = width * height * bytesPerPixel
@@ -45,20 +45,21 @@ Function CreateSurface(bitsPerPixel As Integer, width As Integer, height As Inte
     I32Store(headers, &H2E, usedColors) ' UsedColors
     I32Store(headers, &H32, 0) ' ImportantColors
 
-    MemoryCopy(headers, allHeadersSize, colorTableMemory, colorTableOffset, colorTableSize)
+    MemoryCopy(headers, allHeadersSize, m.wasi_memory, colorTableOffset, colorTableSize)
 
-    Return {
-        bitsPerPixel: bitsPerPixel,
-        width: width,
-        height: height,
-        headers: headers,
-        pixelDataSize: pixelDataSize
-    }
+    m.surfaceHeaders = headers
+    m.surfacePixelDataSize = pixelDataSize
+    m.surfaceHeight = height
+
+    m.screen = CreateObject("roScreen", true, 320, 200)
+    m.screen.SetMessagePort(m.port)
 End Function
 
-Function SurfaceToBitmap(surface As Object, pixelDataMemory As Object, pixelDataOffset As Integer) As Object
+Function wasi_experimental_draw_surface(pixelDataOffset As Integer) as Void
     path = "tmp:/surface.bmp"
-    surface.headers.WriteFile(path)
-    pixelDataMemory.AppendFile(path, pixelDataOffset, surface.pixelDataSize)
-    Return CreateObject("roBitmap", path)
+    m.surfaceHeaders.WriteFile(path)
+    m.wasi_memory.AppendFile(path, pixelDataOffset, m.surfacePixelDataSize)
+    bitmap = CreateObject("roBitmap", path)
+    m.screen.DrawScaledObject(0, m.surfaceHeight, 1, -1, bitmap)
+    m.screen.SwapBuffers()
 End Function
