@@ -262,7 +262,6 @@ class CWriter {
                             const char* op,
                             AssignOp = AssignOp::Disallowed);
   void WritePrefixBinaryExpr(Opcode, const char* op);
-  void WriteSignedBinaryExpr(Opcode, const char* op);
   void Write(const BinaryExpr&);
   void Write(const CompareExpr&);
   void Write(const ConvertExpr&);
@@ -1606,19 +1605,6 @@ void CWriter::WritePrefixBinaryExpr(Opcode opcode, const char* op) {
   Type result_type = opcode.GetResultType();
   Write(StackVar(1, result_type), " = ", op, "(", StackVar(1), ", ",
         StackVar(0), ")", Newline());
-  DropTypes(2);
-  PushType(result_type);
-}
-
-void CWriter::WriteSignedBinaryExpr(Opcode opcode, const char* op) {
-  Type result_type = opcode.GetResultType();
-  Type type = opcode.GetParamType1();
-  assert(opcode.GetParamType2() == type);
-  // TODO(trevor): This is WRONG but we need to move on (removed casting)
-  Write(StackVar(1, result_type), " = (", StackVar(1), " ", op, " ", StackVar(0), ")", Newline());
-  //Write(StackVar(1, result_type), " = (", type, ")((", SignedType(type), ")",
-  //      StackVar(1), " ", op, " (", SignedType(type), ")", StackVar(0), ")",
-  //      Newline());
   DropTypes(2);
   PushType(result_type);
 }
