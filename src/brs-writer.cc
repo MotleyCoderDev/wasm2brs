@@ -260,7 +260,7 @@ class CWriter {
   void WriteSimpleUnaryExpr(Opcode, const char* op);
   void WriteInfixBinaryExpr(Opcode,
                             const char* op,
-                            AssignOp = AssignOp::Allowed);
+                            AssignOp = AssignOp::Disallowed);
   void WritePrefixBinaryExpr(Opcode, const char* op);
   void WriteSignedBinaryExpr(Opcode, const char* op);
   void Write(const BinaryExpr&);
@@ -1592,11 +1592,11 @@ void CWriter::WriteInfixBinaryExpr(Opcode opcode,
                                    AssignOp assign_op) {
   Type result_type = opcode.GetResultType();
   Write(StackVar(1, result_type));
-  //if (assign_op == AssignOp::Allowed) {
-  //  Write(" ", op, "= ", StackVar(0));
-  //} else {
+  if (assign_op == AssignOp::Allowed) {
+    Write(" ", op, "= ", StackVar(0));
+  } else {
     Write(" = ", StackVar(1), " ", op, " ", StackVar(0));
-  //}
+  }
   Write(Newline());
   DropTypes(2);
   PushType(result_type);
@@ -1629,26 +1629,26 @@ void CWriter::Write(const BinaryExpr& expr) {
     case Opcode::I64Add:
     case Opcode::F32Add:
     case Opcode::F64Add:
-      WriteInfixBinaryExpr(expr.opcode, "+");
+      WriteInfixBinaryExpr(expr.opcode, "+", AssignOp::Allowed);
       break;
 
     case Opcode::I32Sub:
     case Opcode::I64Sub:
     case Opcode::F32Sub:
     case Opcode::F64Sub:
-      WriteInfixBinaryExpr(expr.opcode, "-");
+      WriteInfixBinaryExpr(expr.opcode, "-", AssignOp::Allowed);
       break;
 
     case Opcode::I32Mul:
     case Opcode::I64Mul:
     case Opcode::F32Mul:
     case Opcode::F64Mul:
-      WriteInfixBinaryExpr(expr.opcode, "*");
+      WriteInfixBinaryExpr(expr.opcode, "*", AssignOp::Allowed);
       break;
 
     case Opcode::I32DivS:
     case Opcode::I64DivS:
-      WriteInfixBinaryExpr(expr.opcode, "\\");
+      WriteInfixBinaryExpr(expr.opcode, "\\", AssignOp::Allowed);
       break;
 
     case Opcode::I32DivU:
