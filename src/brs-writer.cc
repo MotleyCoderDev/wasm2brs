@@ -2011,31 +2011,61 @@ void CWriter::Write(const ConvertExpr& expr) {
 }
 
 void CWriter::Write(const LoadExpr& expr) {
+  assert(module_->memories.size() == 1);
+  Memory* memory = module_->memories[0];
+
+  Type result_type = expr.opcode.GetResultType();
+
+  size_t int_size = 0;
+  switch (expr.opcode) {
+    case Opcode::I32Load: int_size = 4; break;
+    case Opcode::I32Load8U: int_size = 1; break;
+    case Opcode::I32Load16U: int_size = 2; break;
+  }
+
+  // Special case for loading unsigned integer bytes (faster than calling)
+  // We'd like to handle all the integer operations such as I64, but we need to handle casting back to I64
+  if (int_size != 0) {
+    //buffer[index] + (buffer[index + 1] << 8) + (buffer[index + 2] << 16) + (buffer[index + 3] << 24)
+    Write(StackVar(0, result_type), " = ");
+    for (size_t i = 0; i < int_size; ++i) {
+      if (i != 0) {
+        Write(" + ");
+      }
+      Write("(mem[", StackVar(0));
+      wabt::Address offset = expr.offset + i;
+      if (offset != 0) {
+        Write(" + ", offset);
+      }
+      Write("]");
+      if (i != 0) {
+        Write(" << ", i * 8, i >= 4 ? "&" : "");
+      }
+      Write(")");
+    }
+    Write(Newline());
+    DropTypes(1);
+    PushType(result_type);
+    return;
+  }
+
   const char* func = nullptr;
   switch (expr.opcode) {
-    case Opcode::I32Load: func = "I32Load"; break;
     case Opcode::I64Load: func = "I64Load"; break;
     case Opcode::F32Load: func = "F32Load"; break;
     case Opcode::F64Load: func = "F64Load"; break;
     case Opcode::I32Load8S: func = "I32Load8S"; break;
     case Opcode::I64Load8S: func = "I64Load8S"; break;
-    case Opcode::I32Load8U: func = "I32Load8U"; break;
     case Opcode::I64Load8U: func = "I64Load8U"; break;
     case Opcode::I32Load16S: func = "I32Load16S"; break;
     case Opcode::I64Load16S: func = "I64Load16S"; break;
-    case Opcode::I32Load16U: func = "I32Load16U"; break;
     case Opcode::I64Load16U: func = "I64Load16U"; break;
     case Opcode::I64Load32S: func = "I64Load32S"; break;
     case Opcode::I64Load32U: func = "I64Load32U"; break;
-
     default:
       BRS_UNREACHABLE;
   }
 
-  assert(module_->memories.size() == 1);
-  Memory* memory = module_->memories[0];
-
-  Type result_type = expr.opcode.GetResultType();
   Write(StackVar(0, result_type), " = ", func, "(mem, ", StackVar(0));
   if (expr.offset != 0)
     Write(" + ", expr.offset);
@@ -2059,7 +2089,7 @@ void CWriter::Write(const StoreExpr& expr) {
     case Opcode::I64Store32: int_size = 4; break;
   }
 
-  // Special case for storing bytes (faster than calling)
+  // Special case for storing integer bytes (faster than calling)
   if (int_size != 0) {
     for (size_t i = 0; i < int_size; ++i) {
       Write("mem[", StackVar(1));
