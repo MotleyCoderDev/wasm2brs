@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.13.4)
 project(doom)
 
-set(CMAKE_C_FLAGS "-Oz -Wl,--allow-undefined")
+set(CMAKE_C_FLAGS "-Oz -Ofast -Wl,--allow-undefined")
 
 add_executable(doom
 src/am_map.c
@@ -69,5 +69,3 @@ src/wi_stuff.c
 )
 
 target_compile_options(doom PRIVATE "-Wno-everything")
-
-# Consider adding -Ofast
