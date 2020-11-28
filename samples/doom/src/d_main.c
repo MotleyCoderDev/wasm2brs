@@ -685,6 +685,7 @@ void IdentifyVersion (void)
       return;
     }
 
+	printf("DOOM1 WAD PATH: %s %s\n", doom1wad, getenv("DOOMWADDIR"));
     if ( !access (doom1wad,R_OK) )
     {
       gamemode = shareware;

@@ -52,6 +52,8 @@ rcsid[] = "$Id: m_bbox.c,v 1.1 1997/02/03 22:45:10 b1 Exp $";
 #include <windows.h>
 #else
 //#error You should hack this file for your BSD sockets layer
+#define IPPORT_USERRESERVED	5000
+struct sockaddr_in {};
 #endif
 #endif
 #endif
@@ -102,7 +104,6 @@ rcsid[] = "$Id: m_bbox.c,v 1.1 1997/02/03 22:45:10 b1 Exp $";
 void	NetSend (void);
 boolean NetListen (void);
 
-#if defined(SOCKET_SUPPORT)
 
 //
 // NETWORKING
@@ -118,6 +119,7 @@ struct	sockaddr_in	sendaddress[MAXNETNODES];
 void	(*netget) (void);
 void	(*netsend) (void);
 
+#if defined(SOCKET_SUPPORT)
 
 //
 // UDPsocket
@@ -275,12 +277,13 @@ int GetLocalAddress (void)
 }
 #endif
 
+void NoOp (void) {}
+
 //
 // I_InitNetwork
 //
 void I_InitNetwork (void)
 {
-#if defined(SOCKET_SUPPORT)
     boolean		trueval = true;
     int			i;
     int			p;
@@ -328,8 +331,8 @@ void I_InitNetwork (void)
 	return;
     }
 
-    netsend = PacketSend;
-    netget = PacketGet;
+    netsend = NoOp;
+    netget = NoOp;
     netgame = true;
 
     // parse player number and host list
@@ -337,39 +340,12 @@ void I_InitNetwork (void)
 
     doomcom->numnodes = 1;	// this node for sure
 	
-    i++;
-    while (++i < myargc && myargv[i][0] != '-')
-    {
-	sendaddress[doomcom->numnodes].sin_family = AF_INET;
-	sendaddress[doomcom->numnodes].sin_port = htons(DOOMPORT);
-	if (myargv[i][0] == '.')
-	{
-	    sendaddress[doomcom->numnodes].sin_addr.s_addr 
-		= inet_addr (myargv[i]+1);
-	}
-	else
-	{
-	    hostentry = gethostbyname (myargv[i]);
-	    if (!hostentry)
-		I_Error ("gethostbyname: couldn't find %s", myargv[i]);
-	    sendaddress[doomcom->numnodes].sin_addr.s_addr 
-		= *(int *)hostentry->h_addr_list[0];
-	}
-	doomcom->numnodes++;
-    }
-	
     doomcom->id = DOOMCOM_ID;
     doomcom->numplayers = doomcom->numnodes;
     
     // build message to receive
-    insocket = UDPsocket ();
-    BindToLocalPort (insocket,htons(DOOMPORT));
-#ifdef linux
-    ioctl (insocket, FIONBIO, &trueval);
-#endif
-
-    sendsocket = UDPsocket ();
-#endif
+    insocket = -1;
+    sendsocket = -1;
 }
 
 

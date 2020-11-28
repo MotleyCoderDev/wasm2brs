@@ -236,6 +236,8 @@ void I_FinishUpdate (void)
     }
 
 	// TODO(trevor): Just output screens[0]
+    static int counter = 0;
+    printf("Output to screen frame: %d\n", counter++);
 }
 
 

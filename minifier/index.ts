@@ -3,7 +3,11 @@ import fs from "fs";
 import path from "path";
 import seedrandom from "seedrandom";
 
-export const minifyFiles = (debug: boolean, filesContents: string[], keepIdentifiers?: string[]): string[] => {
+export const minifyFiles = (
+  debug: boolean,
+  filesContents: string[],
+  keepIdentifiers?: string[],
+  skipIdentifierRemap?: boolean): string[] => {
   const text = filesContents.join("\n");
 
   const builtinLiterals = {
@@ -105,7 +109,9 @@ export const minifyFiles = (debug: boolean, filesContents: string[], keepIdentif
     append: true,
     mark: true,
     asseconds: true,
-    getmilliseconds: true
+    getmilliseconds: true,
+    stat: true,
+    getdirectorylisting: true
   };
 
   const ourGlobals = {
@@ -197,9 +203,11 @@ export const minifyFiles = (debug: boolean, filesContents: string[], keepIdentif
   console.log("Remapped Identifiers");
 
   let newIdentifierText = textWithoutCommentsOrWhitespace;
-  for (let i = 0; i < oldIdentifiers.length; ++i) {
-    const identifierRegex = new RegExp(`\\b${oldIdentifiers[i]}\\b`, "gui");
-    newIdentifierText = newIdentifierText.replace(identifierRegex, newIdentifiers[i]);
+  if (!skipIdentifierRemap) {
+    for (let i = 0; i < oldIdentifiers.length; ++i) {
+      const identifierRegex = new RegExp(`\\b${oldIdentifiers[i]}\\b`, "gui");
+      newIdentifierText = newIdentifierText.replace(identifierRegex, newIdentifiers[i]);
+    }
   }
 
   console.log("Replaced Identifiers");
@@ -283,7 +291,11 @@ export const minifyFiles = (debug: boolean, filesContents: string[], keepIdentif
 
 if (process.env.INPUT && process.env.OUTPUT) {
   const filesContents = process.env.INPUT.split(",").map((file) => fs.readFileSync(file, "utf8"));
-  const results = minifyFiles(Boolean(process.env.DEBUG), filesContents, (process.env.KEEP || "").split(","));
+  const results = minifyFiles(
+    Boolean(process.env.DEBUG),
+    filesContents,
+    (process.env.KEEP || "").split(","),
+    Boolean(process.env.SKIP_IDENTIFIER_REMAP));
   if (results.length === 1) {
     fs.writeFileSync(process.env.OUTPUT, results[0], "utf8");
   } else {
