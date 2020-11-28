@@ -1110,6 +1110,12 @@ void CWriter::Write(const Func& func) {
 
   Write(") As ", ResultType(func.decl.sig.result_types), OpenBrace());
 
+  if (!module_->memories.empty()) {
+    assert(module_->memories.size() == 1);
+    Memory* memory = module_->memories[0];
+    Write("mem = ", ExternalPtr(memory->name), Newline());
+  }
+
   WriteLocals(index_to_name);
 
   stream_ = &func_stream_;
@@ -1511,7 +1517,7 @@ void CWriter::Write(const ExprList& exprs) {
         assert(module_->memories.size() == 1);
         Memory* memory = module_->memories[0];
 
-        Write(StackVar(0), " = MemoryGrow(", ExternalPtr(memory->name), ", ", ExternalPtr(memory->name), "Max, ", StackVar(0), ")", Newline());
+        Write(StackVar(0), " = MemoryGrow(mem, ", ExternalPtr(memory->name), "Max, ", StackVar(0), ")", Newline());
         break;
       }
 
@@ -1520,7 +1526,7 @@ void CWriter::Write(const ExprList& exprs) {
         Memory* memory = module_->memories[0];
 
         PushType(Type::I32);
-        Write(StackVar(0), " = MemorySize(", ExternalRef(memory->name), ")", Newline());
+        Write(StackVar(0), " = MemorySize(mem)", Newline());
         break;
       }
 
@@ -2030,7 +2036,7 @@ void CWriter::Write(const LoadExpr& expr) {
   Memory* memory = module_->memories[0];
 
   Type result_type = expr.opcode.GetResultType();
-  Write(StackVar(0, result_type), " = ", func, "(", ExternalPtr(memory->name), ", ", StackVar(0));
+  Write(StackVar(0, result_type), " = ", func, "(mem, ", StackVar(0));
   if (expr.offset != 0)
     Write(" + ", expr.offset);
   Write(")", Newline());
@@ -2056,7 +2062,7 @@ void CWriter::Write(const StoreExpr& expr) {
   // Special case for storing bytes (faster than calling)
   if (int_size != 0) {
     for (size_t i = 0; i < int_size; ++i) {
-      Write(ExternalPtr(memory->name), "[", StackVar(1));
+      Write("mem[", StackVar(1));
       wabt::Address offset = expr.offset + i;
       if (offset != 0) {
         Write(" + ", offset);
@@ -2081,7 +2087,7 @@ void CWriter::Write(const StoreExpr& expr) {
       BRS_UNREACHABLE;
   }
 
-  Write(func, "(", ExternalPtr(memory->name), ", ", StackVar(1));
+  Write(func, "(mem, ", StackVar(1));
   if (expr.offset != 0)
     Write(" + ", expr.offset);
   Write(", ", StackVar(0), ")", Newline());
@@ -2258,8 +2264,7 @@ void CWriter::Write(const LoadSplatExpr& expr) {
   Memory* memory = module_->memories[0];
 
   Type result_type = expr.opcode.GetResultType();
-  Write(StackVar(0, result_type), " = ", expr.opcode.GetName(), "(",
-        ExternalPtr(memory->name), ", (", StackVar(0));
+  Write(StackVar(0, result_type), " = ", expr.opcode.GetName(), "(mem, (", StackVar(0));
   if (expr.offset != 0)
     Write(" + ", expr.offset);
   Write("));", Newline());
