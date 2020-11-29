@@ -2026,12 +2026,24 @@ void CWriter::Write(const LoadExpr& expr) {
     return;
   }
 
+  // Optimize for where we can use GetSignedByte.
+  // TODO(trevor): Also optimize I64Load8S but convert to LongInteger.
+  if (expr.opcode == Opcode::I32Load8S) {
+    Write(StackVar(0, result_type), " = mem.GetSignedByte(", StackVar(0));
+    if (expr.offset != 0) {
+      Write(" + ", expr.offset);
+    }
+    Write(")", Newline());
+    DropTypes(1);
+    PushType(result_type);
+    return;
+  }
+
   const char* func = nullptr;
   switch (expr.opcode) {
     case Opcode::I64Load: func = "I64Load"; break;
     case Opcode::F32Load: func = "F32Load"; break;
     case Opcode::F64Load: func = "F64Load"; break;
-    case Opcode::I32Load8S: func = "I32Load8S"; break;
     case Opcode::I64Load8S: func = "I64Load8S"; break;
     case Opcode::I64Load8U: func = "I64Load8U"; break;
     case Opcode::I32Load16S: func = "I32Load16S"; break;
