@@ -385,7 +385,9 @@ void D_DoomLoop (void)
 	    TryRunTics (); // will run at least one tic
 	}
 
+#if defined(ENABLE_SOUND)
 	S_UpdateSounds (players[consoleplayer].mo);// move positional sounds
+#endif
 
 	// Update display, next frame, with current state.
 	D_Display ();

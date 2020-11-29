@@ -110,11 +110,9 @@ int  I_GetTime (void)
 //
 void I_Init (void)
 {
-#if defined(REPLACE_SDL)
-    if ( SDL_Init(SDL_INIT_AUDIO|SDL_INIT_VIDEO) < 0 )
-        I_Error("Could not initialize SDL: %s", SDL_GetError());
-#endif
+#if defined(ENABLE_SOUND)
     I_InitSound();
+#endif
     //  I_InitGraphics();
 }
 
