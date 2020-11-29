@@ -399,6 +399,7 @@ S_StartSound
 ( void*		origin,
   int		sfx_id )
 {
+#if defined(ENABLE_SOUND)
 #ifdef SAWDEBUG
     // if (sfx_id == sfx_sawful)
     // sfx_id = sfx_itemup;
@@ -462,7 +463,7 @@ S_StartSound
     }
 }
 #endif
- 
+#endif
 }
 
 
@@ -470,6 +471,7 @@ S_StartSound
 
 void S_StopSound(void *origin)
 {
+#if defined(ENABLE_SOUND)
 
     int cnum;
 
@@ -481,6 +483,7 @@ void S_StopSound(void *origin)
 	    break;
 	}
     }
+#endif
 }
 
 
