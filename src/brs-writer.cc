@@ -263,6 +263,7 @@ class CWriter {
                             AssignOp = AssignOp::Disallowed);
   void WritePrefixBinaryExpr(Opcode, const char* op);
   void WriteCompareExpr(Opcode, const char* op);
+  void WriteCompareI32UExpr(Opcode, const char* op);
   void WriteEqzExpr(Opcode);
   void Write(const BinaryExpr&);
   void Write(const CompareExpr&);
@@ -1773,6 +1774,18 @@ void CWriter::WriteCompareExpr(Opcode opcode, const char* op) {
   PushType(result_type);
 }
 
+// We compare I32's as unsigned by promoting them to I64s first via "And &HFFFFFFFF&"
+void CWriter::WriteCompareI32UExpr(Opcode opcode, const char* op) {
+  Type result_type = opcode.GetResultType();
+  Write("If (", StackVar(1), " And &HFFFFFFFF&) ", op, " (", StackVar(0), " And &HFFFFFFFF&) Then", OpenBrace());
+  Write(StackVar(1, result_type), " = 1", Newline());
+  Write(CloseBrace(), "Else", OpenBrace());
+  Write(StackVar(1, result_type), " = 0", Newline());
+  Write(CloseBrace(), "End If", Newline());
+  DropTypes(2);
+  PushType(result_type);
+}
+
 void CWriter::Write(const CompareExpr& expr) {
   switch (expr.opcode) {
     case Opcode::I32Eq:
@@ -1813,25 +1826,27 @@ void CWriter::Write(const CompareExpr& expr) {
       break;
 
     case Opcode::I32LtU:
-      WritePrefixBinaryExpr(expr.opcode, "I32LtU");
-      break;
-    case Opcode::I64LtU:
-      WritePrefixBinaryExpr(expr.opcode, "I64LtU");
+      WriteCompareI32UExpr(expr.opcode, "<");
       break;
     case Opcode::I32LeU:
-      WritePrefixBinaryExpr(expr.opcode, "I32LeU");
+      WriteCompareI32UExpr(expr.opcode, "<=");
+      break;
+    case Opcode::I32GtU:
+      WriteCompareI32UExpr(expr.opcode, ">");
+      break;
+    case Opcode::I32GeU:
+      WriteCompareI32UExpr(expr.opcode, ">=");
+      break;
+    
+
+    case Opcode::I64LtU:
+      WritePrefixBinaryExpr(expr.opcode, "I64LtU");
       break;
     case Opcode::I64LeU:
       WritePrefixBinaryExpr(expr.opcode, "I64LeU");
       break;
-    case Opcode::I32GtU:
-      WritePrefixBinaryExpr(expr.opcode, "I32GtU");
-      break;
     case Opcode::I64GtU:
       WritePrefixBinaryExpr(expr.opcode, "I64GtU");
-      break;
-    case Opcode::I32GeU:
-      WritePrefixBinaryExpr(expr.opcode, "I32GeU");
       break;
     case Opcode::I64GeU:
       WritePrefixBinaryExpr(expr.opcode, "I64GeU");
