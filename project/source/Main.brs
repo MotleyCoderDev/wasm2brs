@@ -9,14 +9,12 @@ Function custom_print_line(fd as Integer, str as String) as Void
     m.output.text = m.outputLines.Join(Chr(10))
 End Function
 
-Function WaitForEvent() as Boolean
+Function WaitForEvent()
     msg = wait(0, m.port)
     If msg <> Invalid Then
         msgType = type(msg)
 
-        If msgType = "roSGScreenEvent" Then
-            If msg.isScreenClosed() Return False
-        Else If msgType = "roSGNodeEvent" Then
+        If msgType = "roSGNodeEvent" Then
             If msg.getNode() = "enter" Then
                 external_append_stdin(m.keyboard.text + Chr(10))
                 m.keyboard.text = ""
@@ -24,7 +22,6 @@ Function WaitForEvent() as Boolean
             End If
         End If
     End If
-    Return True
 End Function
 
 Function custom_wait_for_stdin() as Void
@@ -34,6 +31,14 @@ Function custom_wait_for_stdin() as Void
     ' Not correct but it works for right now
     WaitForEvent()
 End Function
+
+Function CatchingStart()
+    Try
+        Start()
+    Catch e
+        Print e
+    End Try
+EndFunction
 
 sub Main()
     settings = {}
@@ -68,19 +73,13 @@ sub Main()
 
     If settings.RestartOnFailure = True Then
         While True
-            Try
-                Start()
-            Catch e
-                Print e
-            End Try
+            CatchingStart()
         End While
+    Else If settings.Profiling = True Then
+        CatchingStart()
     Else
         Start()
     End If
 
     Print "------ Completed ------"
-
-    While True
-        If WaitForEvent() = False Return
-    End While
 end sub
