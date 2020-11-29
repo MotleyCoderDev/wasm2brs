@@ -307,6 +307,17 @@ static const char kImplicitFuncLabel[] = "$Bfunc";
 #include "src/prebuilt/wasm2c.include.c"
 #undef SECTION_NAME
 
+static bool IsMemcpy(const wabt::Func& func) {
+  return
+    func.name == "$memcpy" &&
+    func.GetNumParams() == 3 &&
+    func.GetParamType(0) == wabt::Type::I32 &&
+    func.GetParamType(1) == wabt::Type::I32 &&
+    func.GetParamType(2) == wabt::Type::I32 &&
+    func.GetNumResults() == 1 &&
+    func.GetResultType(0) == wabt::Type::I32;
+}
+
 size_t CWriter::MarkTypeStack() const {
   return type_stack_.size();
 }
@@ -1097,6 +1108,10 @@ void CWriter::WriteFuncs() {
 }
 
 void CWriter::Write(const Func& func) {
+  if (IsMemcpy(func)) {
+    return;
+  }
+
   func_ = &func;
   label_count_ = 0;
   // Copy symbols from global symbol table so we don't shadow them.
@@ -1337,9 +1352,18 @@ void CWriter::Write(const ExprList& exprs) {
           Write(" = ");
         }
 
-        Write(GlobalVar(var), "(");
+        const bool is_memcpy = IsMemcpy(func);
+        if (is_memcpy) {
+          Write("MemCpy");
+        } else {
+          Write(GlobalVar(var));
+        }
+        Write("(");
+        if (is_memcpy) {
+          Write("mem");
+        }
         for (Index i = 0; i < num_params; ++i) {
-          if (i != 0) {
+          if (i != 0 || is_memcpy) {
             Write(", ");
           }
           Write(StackVar(num_params - i - 1));

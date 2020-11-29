@@ -1009,11 +1009,19 @@ Function MemoryGrow(memory as Object, maxPages as Integer, deltaPages as Integer
     Return previous
 End Function
 
-Function MemoryCopy(toBytes as Object, toOffset as Integer, fromBytes as Object, fromOffset as Integer, size as Integer) as Integer
-    For i = 0 To size - 1 Step 1
-        toBytes[i + toOffset] = fromBytes[i + fromOffset]
+Function MemoryCopy(dstBytes as Object, dst as Integer, srcBytes as Object, src as Integer, size as Integer) as Integer
+    For i = 0 To size - 1
+        dstBytes[dst + i] = srcBytes[src + i]
     End For
     Return size
+End Function
+
+' Same as above but single memory optimized with exact C memcpy semantics (returns destination address)
+Function MemCpy(memory as Object, dst as Integer, src as Integer, size as Integer) as Integer
+    For i = 0 To size - 1
+        memory[dst + i] = memory[src + i]
+    End For
+    Return dst
 End Function
 
 Function Unreachable()
