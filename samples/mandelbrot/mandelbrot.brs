@@ -2,7 +2,7 @@ Function Start()
     w2bInit__()
     wasi_init(m.w2b_memory, "mandelbrot.wasm", {})
 
-    wasi_experimental_create_surface(24, 320, 200, 0)
+    wasi_experimental_create_surface(24, 320, 200)
 
     iterations = 1000%
     x =  -0.7436447860#
