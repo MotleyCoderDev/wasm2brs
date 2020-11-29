@@ -18,4 +18,8 @@ Function Start()
     ts.Mark()
     wasi_experimental_draw_surface(offset)
     print "------------------------------ SWAPPED SCREEN " ts.TotalMilliseconds()
+
+    While True
+        WaitForEvent()
+    End While
 End Function
