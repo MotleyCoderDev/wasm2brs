@@ -1,4 +1,4 @@
-Function wasi_experimental_create_surface(bitsPerPixel As Integer, width As Integer, height As Integer, colorTableOffset as Integer) as Void
+Function wasi_experimental_create_surface(bitsPerPixel As Integer, width As Integer, height As Integer) as Void
     If bitsPerPixel <> 8 And bitsPerPixel <> 16 And bitsPerPixel <> 24 Then
         Throw "Invalid size for bitsPerPixel: " + bitsPerPixel.ToStr()
     End If
@@ -45,9 +45,8 @@ Function wasi_experimental_create_surface(bitsPerPixel As Integer, width As Inte
     I32Store(headers, &H2E, usedColors) ' UsedColors
     I32Store(headers, &H32, 0) ' ImportantColors
 
-    MemoryCopy(headers, allHeadersSize, m.wasi_memory, colorTableOffset, colorTableSize)
-
     m.surfaceHeaders = headers
+    m.surfaceColorTableSize = colorTableSize
     m.surfacePixelDataSize = pixelDataSize
     m.surfaceHeight = height
 
@@ -56,9 +55,14 @@ Function wasi_experimental_create_surface(bitsPerPixel As Integer, width As Inte
     m.screen.SetMessagePort(m.screenport)
 End Function
 
+Function wasi_experimental_set_surface_colors(colorTableOffset as Integer) as Void
+    m.surfaceColorTable = Slice(m.wasi_memory, colorTableOffset, m.surfaceColorTableSize)
+End Function
+
 Function wasi_experimental_draw_surface(pixelDataOffset As Integer) as Void
     path = "tmp:/surface.bmp"
     m.surfaceHeaders.WriteFile(path)
+    If m.surfaceColorTable <> Invalid Then m.surfaceColorTable.AppendFile(path)
     m.wasi_memory.AppendFile(path, pixelDataOffset, m.surfacePixelDataSize)
     bitmap = CreateObject("roBitmap", path)
     m.screen.DrawScaledObject(0, m.surfaceHeight, 1, -1, bitmap)

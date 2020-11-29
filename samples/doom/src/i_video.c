@@ -40,7 +40,10 @@ unsigned char pixels[SCREENWIDTH * SCREENHEIGHT * 4];
 boolean		grabMouse;
 
 __attribute__((__import_module__("wasi_experimental"), __import_name__("create_surface")))
-extern void wasi_experimental_create_surface(int bitsPerPixel, int width, int height, void* colorTableOffset);
+extern void wasi_experimental_create_surface(int bitsPerPixel, int width, int height);
+
+__attribute__((__import_module__("wasi_experimental"), __import_name__("set_surface_colors")))
+extern void wasi_experimental_set_surface_colors(void* colorTableOffset);
 
 __attribute__((__import_module__("wasi_experimental"), __import_name__("draw_surface")))
 extern void wasi_experimental_draw_surface(void* pixelDataOffset);
@@ -207,7 +210,7 @@ void I_SetPalette (byte* palette)
 	colors[i].unused = 0;
     }
 
-    wasi_experimental_create_surface(8, SCREENWIDTH, SCREENHEIGHT, colors);
+    wasi_experimental_set_surface_colors(colors);
 }
 
 
@@ -219,4 +222,6 @@ void I_InitGraphics(void)
     if (!firsttime)
 	return;
     firsttime = 0;
+
+    wasi_experimental_create_surface(8, SCREENWIDTH, SCREENHEIGHT);
 }
