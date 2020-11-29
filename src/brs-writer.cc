@@ -263,6 +263,7 @@ class CWriter {
                             AssignOp = AssignOp::Disallowed);
   void WritePrefixBinaryExpr(Opcode, const char* op);
   void WriteCompareExpr(Opcode, const char* op);
+  void WriteEqzExpr(Opcode);
   void Write(const BinaryExpr&);
   void Write(const CompareExpr&);
   void Write(const ConvertExpr&);
@@ -1841,13 +1842,22 @@ void CWriter::Write(const CompareExpr& expr) {
   }
 }
 
+void CWriter::WriteEqzExpr(Opcode opcode) {
+  Type result_type = opcode.GetResultType();
+  Write("If ", StackVar(0), " = ", result_type == Type::I32 ? Const::I32(0) : Const::I64(0), " Then", OpenBrace());
+  Write(StackVar(0, result_type), " = 1", Newline());
+  Write(CloseBrace(), "Else", OpenBrace());
+  Write(StackVar(0, result_type), " = 0", Newline());
+  Write(CloseBrace(), "End If", Newline());
+  DropTypes(1);
+  PushType(result_type);
+}
+
 void CWriter::Write(const ConvertExpr& expr) {
   switch (expr.opcode) {
     case Opcode::I32Eqz:
-      WriteSimpleUnaryExpr(expr.opcode, "I32Eqz");
-      break;
     case Opcode::I64Eqz:
-      WriteSimpleUnaryExpr(expr.opcode, "I64Eqz");
+      WriteEqzExpr(expr.opcode);
       break;
 
     case Opcode::I64ExtendI32S:
