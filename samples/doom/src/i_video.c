@@ -210,18 +210,16 @@ void I_SetPalette (byte* palette)
 	colors[i].unused = 0;
     }
 
+    static int created = 0;
+    if (!created) {
+        wasi_experimental_create_surface(8, SCREENWIDTH, SCREENHEIGHT);
+        created = 1;
+    }
+
     wasi_experimental_set_surface_colors(colors);
 }
 
 
 void I_InitGraphics(void)
 {
-
-    static int	firsttime=1;
-
-    if (!firsttime)
-	return;
-    firsttime = 0;
-
-    wasi_experimental_create_surface(8, SCREENWIDTH, SCREENHEIGHT);
 }
