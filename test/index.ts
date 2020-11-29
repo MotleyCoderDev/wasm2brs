@@ -277,6 +277,7 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<boolean 
     "major_version=1\n" +
     "minor_version=0\n" +
     "build_version=0\n" +
+    "rsg_version=1.2\n" +
     "mm_icon_focus_hd=pkg:/images/mm_icon_focus_hd.png\n" +
     "mm_icon_focus_sd=pkg:/images/mm_icon_focus_sd.png\n" +
     "splash_screen_hd=pkg:/images/splash_screen_hd.png\n" +
