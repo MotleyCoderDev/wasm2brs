@@ -17,6 +17,7 @@
 // $Log:$
 //
 //-----------------------------------------------------------------------------
+#define PROFILING_FRAMES 0
 
 static const char
 rcsid[] = "$Id: i_x.c,v 1.6 1997/02/03 22:45:10 b1 Exp $";
@@ -117,6 +118,7 @@ void I_GetEvent(unsigned int ev)
 //
 void I_StartTic (void)
 {
+#if PROFILING_FRAMES == 0
     for (;;) {
         unsigned int ev = wasi_experimental_poll_button();
         if (ev == ROKU_INVALID) {
@@ -124,6 +126,9 @@ void I_StartTic (void)
         }
 	    I_GetEvent(ev);
     }
+#else
+	I_GetEvent(ROKU_OK);
+#endif
 }
 
 
@@ -161,6 +166,14 @@ void I_FinishUpdate (void)
     }
 
     wasi_experimental_draw_surface(screens[0]);
+
+#if PROFILING_FRAMES > 0
+    static int counter = 0;
+    ++counter;
+    if (counter == PROFILING_FRAMES) {
+        exit(0);
+    }
+#endif
 }
 
 
