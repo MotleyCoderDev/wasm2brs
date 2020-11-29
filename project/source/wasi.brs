@@ -110,7 +110,7 @@ Function wasi_init(memory as Object, executableFile as String, config as Object)
 End Function
 
 Function wasi_snapshot_preview1_proc_exit(rval As Integer) As Void
-    Stop
+    Throw "Exit:" + rval.ToStr()
 End Function
 
 Function wasi_snapshot_preview1_args_sizes_get(argc_pSize As Integer, argv_buf_pSize As Integer) As Integer
