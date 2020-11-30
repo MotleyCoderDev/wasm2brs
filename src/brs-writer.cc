@@ -2052,14 +2052,24 @@ void CWriter::Write(const LoadExpr& expr) {
   // Special case for loading unsigned integer bytes (faster than calling)
   // We'd like to handle all the integer operations such as I64, but we need to handle casting back to I64
   if (int_size != 0) {
-    //buffer[index] + (buffer[index + 1] << 8) + (buffer[index + 2] << 16) + (buffer[index + 3] << 24)
+    wabt::Address expr_offset_or_zero = expr.offset;
+
+    // Extra special case for I32Load where we can use GetSignedLong if it's 4 byte aligned
+    if (expr.opcode == Opcode::I32Load) {
+      if (expr_offset_or_zero != 0) {
+        Write(StackVar(0), " += ", expr_offset_or_zero, Newline());
+        expr_offset_or_zero = 0;
+      }
+      Write("If ", StackVar(0), " And &H3 Then", OpenBrace());
+    }
+
     Write(StackVar(0, result_type), " = ");
     for (size_t i = 0; i < int_size; ++i) {
       if (i != 0) {
         Write(" + ");
       }
       Write("(mem[", StackVar(0));
-      wabt::Address offset = expr.offset + i;
+      wabt::Address offset = expr_offset_or_zero + i;
       if (offset != 0) {
         Write(" + ", offset);
       }
@@ -2070,6 +2080,12 @@ void CWriter::Write(const LoadExpr& expr) {
       Write(")");
     }
     Write(Newline());
+
+    if (expr.opcode == Opcode::I32Load) {
+      Write(CloseBrace(), "Else", OpenBrace());
+      Write(StackVar(0, result_type), " = mem.GetSignedLong(", StackVar(0), " >> 2)", Newline());
+      Write(CloseBrace(), "End If", Newline());
+    }
     DropTypes(1);
     PushType(result_type);
     return;
