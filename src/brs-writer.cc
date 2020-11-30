@@ -21,6 +21,7 @@
 #include <map>
 #include <set>
 #include <iostream>
+#include <regex>
 
 #include "src/cast.h"
 #include "src/common.h"
@@ -262,6 +263,7 @@ class CWriter {
                             const char* op,
                             AssignOp = AssignOp::Disallowed);
   void WritePrefixBinaryExpr(Opcode, const char* op);
+  void WriteExprReplacement(Opcode opcode, size_t args, const std::string& input);
   void WriteCompareExpr(Opcode, const char* op);
   void WriteCompareI32UExpr(Opcode, const char* op);
   void WriteEqzExpr(Opcode);
@@ -1639,6 +1641,27 @@ void CWriter::WritePrefixBinaryExpr(Opcode opcode, const char* op) {
   Write(StackVar(1, result_type), " = ", op, "(", StackVar(1), ", ",
         StackVar(0), ")", Newline());
   DropTypes(2);
+  PushType(result_type);
+}
+
+void CWriter::WriteExprReplacement(Opcode opcode, size_t args, const std::string& input) {
+  Type result_type = opcode.GetResultType();
+  static const std::regex r("([^$]*)\\$(in|out)([0-9]+)");
+  std::string::const_iterator last_parsed_ending = input.begin();
+  for(auto i = std::sregex_iterator(input.begin(), input.end(), r); i != std::sregex_iterator(); ++i) {
+    std::smatch m = *i;
+    auto something = m[0];
+    Write(m[1].str());
+    const int index = std::atoi(m[3].str().c_str());
+    if (m[2].compare("out") == 0) {
+      Write(StackVar(index, result_type));
+    } else {
+      Write(StackVar(index));
+    }
+    last_parsed_ending = m[0].second;
+  }
+  Write(std::string(last_parsed_ending, input.end()));
+  DropTypes(args);
   PushType(result_type);
 }
 
