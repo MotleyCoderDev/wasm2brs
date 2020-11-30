@@ -263,7 +263,7 @@ class CWriter {
                             const char* op,
                             AssignOp = AssignOp::Disallowed);
   void WritePrefixBinaryExpr(Opcode, const char* op);
-  void WriteExprReplacement(Opcode opcode, size_t args, const std::string& input);
+  void WriteExprReplacement(Opcode opcode, size_t args, size_t offset, const std::string& input);
   void WriteCompareExpr(Opcode, const char* op);
   void WriteCompareI32UExpr(Opcode, const char* op);
   void WriteEqzExpr(Opcode);
@@ -1644,19 +1644,23 @@ void CWriter::WritePrefixBinaryExpr(Opcode opcode, const char* op) {
   PushType(result_type);
 }
 
-void CWriter::WriteExprReplacement(Opcode opcode, size_t args, const std::string& input) {
+void CWriter::WriteExprReplacement(Opcode opcode, size_t args, size_t offset, const std::string& input) {
   Type result_type = opcode.GetResultType();
-  static const std::regex r("([^$]*)\\$(in|out)([0-9]+)");
+  static const std::regex r("([^$]*)\\$(in|out|offset)([0-9]+)");
   std::string::const_iterator last_parsed_ending = input.begin();
   for(auto i = std::sregex_iterator(input.begin(), input.end(), r); i != std::sregex_iterator(); ++i) {
     std::smatch m = *i;
     auto something = m[0];
     Write(m[1].str());
     const int index = std::atoi(m[3].str().c_str());
-    if (m[2].compare("out") == 0) {
+    const auto& keyword = m[2];
+    if (keyword.compare("out") == 0) {
       Write(StackVar(index, result_type));
-    } else {
+    } else if (keyword.compare("in") == 0) {
       Write(StackVar(index));
+    } else if ((offset + index) != 0) {
+      assert(keyword.compare("offset") == 0);
+      Write(" + ", offset + index);
     }
     last_parsed_ending = m[0].second;
   }
@@ -1751,7 +1755,7 @@ void CWriter::Write(const BinaryExpr& expr) {
       break;
 
     case Opcode::I32ShrS:
-      WriteExprReplacement(expr.opcode, 2,
+      WriteExprReplacement(expr.opcode, 2, 0,
         "$in0 = $in0 And &H1F\n"
         "If $in1 < 0 And $in0 <> 0 Then\n"
         "    $out1 = ($in1 >> $in0) Or (&HFFFFFFFF << (32 - $in0))\n"
@@ -1761,7 +1765,7 @@ void CWriter::Write(const BinaryExpr& expr) {
       break;
 
     case Opcode::I64ShrS:
-      WriteExprReplacement(expr.opcode, 2,
+      WriteExprReplacement(expr.opcode, 2, 0,
         "$in0 = $in0 And &H3F\n"
         "If $in1 < 0 And $in0 <> 0 Then\n"
         "    $out1 = ($in1 >> $in0) Or (&HFFFFFFFFFFFFFFFF << (64& - $in0))\n"
@@ -2139,6 +2143,13 @@ void CWriter::Write(const LoadExpr& expr) {
     return;
   }
 
+  if (expr.opcode == Opcode::I32Load16S) {
+    WriteExprReplacement(expr.opcode, 1, expr.offset,
+      "$out0 = mem[$in0$offset0] + (mem[$in0$offset1] << 8)\n"
+      "If $out0 > &H7FFF Then $out0 = $out0 + &HFFFF0000\n");
+    return;
+  }
+
   const char* func = nullptr;
   switch (expr.opcode) {
     case Opcode::I64Load: func = "I64Load"; break;
@@ -2146,7 +2157,6 @@ void CWriter::Write(const LoadExpr& expr) {
     case Opcode::F64Load: func = "F64Load"; break;
     case Opcode::I64Load8S: func = "I64Load8S"; break;
     case Opcode::I64Load8U: func = "I64Load8U"; break;
-    case Opcode::I32Load16S: func = "I32Load16S"; break;
     case Opcode::I64Load16S: func = "I64Load16S"; break;
     case Opcode::I64Load16U: func = "I64Load16U"; break;
     case Opcode::I64Load32S: func = "I64Load32S"; break;
