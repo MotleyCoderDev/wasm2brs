@@ -1751,11 +1751,23 @@ void CWriter::Write(const BinaryExpr& expr) {
       break;
 
     case Opcode::I32ShrS:
-      WritePrefixBinaryExpr(expr.opcode, "I32ShrS");
+      WriteExprReplacement(expr.opcode, 2,
+        "$in0 = $in0 And &H1F\n"
+        "If $in1 < 0 And $in0 <> 0 Then\n"
+        "    $out1 = ($in1 >> $in0) Or (&HFFFFFFFF << (32 - $in0))\n"
+        "Else\n"
+        "    $out1 = $in1 >> $in0\n"
+        "End If\n");
       break;
 
     case Opcode::I64ShrS:
-      WritePrefixBinaryExpr(expr.opcode, "I64ShrS");
+      WriteExprReplacement(expr.opcode, 2,
+        "$in0 = $in0 And &H3F\n"
+        "If $in1 < 0 And $in0 <> 0 Then\n"
+        "    $out1 = ($in1 >> $in0) Or (&HFFFFFFFFFFFFFFFF << (64& - $in0))\n"
+        "Else\n"
+        "    $out1 = $in1 >> $in0\n"
+        "End If\n");
       break;
 
     case Opcode::I32ShrU:
