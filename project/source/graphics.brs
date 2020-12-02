@@ -60,7 +60,7 @@ Function wasi_experimental_set_surface_colors(colorTableOffset as Integer) as Vo
 End Function
 
 Function wasi_experimental_draw_surface(pixelDataOffset As Integer) as Void
-    path = "tmp:/surface.bmp"
+    path = "tmp:/s"
     m.surfaceHeaders.WriteFile(path)
     If m.surfaceColorTable <> Invalid Then m.surfaceColorTable.AppendFile(path)
     m.wasi_memory.AppendFile(path, pixelDataOffset, m.surfacePixelDataSize)
