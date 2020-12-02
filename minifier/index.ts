@@ -111,11 +111,24 @@ export const minifyFiles = (
     asseconds: true,
     getmilliseconds: true,
     stat: true,
-    getdirectorylisting: true
+    getdirectorylisting: true,
+    getsignedlong: true,
+    sizeex: true,
+    ctime: true,
+    mtime: true,
+    readfile: true,
+    writefile: true,
+    appendfile: true,
+    setmessageport: true,
+    getmessage: true,
+    getint: true,
+    swapbuffers: true,
+    drawscaledobject: true
   };
 
   const ourGlobals = {
-    external_append_stdin: true
+    external_append_stdin: true,
+    screen: true
   };
 
   const ourMembers = {
