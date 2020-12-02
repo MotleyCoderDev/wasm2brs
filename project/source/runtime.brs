@@ -1020,6 +1020,13 @@ Function MemCpy(memory as Object, dst as Integer, src as Integer, size as Intege
     Return dst
 End Function
 
+Function MemSet(memory as Object, dst as Integer, value as Integer, size as Integer) as Integer
+    For i = 0 To size - 1
+        memory[dst + i] = value
+    End For
+    Return dst
+End Function
+
 Function Unreachable()
     Throw "Unreachable"
 End Function

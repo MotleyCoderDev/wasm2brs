@@ -309,9 +309,9 @@ static const char kImplicitFuncLabel[] = "$Bfunc";
 #include "src/prebuilt/wasm2c.include.c"
 #undef SECTION_NAME
 
-static bool IsMemcpy(const wabt::Func& func) {
+static bool IsReplaceableMemFunction(const wabt::Func& func) {
   return
-    func.name == "$memcpy" &&
+    (func.name == "$memcpy" || func.name == "$memset") &&
     func.GetNumParams() == 3 &&
     func.GetParamType(0) == wabt::Type::I32 &&
     func.GetParamType(1) == wabt::Type::I32 &&
@@ -1110,7 +1110,7 @@ void CWriter::WriteFuncs() {
 }
 
 void CWriter::Write(const Func& func) {
-  if (IsMemcpy(func)) {
+  if (IsReplaceableMemFunction(func)) {
     return;
   }
 
@@ -1354,18 +1354,24 @@ void CWriter::Write(const ExprList& exprs) {
           Write(" = ");
         }
 
-        const bool is_memcpy = IsMemcpy(func);
-        if (is_memcpy) {
-          Write("MemCpy");
+        const bool replaceable_mem_func = IsReplaceableMemFunction(func);
+        if (replaceable_mem_func) {
+          if (func.name == "$memcpy") {
+            Write("MemCpy");
+          } else if (func.name == "$memset") {
+            Write("MemSet");
+          } else {
+            BRS_UNREACHABLE;
+          }
         } else {
           Write(GlobalVar(var));
         }
         Write("(");
-        if (is_memcpy) {
+        if (replaceable_mem_func) {
           Write("mem");
         }
         for (Index i = 0; i < num_params; ++i) {
-          if (i != 0 || is_memcpy) {
+          if (i != 0 || replaceable_mem_func) {
             Write(", ");
           }
           Write(StackVar(num_params - i - 1));
