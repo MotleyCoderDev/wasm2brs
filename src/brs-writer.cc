@@ -1740,11 +1740,8 @@ void CWriter::Write(const BinaryExpr& expr) {
       break;
 
     case Opcode::I32Xor:
-      WritePrefixBinaryExpr(expr.opcode, "I32Xor");
-      break;
-
     case Opcode::I64Xor:
-      WritePrefixBinaryExpr(expr.opcode, "I64Xor");
+      WriteExprReplacement(expr.opcode, 2, 0, "$out1 = ($in1 Or $in0) And Not ($in1 And $in0)\n");
       break;
 
     case Opcode::I32Shl:

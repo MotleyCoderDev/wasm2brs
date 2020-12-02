@@ -134,16 +134,12 @@ Function I64RemU(lhs as LongInteger, rhs as LongInteger) as LongInteger
     Return I64DivideUnsigned(lhs, rhs).remainder
 End Function
 
-Function I32Xor(lhs as Integer, rhs as Integer) as Integer
-    bitwiseAnd = lhs And rhs
-    bitwiseOr = lhs Or rhs
-    Return bitwiseOr And Not bitwiseAnd
+Function I32Xor(a as Integer, b as Integer) as Integer
+    Return (a Or b) And Not (a And b)
 End Function
 
-Function I64Xor(lhs as LongInteger, rhs as LongInteger) as LongInteger
-    bitwiseAnd = lhs And rhs
-    bitwiseOr = lhs Or rhs
-    Return bitwiseOr And Not bitwiseAnd
+Function I64Xor(a as LongInteger, b as LongInteger) as LongInteger
+    Return (a Or b) And Not (a And b)
 End Function
 
 Function I32ShrS(lhs as Integer, rhs as Integer) as Integer
