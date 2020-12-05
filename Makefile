@@ -1,3 +1,7 @@
+.PHONY: all
+
+all: build/wasm2brs/wasm2brs
+
 build/wasm2brs/wasm2brs: docker.stamp CMakeLists.txt build/wasm2brs/Makefile
 	rm build/wasm2brs/wasm2brs
 	./run.sh cmake --build ./build/wasm2brs --parallel
