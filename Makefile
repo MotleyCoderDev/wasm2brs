@@ -1,5 +1,7 @@
+build/wasm2brs/wasm2brs: docker.stamp ./build/wasm2brs/Makefile
+	./run.sh cmake --build ./build/wasm2brs --parallel
 
-wasm2brs/Makefile: docker.stamp ./build.sh
+build/wasm2brs/Makefile: docker.stamp ./build.sh
 	./run.sh ./build.sh
 
 docker.stamp: ./docker/Dockerfile

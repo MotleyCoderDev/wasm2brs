@@ -1,5 +1,5 @@
 #!/bin/bash
 set -e
-mkdir -p wasm2brs
-cd wasm2brs
-cmake ..
+mkdir -p build/wasm2brs
+cd build/wasm2brs
+cmake ../..

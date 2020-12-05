@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.16.3)
 project(WASM2BRS VERSION 1.0.0)
 
 add_subdirectory(third_party/wabt)

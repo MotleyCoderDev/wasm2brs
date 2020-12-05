@@ -5,6 +5,8 @@ RUN apt-get update && \
         cmake \
         clang \
         git \
-        curl
+        curl \
+        dumb-init
 
+ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 CMD echo "No command specified"

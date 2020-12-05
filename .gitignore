@@ -1,5 +1,4 @@
-wasm2brs
-samples/*/build
+build
 bld
 out
 project/source/test.*.brs
