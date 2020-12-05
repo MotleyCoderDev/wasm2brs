@@ -6,6 +6,7 @@ RUN apt-get update && \
         clang \
         git \
         curl \
+        nodejs \
         dumb-init
 
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
