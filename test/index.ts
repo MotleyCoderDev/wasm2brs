@@ -306,7 +306,7 @@ const deploy = async (guid: string): Promise<true | string> => {
     let str = "";
     let writeOutput = false;
     const socket = net.connect(8085, process.env.DEPLOY);
-    socket.on("data", async (buffer) => {
+    socket.on("data", (buffer) => {
       const text = buffer.toString();
       str += text;
       if (writeOutput) {
@@ -323,18 +323,15 @@ const deploy = async (guid: string): Promise<true | string> => {
         }
       }
 
-      const end = async (testCasesLine?: string) => {
+      const end = () => {
         process.stdout.write("\n");
         socket.destroy();
         resolve();
-        if (process.env.IDE === "1" && testCasesLine) {
-          await execa("code", ["-g", `${testCasesBrs}:${testCasesLine}`]);
-        }
       };
 
       if (writeOutput) {
         if (str.indexOf("------ Completed ------") !== -1) {
-          await end();
+          end();
           return;
         }
         const match = str.match(/Syntax Error.*|.*runtime error.*/u) || str.match(/ERROR compiling.*/u);
@@ -347,7 +344,7 @@ const deploy = async (guid: string): Promise<true | string> => {
           } else {
             result = error;
           }
-          await end(testCasesMatch ? testCasesMatch[1] : undefined);
+          end();
         }
       }
     });
