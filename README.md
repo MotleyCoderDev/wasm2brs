@@ -1,11 +1,7 @@
-# wasm2brs
-
+# Building wasm2brs
 ```bash
 git submodule update --init --recursive
-mkdir build
-cd build
-cmake ..
-make -j
+./make.sh
 ```
 
 # WASM / Brightscript limitations
@@ -56,3 +52,19 @@ make -j
 - Called when an attempt was made to read from stdin, but there was no bytes available.
 - During this callback, you should invoke `external_append_stdin`.
 - When the callback completes, the program will continue its attempt to read from stdin.
+
+# Run tests
+Run all the tests, this will auto discover your device with a default password of `rokudev`.
+```bash
+./make.sh run_test
+```
+
+To use a non-default password:
+```bash
+./make.sh run_test ARGS="password ..."
+```
+
+To run a specific test you can specify the .wast file as an absolute path, otherwise it assumes it's in the `third_part/testsuite/` directory, for example `i32.wast`:
+```bash
+./make.sh run_test ARGS="wast i32.wast"
+```
