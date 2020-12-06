@@ -302,7 +302,7 @@ const deploy = async (guid: string): Promise<true | string> => {
   let result: true | string = true;
 
   console.log("Connecting...");
-  await new Promise((resolve) => {
+  await new Promise<void>((resolve) => {
     let str = "";
     let writeOutput = false;
     const socket = net.connect(8085, process.env.DEPLOY);
