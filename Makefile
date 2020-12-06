@@ -14,7 +14,7 @@ test/bin/test/index.js: test/index.ts test/node_modules
 	cd test && rm -rf bin && npm run build
 
 test/node_modules: test/package.json
-	cd test && rm -rf node_modules && npm install
+	cd test && npm install && touch node_modules
 
 run_test: test/bin/test/index.js build/wasm2brs/wasm2brs
 	cd test && node bin/test/index.js $(ARGS)
