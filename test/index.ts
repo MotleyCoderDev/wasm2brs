@@ -391,7 +391,8 @@ const outputAndMaybeDeploy = async (wastFile: string, host: string): Promise<boo
     }
     console.log(results.sort().join("\n"));
   } else {
-    const result = await outputAndMaybeDeploy(args.wast, host);
+    const wastFile = path.resolve(testSuiteDir, args.wast);
+    const result = await outputAndMaybeDeploy(wastFile, host);
     if (typeof result === "string") {
       console.error(`ERROR: ${result}`);
     }
