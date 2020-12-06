@@ -15,6 +15,7 @@
     "execa": "^4.0.3",
     "mkdirp": "^1.0.4",
     "rimraf": "^3.0.2",
+    "roku-client": "^5.1.0",
     "roku-deploy": "^3.2.3",
     "seedrandom": "^3.0.5",
     "uuid": "^8.3.1"

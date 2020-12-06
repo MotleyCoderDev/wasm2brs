@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import execa from "execa";
 import * as rokuDeploy from "roku-deploy";
+import {RokuClient} from "roku-client";
 import net from "net";
 import * as uuid from "uuid";
 import ADLER32 from "adler-32";
@@ -294,11 +295,11 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<boolean 
   return true;
 };
 
-const deploy = async (guid: string): Promise<true | string> => {
+const deploy = async (guid: string, host: string): Promise<true | string> => {
   console.log("Deploying...");
   try {
     await rokuDeploy.deploy({
-      host: args.deploy,
+      host,
       password: args.password || "rokudev",
       rootDir: project,
       failOnCompileError: true
@@ -313,7 +314,7 @@ const deploy = async (guid: string): Promise<true | string> => {
   await new Promise<void>((resolve) => {
     let str = "";
     let writeOutput = false;
-    const socket = net.connect(8085, args.deploy);
+    const socket = net.connect(8085, host);
     socket.on("data", (buffer) => {
       const text = buffer.toString();
       str += text;
@@ -360,24 +361,25 @@ const deploy = async (guid: string): Promise<true | string> => {
   return result;
 };
 
-const outputAndMaybeDeploy = async (wastFile: string): Promise<boolean | string> => {
+const outputAndMaybeDeploy = async (wastFile: string, host: string): Promise<boolean | string> => {
   const guid = uuid.v4();
   const result = await outputWastTests(wastFile, guid);
   if (result === true) {
-    if (args.deploy) {
-      return deploy(guid);
-    }
-    return false;
+    return deploy(guid, host);
   }
   return result;
 };
 
 (async () => {
+  const host = args.deploy
+    ? args.deploy
+    : await RokuClient.discover().then((device) => new URL(device.ip).hostname, () => undefined);
+
   if (args.wast === undefined) {
     const results: string[] = [];
     for (const file of fs.readdirSync(testSuiteDir)) {
       if (path.extname(file) === ".wast" && file !== "names.wast") {
-        const result = await outputAndMaybeDeploy(path.join(testSuiteDir, file));
+        const result = await outputAndMaybeDeploy(path.join(testSuiteDir, file), host);
         if (typeof result === "string") {
           results.push(`FAIL - ${result} - ${file}`);
         } else if (result === false) {
@@ -389,7 +391,7 @@ const outputAndMaybeDeploy = async (wastFile: string): Promise<boolean | string>
     }
     console.log(results.sort().join("\n"));
   } else {
-    const result = await outputAndMaybeDeploy(args.wast);
+    const result = await outputAndMaybeDeploy(args.wast, host);
     if (typeof result === "string") {
       console.error(`ERROR: ${result}`);
     }
