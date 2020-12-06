@@ -2,8 +2,7 @@
   "main": "bin/test/index.js",
   "scripts": {
     "build": "tsc",
-    "lint": "eslint .",
-    "start": "node bin/test/index.js"
+    "lint": "eslint ."
   },
   "author": "Trevor Sundberg",
   "license": "MIT",

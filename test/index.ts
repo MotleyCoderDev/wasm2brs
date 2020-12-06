@@ -60,6 +60,13 @@ interface WastTest {
   commands: WastTestCommand[];
 }
 
+// Basic arg parsing (replace this with something better)
+const args: Record<string, string> = {};
+const slicedArgv = process.argv.slice(2);
+for (let i = 0; i < slicedArgv.length; i += 2) {
+  args[slicedArgv[i]] = slicedArgv[i + 1];
+}
+
 const root = path.join(__dirname, "../../..");
 const testOut = path.join(root, "test/out");
 const project = path.join(root, "project");
@@ -71,6 +78,7 @@ const helpersBrs = path.join(projectSource, "helpers.brs");
 const spectestBrs = path.join(projectSource, "spectest.brs");
 const wasiBrs = path.join(projectSource, "wasi.brs");
 const testSuiteDir = path.join(root, "third_party/testsuite");
+const wasm2brs = path.join(root, "build/wasm2brs/wasm2brs");
 
 const outputWastTests = async (wastFile: string, guid: string): Promise<boolean | string> => {
   const testWast = path.resolve(wastFile);
@@ -197,7 +205,7 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<boolean 
 
     const moduleName = test.module.name ? legalizeNameNoAddons(test.module.name) : `Test${textIndex}`;
     console.log("Outputting module", test.module.filename);
-    const wasm2BrsResult = await execa("build/wasm2brs",
+    const wasm2BrsResult = await execa(wasm2brs,
       [
         "--name-prefix", moduleName,
         path.join(testOut, test.module.filename)
@@ -217,9 +225,9 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<boolean 
       `  ${moduleName}Init__() ${sourceMapNewline(test.module)}`;
 
     const writeInvoke = (command: WastTestCommand, invoke: WastActionInvoke) => {
-      const args = invoke.args.map((arg) => toArgValue(arg)).join(",");
+      const param = invoke.args.map((arg) => toArgValue(arg)).join(",");
       testFunction +=
-        `  result = ${legalizeName(invoke.module || moduleName, invoke.field)}(${args}) ${sourceMapNewline(command)}`;
+        `  result = ${legalizeName(invoke.module || moduleName, invoke.field)}(${param}) ${sourceMapNewline(command)}`;
     };
 
     for (const command of test.commands) {
@@ -251,10 +259,10 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<boolean 
   testCasesFile += runTestsFunction;
 
   testCasesFile += "Function GetSettings()\n" +
-    `Return { CustomInit: ${process.env.MINIFY ? "InitSpectestMinified" : "InitSpectest"} }\n` +
+    `Return { CustomInit: ${args.minify ? "InitSpectestMinified" : "InitSpectest"} }\n` +
   "End Function";
 
-  if (process.env.MINIFY) {
+  if (args.minify) {
     const brsFiles = [runtimeBrs, helpersBrs, spectestBrs, wasiBrs];
     const brsContents = brsFiles.map((file) => fs.readFileSync(file, "utf8"));
     const minified = minifyFiles(
@@ -290,8 +298,8 @@ const deploy = async (guid: string): Promise<true | string> => {
   console.log("Deploying...");
   try {
     await rokuDeploy.deploy({
-      host: process.env.DEPLOY,
-      password: process.env.PASSWORD || "rokudev",
+      host: args.deploy,
+      password: args.password || "rokudev",
       rootDir: project,
       failOnCompileError: true
     });
@@ -305,7 +313,7 @@ const deploy = async (guid: string): Promise<true | string> => {
   await new Promise<void>((resolve) => {
     let str = "";
     let writeOutput = false;
-    const socket = net.connect(8085, process.env.DEPLOY);
+    const socket = net.connect(8085, args.deploy);
     socket.on("data", (buffer) => {
       const text = buffer.toString();
       str += text;
@@ -356,7 +364,7 @@ const outputAndMaybeDeploy = async (wastFile: string): Promise<boolean | string>
   const guid = uuid.v4();
   const result = await outputWastTests(wastFile, guid);
   if (result === true) {
-    if (process.env.DEPLOY) {
+    if (args.deploy) {
       return deploy(guid);
     }
     return false;
@@ -365,7 +373,7 @@ const outputAndMaybeDeploy = async (wastFile: string): Promise<boolean | string>
 };
 
 (async () => {
-  if (process.env.WAST === undefined) {
+  if (args.wast === undefined) {
     const results: string[] = [];
     for (const file of fs.readdirSync(testSuiteDir)) {
       if (path.extname(file) === ".wast" && file !== "names.wast") {
@@ -381,7 +389,7 @@ const outputAndMaybeDeploy = async (wastFile: string): Promise<boolean | string>
     }
     console.log(results.sort().join("\n"));
   } else {
-    const result = await outputAndMaybeDeploy(process.env.WAST);
+    const result = await outputAndMaybeDeploy(args.wast);
     if (typeof result === "string") {
       console.error(`ERROR: ${result}`);
     }
