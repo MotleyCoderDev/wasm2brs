@@ -3,7 +3,7 @@
   "scripts": {
     "build": "tsc",
     "lint": "eslint .",
-    "start": "npm run build && node bin/test/index.js"
+    "start": "node bin/test/index.js"
   },
   "author": "Trevor Sundberg",
   "license": "MIT",
