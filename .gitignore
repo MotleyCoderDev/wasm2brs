@@ -4,4 +4,4 @@ out
 project/source/test.*.brs
 project/manifest
 testproject
-.stamp
+*.stamp
