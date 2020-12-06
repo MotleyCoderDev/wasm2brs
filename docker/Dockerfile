@@ -7,6 +7,7 @@ RUN apt-get update && \
         git \
         curl \
         nodejs \
+        npm \
         dumb-init
 
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
