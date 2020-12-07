@@ -8,7 +8,6 @@ import * as uuid from "uuid";
 import ADLER32 from "adler-32";
 import mkdirp from "mkdirp";
 import rimraf from "rimraf";
-import {minifyFiles} from "../minifier";
 
 interface WastArg {
   type: "i32" | "i64" | "f32" | "f64";
@@ -74,10 +73,6 @@ const project = path.join(root, "project");
 const projectSource = path.join(project, "source");
 const testCasesBrs = path.join(projectSource, "test.cases.brs");
 const testWasmBrs = path.join(projectSource, "test.wasm.brs");
-const runtimeBrs = path.join(projectSource, "runtime.brs");
-const helpersBrs = path.join(projectSource, "helpers.brs");
-const spectestBrs = path.join(projectSource, "spectest.brs");
-const wasiBrs = path.join(projectSource, "wasi.brs");
 const testSuiteDir = path.join(root, "third_party/testsuite");
 const wasm2brs = path.join(root, "build/wasm2brs/wasm2brs");
 
@@ -260,26 +255,11 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<boolean 
   testCasesFile += runTestsFunction;
 
   testCasesFile += "Function GetSettings()\n" +
-    `Return { CustomInit: ${args.minify ? "InitSpectestMinified" : "InitSpectest"} }\n` +
+    "Return { CustomInit: InitSpectest }\n" +
   "End Function";
 
-  if (args.minify) {
-    const brsFiles = [runtimeBrs, helpersBrs, spectestBrs, wasiBrs];
-    const brsContents = brsFiles.map((file) => fs.readFileSync(file, "utf8"));
-    const minified = minifyFiles(
-      false,
-      [testCasesFile, testWasmFile, ...brsContents],
-      ["InitSpectest"]
-    );
-    if (minified.length !== 1) {
-      throw new Error("Unhandled case where minifier returned more than one file");
-    }
-    fs.writeFileSync(testCasesBrs, minified[0].replace(/initspectest/gu, "InitSpectestMinified"));
-    fs.writeFileSync(testWasmBrs, "");
-  } else {
-    fs.writeFileSync(testCasesBrs, testCasesFile);
-    fs.writeFileSync(testWasmBrs, testWasmFile);
-  }
+  fs.writeFileSync(testCasesBrs, testCasesFile);
+  fs.writeFileSync(testWasmBrs, testWasmFile);
 
   fs.writeFileSync(path.join(project, "manifest"),
     `title=${guid}\n` +
