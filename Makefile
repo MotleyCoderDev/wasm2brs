@@ -1,8 +1,8 @@
-.PHONY: all wasm2brs run_test
+.PHONY: all wasm2brs doom run_test
 
-all: wasm2brs test/bin/index.js
+all: wasm2brs doom test/bin/index.js
 
-wasm2brs: CMakeLists.txt build/wasm2brs/Makefile
+wasm2brs: build/wasm2brs/Makefile
 	GNUMAKEFLAGS=--no-print-directory cmake --build ./build/wasm2brs --parallel
 
 build/wasm2brs/Makefile:
@@ -17,3 +17,10 @@ test/node_modules: test/package.json
 
 run_test: test/bin/index.js wasm2brs
 	cd test && node bin/index.js $(ARGS)
+
+doom: build/doom/Makefile
+	GNUMAKEFLAGS=--no-print-directory cmake --build ./build/doom --parallel
+
+build/doom/Makefile:
+	mkdir -p build/doom
+	cd build/doom && wasimake cmake ../../samples/doom
