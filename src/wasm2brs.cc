@@ -38,7 +38,6 @@ using namespace wabt;
 
 static int s_verbose;
 static std::string s_infile;
-static std::string s_outfile;
 static std::string s_prefix;
 static Features s_features;
 static WriteCOptions s_write_c_options;
@@ -68,8 +67,8 @@ static void ParseOptions(int argc, char** argv) {
       'o', "output", "FILENAME",
       "Output file for the generated C source file, by default use stdout",
       [](const char* argument) {
-        s_outfile = argument;
-        ConvertBackslashToSlash(&s_outfile);
+        s_write_c_options.out_filename = argument;
+        ConvertBackslashToSlash(&s_write_c_options.out_filename);
       });
   s_features.AddOptions(&parser);
   parser.AddOption("no-debug-names", "Ignore debug names in the binary file",
@@ -111,7 +110,8 @@ int ProgramMain(int argc, char** argv) {
     Errors errors;
     std::unique_ptr<wabt::Module> module;
     Location::Type location_type = Location::Type::Text;
-    if (file_data.front() == '(') {
+    const char first = file_data.front();
+    if (first == '(' || first == ';' || first == ' ' || first == '\n') {
       std::unique_ptr<WastLexer> lexer = WastLexer::CreateBufferLexer(
           s_infile, file_data.data(), file_data.size());
       WastParseOptions options(s_features);
@@ -151,14 +151,7 @@ int ProgramMain(int argc, char** argv) {
             s_write_c_options.name_prefix = module->name;
           }
         }
-        if (!s_outfile.empty()) {
-          FileStream brs_stream(s_outfile.c_str());
-          result = WriteBrs(&brs_stream, module.get(),
-                          s_write_c_options);
-        } else {
-          FileStream stream(stdout);
-          result = WriteBrs(&stream, module.get(), s_write_c_options);
-        }
+        result = WriteBrs(module.get(), s_write_c_options);
       }
     }
     FormatErrorsToFile(errors, location_type);

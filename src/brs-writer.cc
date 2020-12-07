@@ -144,24 +144,20 @@ int GetShiftMask(Type type) {
 
 class CWriter {
  public:
-  CWriter(Stream* stream,
-          const WriteCOptions& options)
-      : options_(options),
-        brs_stream_(stream) {
+  CWriter(const WriteCOptions& options)
+      : options_(options) {
     options_.name_prefix = LegalizeNameNoAddons(options_.name_prefix);
   }
 
-  Result WriteModule(const Module&);
+  std::string GetFilename(size_t index);
+  FileStream OpenFileStream(size_t index);
+  void WriteModule(const Module&);
 
  private:
   typedef std::set<std::string> SymbolSet;
   typedef std::map<std::string, std::string> SymbolMap;
   typedef std::pair<Index, Type> StackTypePair;
   typedef std::map<StackTypePair, std::string> StackVarSymbolMap;
-
-  void UseStream(Stream*);
-
-  void WriteCSource();
 
   size_t MarkTypeStack() const;
   void ResetTypeStack(size_t mark);
@@ -192,6 +188,7 @@ class CWriter {
   std::string DefineLocalScopeName(const std::string&);
   std::string DefineStackVarName(Index, Type, string_view);
 
+  void EndChunk();
   void Indent(int size = INDENT_SIZE);
   void Dedent(int size = INDENT_SIZE);
   void WriteIndent();
@@ -233,13 +230,13 @@ class CWriter {
   void WriteSourceTop();
   void WriteFuncTypes();
   void WriteImports();
-  void WriteFuncDeclarations();
+  void DefineFuncDeclarations();
   void WriteFuncDeclaration(const FuncDeclaration&, const std::string&);
   void WriteGlobals();
   void WriteGlobal(const Global&, const std::string&);
-  void WriteMemories();
+  void DefineMemories();
   void WriteMemory(const std::string&);
-  void WriteTables();
+  void DefineTables();
   void WriteTable(const std::string&);
   void WriteDataInitializers();
   void WriteElemInitializers();
@@ -282,10 +279,8 @@ class CWriter {
   const Module* module_ = nullptr;
   const Func* func_ = nullptr;
   size_t label_count_ = 0;
-  Stream* stream_ = nullptr;
-  MemoryStream func_stream_;
-  Stream* brs_stream_ = nullptr;
-  Result result_ = Result::Ok;
+  MemoryStream stream_;
+  std::vector<std::string> chunks_;
   int indent_ = 0;
   bool should_write_indent_next_ = false;
 
@@ -492,6 +487,13 @@ std::string CWriter::DefineStackVarName(Index index,
   return unique;
 }
 
+void CWriter::EndChunk() {
+  auto buffer = stream_.ReleaseOutputBuffer();
+  chunks_.emplace_back(std::string((const char*)buffer->data.data(), buffer->data.size()));
+  stream_.Clear();
+  stream_.ClearOffset();
+}
+
 void CWriter::Indent(int size) {
   indent_ += size;
 }
@@ -508,11 +510,11 @@ void CWriter::WriteIndent() {
   static size_t s_indent_len = sizeof(s_indent) - 1;
   size_t to_write = indent_;
   while (to_write >= s_indent_len) {
-    stream_->WriteData(s_indent, s_indent_len);
+    stream_.WriteData(s_indent, s_indent_len);
     to_write -= s_indent_len;
   }
   if (to_write > 0) {
-    stream_->WriteData(s_indent, to_write);
+    stream_.WriteData(s_indent, to_write);
   }
 }
 
@@ -521,7 +523,7 @@ void CWriter::WriteData(const void* src, size_t size) {
     WriteIndent();
     should_write_indent_next_ = false;
   }
-  stream_->WriteData(src, size);
+  stream_.WriteData(src, size);
 }
 
 void WABT_PRINTF_FORMAT(2, 3) CWriter::Writef(const char* format, ...) {
@@ -558,7 +560,7 @@ void CWriter::Write(const LocalName& name) {
 
 std::string CWriter::GetGlobalName(const std::string& name) const {
   if (global_sym_map_.count(name) != 1) {
-    std::cout << "########################## Invalid GetGlobalName: " << name << std::endl << std::flush;
+    std::cerr << "########################## Invalid GetGlobalName: " << name << std::endl << std::flush;
     return "BAD_" + name;
   }
   assert(global_sym_map_.count(name) == 1);
@@ -792,8 +794,6 @@ void CWriter::WriteImports() {
   if (module_->imports.empty())
     return;
 
-  Write(Newline());
-
   // TODO(binji): Write imports ordered by type.
   for (const Import* import : module_->imports) {
     const std::string legal_module_name = LegalizeNameNoAddons(import->module_name);
@@ -839,22 +839,18 @@ void CWriter::WriteImports() {
 
     Write(Newline());
   }
+  EndChunk();
 }
 
-void CWriter::WriteFuncDeclarations() {
+void CWriter::DefineFuncDeclarations() {
   if (module_->funcs.size() == module_->num_func_imports)
     return;
-
-  //Write(Newline());
 
   Index func_index = 0;
   for (const Func* func : module_->funcs) {
     bool is_import = func_index < module_->num_func_imports;
     if (!is_import) {
       DefineGlobalScopeName(func->name);
-      //Write("static ");
-      //WriteFuncDeclaration(func->decl, DefineGlobalScopeName(func->name));
-      //Write(Newline());
     }
     ++func_index;
   }
@@ -874,19 +870,16 @@ void CWriter::WriteFuncDeclaration(const FuncDeclaration& decl,
 void CWriter::WriteGlobals() {
   Index global_index = 0;
   if (module_->globals.size() != module_->num_global_imports) {
-    Write(Newline());
-
     for (const Global* global : module_->globals) {
       bool is_import = global_index < module_->num_global_imports;
       if (!is_import) {
         DefineGlobalScopeName(global->name, "m.");
-        Write(Newline());
       }
       ++global_index;
     }
   }
 
-  Write(Newline(), "Function ", options_.name_prefix, "_InitGlobals__()", OpenBrace());
+  Write("Function ", options_.name_prefix, "_InitGlobals__()", OpenBrace());
   global_index = 0;
   for (const Global* global : module_->globals) {
     bool is_import = global_index < module_->num_global_imports;
@@ -898,14 +891,15 @@ void CWriter::WriteGlobals() {
     }
     ++global_index;
   }
-  Write(CloseBrace(), "End Function", Newline());
+  Write(CloseBrace(), "End Function");
+  EndChunk();
 }
 
 void CWriter::WriteGlobal(const Global& global, const std::string& name) {
   Write(global.type, " ", name);
 }
 
-void CWriter::WriteMemories() {
+void CWriter::DefineMemories() {
   if (module_->memories.size() == module_->num_memory_imports)
     return;
 
@@ -924,7 +918,7 @@ void CWriter::WriteMemory(const std::string& name) {
   Write("Function ", name, " As Object");
 }
 
-void CWriter::WriteTables() {
+void CWriter::DefineTables() {
   if (module_->tables.size() == module_->num_table_imports)
     return;
 
@@ -946,7 +940,7 @@ void CWriter::WriteTable(const std::string& name) {
 void CWriter::WriteDataInitializers() {
   const Memory* memory = module_->memories.empty() ? nullptr : module_->memories[0];
 
-  Write(Newline(), "Function ", options_.name_prefix, "_InitMemory__()", OpenBrace());
+  Write("Function ", options_.name_prefix, "_InitMemory__()", OpenBrace());
   if (memory && module_->num_memory_imports == 0) {
     uint32_t max =
         memory->page_limits.has_max ? memory->page_limits.max : 65536;
@@ -973,13 +967,14 @@ void CWriter::WriteDataInitializers() {
     ++data_segment_index;
   }
 
-  Write(CloseBrace(), "End Function", Newline());
+  Write(CloseBrace(), "End Function");
+  EndChunk();
 }
 
 void CWriter::WriteElemInitializers() {
   const Table* table = module_->tables.empty() ? nullptr : module_->tables[0];
 
-  Write(Newline(), "Function ", options_.name_prefix, "_InitTable__()", OpenBrace());
+  Write("Function ", options_.name_prefix, "_InitTable__()", OpenBrace());
   if (table && module_->num_table_imports == 0) {
     uint32_t max =
         table->elem_limits.has_max ? table->elem_limits.max : UINT32_MAX;
@@ -1003,11 +998,12 @@ void CWriter::WriteElemInitializers() {
     }
   }
 
-  Write(CloseBrace(), "End Function", Newline());
+  Write(CloseBrace(), "End Function");
+  EndChunk();
 }
 
 void CWriter::WriteInitExports() {
-  Write(Newline(), "Function ", options_.name_prefix, "_InitExports__()", OpenBrace());
+  Write("Function ", options_.name_prefix, "_InitExports__()", OpenBrace());
   WriteExports();
   Write(CloseBrace(), "End Function", Newline());
 
@@ -1045,6 +1041,7 @@ void CWriter::WriteInitExports() {
 
     Write(CloseBrace(), "End Function", Newline());
   }
+  EndChunk();
 }
 
 void CWriter::WriteExports() {
@@ -1085,7 +1082,7 @@ void CWriter::WriteExports() {
 }
 
 void CWriter::WriteInit() {
-  Write(Newline(), "Function ", options_.name_prefix, "Init__()", OpenBrace());
+  Write("Function ", options_.name_prefix, "Init__()", OpenBrace());
   //Write("InitFuncTypes()", Newline());
   Write(options_.name_prefix, "_InitGlobals__()", Newline());
   Write(options_.name_prefix, "_InitMemory__()", Newline());
@@ -1094,7 +1091,8 @@ void CWriter::WriteInit() {
   for (Var* var : module_->starts) {
     Write(ExternalRef(module_->GetFunc(*var)->name), "()", Newline());
   }
-  Write(CloseBrace(), "End Function", Newline());
+  Write(CloseBrace(), "End Function");
+  EndChunk();
 }
 
 void CWriter::WriteFuncs() {
@@ -1103,7 +1101,7 @@ void CWriter::WriteFuncs() {
     bool is_import = func_index < module_->num_func_imports;
     if (!is_import) {
       DefineGlobalScopeName(func->name);
-      Write(Newline(), *func, Newline());
+      Write(*func);
     }
     ++func_index;
   }
@@ -1138,9 +1136,6 @@ void CWriter::Write(const Func& func) {
 
   WriteLocals(index_to_name);
 
-  stream_ = &func_stream_;
-  stream_->ClearOffset();
-
   std::string label = DefineLocalScopeName(kImplicitFuncLabel);
   ResetTypeStack(0);
   std::string empty;  // Must not be temporary, since address is taken by Label.
@@ -1167,16 +1162,8 @@ void CWriter::Write(const Func& func) {
     }
   }
 
-  stream_ = brs_stream_;
-
   //WriteStackVarDeclarations();
-
-  std::unique_ptr<OutputBuffer> buf = func_stream_.ReleaseOutputBuffer();
-  stream_->WriteData(buf->data.data(), buf->data.size());
-
-  Write(CloseBrace(), "End Function", Newline());
-
-  func_stream_.Clear();
+  Write(CloseBrace(), "End Function");
   func_ = nullptr;
 
   const size_t label_soft_limit = 128;
@@ -1194,6 +1181,8 @@ void CWriter::Write(const Func& func) {
     std::cerr << "Function " << func.name << " had " << variable_count << " variables (limit " << variable_limit << " due to BrightScript)" << std::endl;
     BRS_ABORT("Variable limit reached");
   }
+
+  EndChunk();
 }
 
 void CWriter::WriteParams(const std::vector<std::string>& index_to_name) {
@@ -2404,34 +2393,101 @@ void CWriter::Write(const LoadSplatExpr& expr) {
   PushType(result_type);
 }
 
-void CWriter::WriteCSource() {
-  stream_ = brs_stream_;
-  WriteFuncDeclarations();
+size_t CountLines(const char* string) {
+  size_t lines = 0;
+  while (*string) {
+    if (*string == '\n') {
+      ++lines;
+    }
+    ++string;
+  }
+  return lines;
+}
+
+std::string CWriter::GetFilename(size_t index) {
+  if (options_.out_filename.empty()) {
+    return std::string();
+  } else {
+    if (index != 0) {
+      const size_t extension = options_.out_filename.find_last_of(".");
+      if (extension == std::string::npos) {
+        return options_.out_filename + std::to_string(index);
+      } else {
+        return options_.out_filename.substr(0, extension) + std::to_string(index) + options_.out_filename.substr(extension);
+      }
+    }
+    return options_.out_filename;
+  }
+}
+
+FileStream CWriter::OpenFileStream(size_t index) {
+  return FileStream(GetFilename(index).c_str());
+}
+
+void CWriter::WriteModule(const Module& module) {
+  WABT_USE(options_);
+  module_ = &module;
+
+
+  // Delete all existing files by the same name
+  for (size_t i = 0;; ++i) {
+    if (remove(GetFilename(i).c_str()) != 0) {
+      break;
+    }
+  }
+
+  DefineFuncDeclarations();
+  DefineMemories();
+  DefineTables();
   WriteImports();
   WriteGlobals();
-  WriteMemories();
   WriteDataInitializers();
-  WriteTables();
   WriteElemInitializers();
   WriteInitExports();
   WriteFuncs();
   WriteInit();
-}
 
-Result CWriter::WriteModule(const Module& module) {
-  WABT_USE(options_);
-  module_ = &module;
-  WriteCSource();
-  return result_;
+  const size_t brightscript_size_limit = 1024 * 1024 * 2;
+  const size_t brightscript_line_limit = 65535;
+
+  size_t lines = 0;
+  size_t bytes = 0;
+
+  size_t file_index = 0;
+
+  FileStream stream(stdout);
+
+  if (!options_.out_filename.empty()) {
+    stream = OpenFileStream(file_index);
+  }
+
+  for (std::string chunk : chunks_) {
+    const size_t chunk_lines = CountLines(chunk.c_str()) + 1;
+    const size_t chunk_bytes = chunk.size() + 1;
+
+    if (bytes + chunk_bytes > brightscript_size_limit || lines + chunk_lines > brightscript_line_limit) {
+      ++file_index;
+      lines = 0;
+      bytes = 0;
+      if (!options_.out_filename.empty()) {
+        stream = OpenFileStream(file_index);
+        stream.ClearOffset();
+      }
+    }
+
+    stream.WriteData(chunk.data(), chunk.size());
+    stream.WriteData("\n", 1);
+    lines += chunk_lines;
+    bytes += chunk_bytes;
+  }
 }
 
 }  // end anonymous namespace
 
-Result WriteBrs(Stream* stream,
-                const Module* module,
-                const WriteCOptions& options) {
-  CWriter c_writer(stream, options);
-  return c_writer.WriteModule(*module);
+Result WriteBrs(const Module* module, const WriteCOptions& options) {
+  CWriter c_writer(options);
+  c_writer.WriteModule(*module);
+  return Result::Ok;
 }
 
 }  // namespace wabt

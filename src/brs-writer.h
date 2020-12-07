@@ -26,11 +26,10 @@ class Stream;
 
 struct WriteCOptions {
   std::string name_prefix;
+  std::string out_filename;
 };
 
-Result WriteBrs(Stream* brs_stream,
-                const Module*,
-                const WriteCOptions&);
+Result WriteBrs(const Module*, const WriteCOptions&);
 
 }  // namespace wabt
 
