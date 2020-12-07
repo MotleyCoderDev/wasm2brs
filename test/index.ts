@@ -67,7 +67,7 @@ for (let i = 0; i < slicedArgv.length; i += 2) {
   args[slicedArgv[i]] = slicedArgv[i + 1];
 }
 
-const root = path.join(__dirname, "../../..");
+const root = path.join(__dirname, "../..");
 const testOut = path.join(root, "test/out");
 const project = path.join(root, "project");
 const projectSource = path.join(project, "source");
@@ -341,7 +341,7 @@ const deploy = async (guid: string, host: string): Promise<true | string> => {
   return result;
 };
 
-const outputAndMaybeDeploy = async (wastFile: string, host: string): Promise<boolean | string> => {
+const outputAndMaybeDeploy = async (wastFile: string, host?: string): Promise<boolean | string> => {
   const guid = uuid.v4();
   const result = await outputWastTests(wastFile, guid);
   if (result === true) {
@@ -353,7 +353,7 @@ const outputAndMaybeDeploy = async (wastFile: string, host: string): Promise<boo
 (async () => {
   const host = args.deploy
     ? args.deploy
-    : await RokuClient.discover().then((device) => new URL(device.ip).hostname, () => undefined);
+    : new URL((await RokuClient.discover()).ip).hostname;
 
   if (args.wast === undefined) {
     const results: string[] = [];

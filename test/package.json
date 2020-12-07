@@ -1,5 +1,4 @@
 {
-  "main": "bin/test/index.js",
   "scripts": {
     "build": "tsc",
     "lint": "eslint ."
