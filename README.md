@@ -1,7 +1,7 @@
 # Building wasm2brs
 ```bash
 git submodule update --init --recursive
-./make.sh
+./run.sh make
 ```
 
 # WASM / Brightscript limitations
@@ -56,15 +56,15 @@ git submodule update --init --recursive
 # Run tests
 Run all the tests, this will auto discover your device with a default password of `rokudev`.
 ```bash
-./make.sh run_test
+./run.sh make run_test
 ```
 
 To use a non-default password:
 ```bash
-./make.sh run_test ARGS="password ..."
+./run.sh make run_test ARGS="password ..."
 ```
 
 To run a specific test you can specify the .wast file as an absolute path, otherwise it assumes it's in the `third_part/testsuite/` directory, for example `i32.wast`:
 ```bash
-./make.sh run_test ARGS="wast i32.wast"
+./run.sh make run_test ARGS="wast i32.wast"
 ```
