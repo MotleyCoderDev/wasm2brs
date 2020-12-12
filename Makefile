@@ -1,4 +1,4 @@
-.PHONY: all wasm2brs doom run_test
+.PHONY: all wasm2brs doom files run_test
 
 all: wasm2brs doom test/bin/index.js
 
@@ -24,6 +24,16 @@ doom: build/doom/Makefile wasm2brs
 	./build/wasm2brs/wasm2brs -o project/source/test.wasm.brs ./build/doom/doom-opt.wasm
 	cp samples/doom/doom.brs project/source/test.cases.brs
 	cp samples/doom/doom1.wad project/source/doom1.wad
+
+files: build/files/files-wasm.brs
+	cp build/files/files-wasm.brs project/source/test.wasm.brs
+	cp samples/files/files.brs project/source/test.cases.brs
+
+build/files/files-wasm.brs: samples/files/files.cc
+	mkdir -p build/files
+	wasic++ -g -Oz samples/files/files.cc -o ./build/files/files.wasm
+	./build/wasm2brs/third_party/binaryen/bin/wasm-opt -g -Oz ./build/files/files.wasm -o ./build/files/files-opt.wasm
+	./build/wasm2brs/wasm2brs -o build/files/files-wasm.brs ./build/files/files-opt.wasm
 
 build/doom/Makefile:
 	mkdir -p build/doom
