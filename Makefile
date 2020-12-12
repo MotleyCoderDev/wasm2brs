@@ -52,8 +52,10 @@ files: build/files/files-wasm.brs
 	cp build/files/files-wasm.brs project/source/test.wasm.brs
 	cp samples/files/files.brs project/source/test.cases.brs
 
-build/files/files-wasm.brs: samples/files/files.cc build/wasm2brs/wasm2brs
-	mkdir -p build/files
-	wasic++ -g -Oz samples/files/files.cc -o ./build/files/files.wasm
+build/files/files-wasm.brs: build/files/files.wasm build/wasm2brs/wasm2brs
 	./build/wasm2brs/third_party/binaryen/bin/wasm-opt -g -Oz ./build/files/files.wasm -o ./build/files/files-opt.wasm
 	./build/wasm2brs/wasm2brs -o build/files/files-wasm.brs ./build/files/files-opt.wasm
+
+build/files/files.wasm: samples/files/files.cc
+	mkdir -p build/files
+	wasic++ -g -Oz samples/files/files.cc -o ./build/files/files.wasm
