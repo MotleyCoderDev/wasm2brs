@@ -1,8 +1,8 @@
 # These rules aren't backed by files and will always run
-.PHONY: all wasm2brs doom files run_test
+.PHONY: wasm2brs doom files test run_test all
 
 # This rule must be first so it runs when you don't specify a target
-all: build/wasm2brs/wasm2brs files doom test/bin/index.js
+all: wasm2brs doom files test
 
 # Because we call into cmake, we don't know whether some rules need to be updated
 # For example in rule build/wasm2brs/wasm2brs we don't know if brs-writer.cc changed
@@ -13,6 +13,8 @@ all: build/wasm2brs/wasm2brs files doom test/bin/index.js
 FORCE: ;
 
 # --- wasm2brs
+wasm2brs: build/wasm2brs/wasm2brs
+
 build/wasm2brs/wasm2brs: build/wasm2brs/Makefile FORCE
 	GNUMAKEFLAGS=--no-print-directory cmake --build ./build/wasm2brs --parallel
 
@@ -21,14 +23,16 @@ build/wasm2brs/Makefile:
 	cd build/wasm2brs && cmake ../..
 
 # --- test
+test: test/bin/index.js
+
+run_test: test/bin/index.js wasm2brs
+	cd test && node bin/index.js $(ARGS)
+
 test/bin/index.js: test/index.ts test/node_modules
 	cd test && rm -rf bin && npm run build
 
 test/node_modules: test/package.json
 	cd test && npm install && touch node_modules
-
-run_test: test/bin/index.js build/wasm2brs/wasm2brs
-	cd test && node bin/index.js $(ARGS)
 
 # --- doom
 doom: build/doom/doom-wasm.brs
@@ -36,7 +40,7 @@ doom: build/doom/doom-wasm.brs
 	cp samples/doom/doom.brs project/source/test.cases.brs
 	cp samples/doom/doom1.wad project/source/doom1.wad
 
-build/doom/doom-wasm.brs: build/doom/doom.wasm build/wasm2brs/wasm2brs
+build/doom/doom-wasm.brs: build/doom/doom.wasm wasm2brs
 	./build/wasm2brs/third_party/binaryen/bin/wasm-opt -g -O4 ./build/doom/doom.wasm -o ./build/doom/doom-opt.wasm
 	./build/wasm2brs/wasm2brs -o build/doom/doom-wasm.brs ./build/doom/doom-opt.wasm
 
@@ -52,7 +56,7 @@ files: build/files/files-wasm.brs
 	cp build/files/files-wasm.brs project/source/test.wasm.brs
 	cp samples/files/files.brs project/source/test.cases.brs
 
-build/files/files-wasm.brs: build/files/files.wasm build/wasm2brs/wasm2brs
+build/files/files-wasm.brs: build/files/files.wasm wasm2brs
 	./build/wasm2brs/third_party/binaryen/bin/wasm-opt -g -Oz ./build/files/files.wasm -o ./build/files/files-opt.wasm
 	./build/wasm2brs/wasm2brs -o build/files/files-wasm.brs ./build/files/files-opt.wasm
 
