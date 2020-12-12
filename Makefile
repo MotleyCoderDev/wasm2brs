@@ -1,5 +1,5 @@
 # These rules aren't backed by files and will always run
-.PHONY: wasm2brs doom files test run_test all
+.PHONY: wasm2brs doom files test clean run_test all
 
 # This rule must be first so it runs when you don't specify a target
 all: wasm2brs doom files test
@@ -11,6 +11,17 @@ all: wasm2brs doom files test
 # who depends on a rule that uses FORCE (e.g. build/wasm2brs/wasm2brs) is not themselves
 # forced to rebuild each time, but they would if we used a PHONY.
 FORCE: ;
+
+# --- clean
+clean: clean-project
+	rm -rf build
+	rm -rf test/bin
+	rm -rf test/node_modules
+
+clean-project:
+	rm -rf project/source/test.*.brs
+	rm -rf project/source/*-wasm*.brs
+	rm -rf project/source/*.wad
 
 # --- wasm2brs
 wasm2brs: build/wasm2brs/wasm2brs
@@ -25,7 +36,7 @@ build/wasm2brs/Makefile:
 # --- test
 test: test/bin/index.js
 
-run_test: test/bin/index.js wasm2brs
+run_test: test/bin/index.js wasm2brs clean-project
 	cd test && node bin/index.js $(ARGS)
 
 test/bin/index.js: test/index.ts test/node_modules
@@ -35,8 +46,8 @@ test/node_modules: test/package.json
 	cd test && npm install && touch node_modules
 
 # --- doom
-doom: build/doom/doom-wasm.brs
-	cp build/doom/doom-wasm.brs project/source/test.wasm.brs
+doom: build/doom/doom-wasm.brs clean-project
+	cp build/doom/doom-wasm*.brs project/source/
 	cp samples/doom/doom.brs project/source/test.cases.brs
 	cp samples/doom/doom1.wad project/source/doom1.wad
 
@@ -52,7 +63,7 @@ build/doom/Makefile:
 	cd build/doom && wasimake cmake ../../samples/doom
 
 # --- files
-files: build/files/files-wasm.brs
+files: build/files/files-wasm.brs clean-project
 	cp build/files/files-wasm.brs project/source/test.wasm.brs
 	cp samples/files/files.brs project/source/test.cases.brs
 

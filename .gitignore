@@ -2,6 +2,7 @@ build
 bld
 out
 project/source/test.*.brs
+project/source/*-wasm*.brs
 project/source/*.wad
 project/manifest
 testproject
