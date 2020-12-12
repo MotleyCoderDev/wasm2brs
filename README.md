@@ -1,8 +1,19 @@
 # Building wasm2brs
+All the dependencies for wasm2brs are installed within a Docker image that can be run with `./run.sh`.
+
 ```bash
 git submodule update --init --recursive
 ./run.sh make
 ```
+
+It is not recommended, but if you wish to run without our Docker image, you must install:
+- cmake
+- clang
+- python3
+- pip3
+- wasienv
+- nodejs
+- npm
 
 # WASM / Brightscript limitations
 - Maximum number of arguments to a function is 32 due to BrightScript
