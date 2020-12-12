@@ -1,8 +1,8 @@
 .PHONY: all doom files run_test
 
-FORCE: ;
-
 all: build/wasm2brs/wasm2brs files doom test/bin/index.js
+
+FORCE: ;
 
 build/wasm2brs/wasm2brs: build/wasm2brs/Makefile FORCE
 	GNUMAKEFLAGS=--no-print-directory cmake --build ./build/wasm2brs --parallel
