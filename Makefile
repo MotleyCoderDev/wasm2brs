@@ -21,6 +21,7 @@ clean: clean-project
 clean-project:
 	rm -rf project/source/*.out*
 	rm -rf project/source/*.wad
+	rm -rf project/manifest
 
 # --- wasm2brs
 wasm2brs: build/wasm2brs/wasm2brs
@@ -49,6 +50,7 @@ doom: build/doom/doom-wasm.out.brs clean-project
 	cp build/doom/doom-wasm.out*.brs project/source/
 	cp samples/doom/doom.brs project/source/doom.out.brs
 	cp samples/doom/doom1.wad project/source/doom1.wad
+	cp samples/doom/manifest project/manifest
 
 build/doom/doom-wasm.out.brs: build/doom/doom.wasm build/wasm2brs/wasm2brs
 	./build/wasm2brs/third_party/binaryen/bin/wasm-opt -g -O4 ./build/doom/doom.wasm -o ./build/doom/doom-opt.wasm
@@ -65,6 +67,7 @@ build/doom/Makefile:
 files: build/files/files-wasm.out.brs clean-project
 	cp build/files/files-wasm.out*.brs project/source/
 	cp samples/files/files.brs project/source/files.out.brs
+	cp samples/files/manifest project/manifest
 
 build/files/files-wasm.out.brs: build/files/files.wasm build/wasm2brs/wasm2brs
 	./build/wasm2brs/third_party/binaryen/bin/wasm-opt -g -Oz ./build/files/files.wasm -o ./build/files/files-opt.wasm
