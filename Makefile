@@ -15,7 +15,6 @@ FORCE: ;
 # --- clean
 clean: clean-project
 	rm -rf build
-	rm -rf test/bin
 	rm -rf test/node_modules
 
 clean-project:
