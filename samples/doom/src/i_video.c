@@ -33,7 +33,7 @@ rcsid[] = "$Id: i_x.c,v 1.6 1997/02/03 22:45:10 b1 Exp $";
 
 #include "doomdef.h"
 
-#include "roku.h"
+#include <roku.h>
 
 unsigned char pixels[SCREENWIDTH * SCREENHEIGHT * 4];
 #define SCREENPITCH (SCREENWIDTH * 4)
