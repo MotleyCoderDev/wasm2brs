@@ -33,38 +33,13 @@ rcsid[] = "$Id: i_x.c,v 1.6 1997/02/03 22:45:10 b1 Exp $";
 
 #include "doomdef.h"
 
+#include "roku.h"
+
 unsigned char pixels[SCREENWIDTH * SCREENHEIGHT * 4];
 #define SCREENPITCH (SCREENWIDTH * 4)
 
 // Fake mouse handling.
 boolean		grabMouse;
-
-__attribute__((__import_module__("wasi_experimental"), __import_name__("create_surface")))
-extern void wasi_experimental_create_surface(int bitsPerPixel, int width, int height);
-
-__attribute__((__import_module__("wasi_experimental"), __import_name__("set_surface_colors")))
-extern void wasi_experimental_set_surface_colors(void* colorTableOffset);
-
-__attribute__((__import_module__("wasi_experimental"), __import_name__("draw_surface")))
-extern void wasi_experimental_draw_surface(void* pixelDataOffset);
-
-__attribute__((__import_module__("wasi_experimental"), __import_name__("poll_button")))
-extern unsigned int wasi_experimental_poll_button();
-
-enum roku_button {
-    ROKU_BACK = 0,
-    ROKU_UP = 2,
-    ROKU_DOWN = 3,
-    ROKU_LEFT = 4,
-    ROKU_RIGHT = 5,
-    ROKU_OK = 6,
-    ROKU_INSTANTREPLAY = 7,
-    ROKU_REWIND = 8,
-    ROKU_FASTFORWARD = 9,
-    ROKU_OPTIONS = 10,
-    ROKU_PLAY = 13,
-    ROKU_INVALID = 0xFFFFFFFF
-};
 
 //
 //  Translates the key 
@@ -123,11 +98,11 @@ void I_StartTic (void)
 {
 #if PROFILING_FRAMES == 0
     for (;;) {
-        unsigned int ev = wasi_experimental_poll_button();
-        if (ev == ROKU_INVALID) {
+        unsigned int button = roku_poll_button();
+        if (button == ROKU_INVALID) {
             break;
         }
-	    I_GetEvent(ev);
+	    I_GetEvent(button);
     }
 #else
 	I_GetEvent(ROKU_OK);
@@ -168,7 +143,7 @@ void I_FinishUpdate (void)
 	    screens[0][ (SCREENHEIGHT-1)*SCREENWIDTH + i] = 0x0;
     }
 
-    wasi_experimental_draw_surface(screens[0]);
+    roku_draw_surface(screens[0]);
 
 #if PROFILING_FRAMES > 0
     static int counter = 0;
@@ -212,11 +187,11 @@ void I_SetPalette (byte* palette)
 
     static int created = 0;
     if (!created) {
-        wasi_experimental_create_surface(8, SCREENWIDTH, SCREENHEIGHT);
+        roku_create_surface(8, SCREENWIDTH, SCREENHEIGHT);
         created = 1;
     }
 
-    wasi_experimental_set_surface_colors(colors);
+    roku_set_surface_colors(colors);
 }
 
 

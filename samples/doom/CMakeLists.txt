@@ -69,3 +69,4 @@ src/wi_stuff.c
 )
 
 target_compile_options(doom PRIVATE "-Wno-everything")
+target_include_directories(doom PRIVATE ../../include)

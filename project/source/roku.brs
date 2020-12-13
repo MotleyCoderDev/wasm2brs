@@ -1,4 +1,6 @@
-Function wasi_experimental_create_surface(bitsPerPixel As Integer, width As Integer, height As Integer) as Void
+' All the functions here correspond with imports in `roku.h`.
+
+Function roku_create_surface(bitsPerPixel As Integer, width As Integer, height As Integer) as Void
     If bitsPerPixel <> 8 And bitsPerPixel <> 16 And bitsPerPixel <> 24 Then
         Throw "Invalid size for bitsPerPixel: " + bitsPerPixel.ToStr()
     End If
@@ -55,11 +57,11 @@ Function wasi_experimental_create_surface(bitsPerPixel As Integer, width As Inte
     m.screen.SetMessagePort(m.screenport)
 End Function
 
-Function wasi_experimental_set_surface_colors(colorTableOffset as Integer) as Void
+Function roku_set_surface_colors(colorTableOffset as Integer) as Void
     m.surfaceColorTable = Slice(m.wasi_memory, colorTableOffset, m.surfaceColorTableSize)
 End Function
 
-Function wasi_experimental_draw_surface(pixelDataOffset As Integer) as Void
+Function roku_draw_surface(pixelDataOffset As Integer) as Void
     path = "tmp:/s"
     m.surfaceHeaders.WriteFile(path)
     If m.surfaceColorTable <> Invalid Then m.surfaceColorTable.AppendFile(path)
@@ -69,7 +71,7 @@ Function wasi_experimental_draw_surface(pixelDataOffset As Integer) as Void
     m.screen.SwapBuffers()
 End Function
 
-Function wasi_experimental_poll_button() as Integer
+Function roku_poll_button() as Integer
     If m.screenport <> Invalid Then
         msg = m.screenport.GetMessage()
         If type(msg) = "roUniversalControlEvent" Then
