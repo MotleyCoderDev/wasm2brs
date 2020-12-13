@@ -1,9 +1,7 @@
 build
-bld
 out
-project/source/test.*.brs
-project/source/*-wasm*.brs
+*.stamp
+
+project/source/*.out*
 project/source/*.wad
 project/manifest
-testproject
-*.stamp

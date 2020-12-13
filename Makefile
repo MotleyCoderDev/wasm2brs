@@ -19,8 +19,7 @@ clean: clean-project
 	rm -rf test/node_modules
 
 clean-project:
-	rm -rf project/source/test.*.brs
-	rm -rf project/source/*-wasm*.brs
+	rm -rf project/source/*.out*
 	rm -rf project/source/*.wad
 
 # --- wasm2brs
@@ -46,14 +45,14 @@ test/node_modules: test/package.json
 	cd test && npm install && touch node_modules
 
 # --- doom
-doom: build/doom/doom-wasm.brs clean-project
-	cp build/doom/doom-wasm*.brs project/source/
-	cp samples/doom/doom.brs project/source/test.cases.brs
+doom: build/doom/doom-wasm.out.brs clean-project
+	cp build/doom/doom-wasm.out*.brs project/source/
+	cp samples/doom/doom.brs project/source/doom.out.brs
 	cp samples/doom/doom1.wad project/source/doom1.wad
 
-build/doom/doom-wasm.brs: build/doom/doom.wasm wasm2brs
+build/doom/doom-wasm.out.brs: build/doom/doom.wasm wasm2brs
 	./build/wasm2brs/third_party/binaryen/bin/wasm-opt -g -O4 ./build/doom/doom.wasm -o ./build/doom/doom-opt.wasm
-	./build/wasm2brs/wasm2brs -o build/doom/doom-wasm.brs ./build/doom/doom-opt.wasm
+	./build/wasm2brs/wasm2brs -o build/doom/doom-wasm.out.brs ./build/doom/doom-opt.wasm
 
 build/doom/doom.wasm: build/doom/Makefile FORCE
 	GNUMAKEFLAGS=--no-print-directory cmake --build ./build/doom --parallel
@@ -63,13 +62,13 @@ build/doom/Makefile:
 	cd build/doom && wasimake cmake ../../samples/doom
 
 # --- files
-files: build/files/files-wasm.brs clean-project
-	cp build/files/files-wasm.brs project/source/test.wasm.brs
-	cp samples/files/files.brs project/source/test.cases.brs
+files: build/files/files-wasm.out.brs clean-project
+	cp build/files/files-wasm.out*.brs project/source/
+	cp samples/files/files.brs project/source/files.out.brs
 
-build/files/files-wasm.brs: build/files/files.wasm wasm2brs
+build/files/files-wasm.out.brs: build/files/files.wasm wasm2brs
 	./build/wasm2brs/third_party/binaryen/bin/wasm-opt -g -Oz ./build/files/files.wasm -o ./build/files/files-opt.wasm
-	./build/wasm2brs/wasm2brs -o build/files/files-wasm.brs ./build/files/files-opt.wasm
+	./build/wasm2brs/wasm2brs -o build/files/files-wasm.out.brs ./build/files/files-opt.wasm
 
 build/files/files.wasm: samples/files/files.cc
 	mkdir -p build/files

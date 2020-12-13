@@ -71,8 +71,8 @@ const root = path.join(__dirname, "../..");
 const testOut = path.join(root, "test/out");
 const project = path.join(root, "project");
 const projectSource = path.join(project, "source");
-const testCasesBrs = path.join(projectSource, "test.cases.brs");
-const testWasmBrs = path.join(projectSource, "test.wasm.brs");
+const testCasesBrs = path.join(projectSource, "test-cases.out.brs");
+const testWasmBrs = path.join(projectSource, "test-wasm.out.brs");
 const testSuiteDir = path.join(root, "third_party/testsuite");
 const wasm2brs = path.join(root, "build/wasm2brs/wasm2brs");
 
@@ -326,7 +326,7 @@ const deploy = async (guid: string, host: string): Promise<true | string> => {
         const match = str.match(/Syntax Error.*|.*runtime error.*/u) || str.match(/ERROR compiling.*/u);
         if (match) {
           const [error] = match;
-          const testCasesLineRegex = /pkg:\/source\/test.cases.brs\(([0-9]+)\)/u;
+          const testCasesLineRegex = /pkg:\/source\/test-cases.out.brs\(([0-9]+)\)/u;
           const testCasesMatch = str.match(testCasesLineRegex);
           if (testCasesMatch && !error.match(testCasesLineRegex)) {
             result = `${error} : ${testCasesMatch[0]}`;
