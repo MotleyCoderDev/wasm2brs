@@ -68,7 +68,8 @@ for (let i = 0; i < slicedArgv.length; i += 2) {
 }
 
 const root = path.join(__dirname, "../..");
-const testOut = path.join(root, "test/out");
+const runtestOut = path.join(root, "build/run_test");
+const rokuDeployOut = path.join(root, "build/roku_deploy");
 const project = path.join(root, "project");
 const projectSource = path.join(project, "source");
 const testCasesBrs = path.join(projectSource, "test-cases.out.brs");
@@ -87,11 +88,11 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<boolean 
     reject: false
   };
 
-  rimraf.sync(testOut);
-  await mkdirp(testOut);
+  rimraf.sync(runtestOut);
+  await mkdirp(runtestOut);
 
   const outJsonFilename = "current.json";
-  const outJson = path.join(testOut, outJsonFilename);
+  const outJson = path.join(runtestOut, outJsonFilename);
   const wast2Json = await execa("third_party/wabt/bin/wast2json",
     [
       "--disable-multi-value",
@@ -204,7 +205,7 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<boolean 
     const wasm2BrsResult = await execa(wasm2brs,
       [
         "--name-prefix", moduleName,
-        path.join(testOut, test.module.filename)
+        path.join(runtestOut, test.module.filename)
       ],
       fromRootOptions);
 
@@ -274,6 +275,7 @@ const deploy = async (guid: string, host: string): Promise<true | string> => {
       host,
       password: args.password || "rokudev",
       rootDir: project,
+      outDir: rokuDeployOut,
       failOnCompileError: true
     });
   } catch {

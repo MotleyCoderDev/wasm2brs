@@ -12,6 +12,7 @@
             "host": "${promptForHost}",
             "password": "rokudev",
             "rootDir": "${workspaceFolder}/project",
+            "outDir": "${workspaceFolder}/build/vscode_roku_deploy",
             "enableDebuggerAutoRecovery": false,
             "stopDebuggerOnAppExit": false
         }

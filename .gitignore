@@ -1,5 +1,6 @@
 build
-out
+node_modules
+
 *.stamp
 
 project/source/*.out*

@@ -34,13 +34,13 @@ build/wasm2brs/Makefile:
 	cd build/wasm2brs && cmake ../..
 
 # --- test
-test: test/bin/index.js
+test: build/test/index.js
 
-run_test: test/bin/index.js build/wasm2brs/wasm2brs clean-project
-	cd test && node bin/index.js $(ARGS)
+run_test: build/test/index.js build/wasm2brs/wasm2brs clean-project
+	NODE_PATH=test/node_modules node build/test/index.js $(ARGS)
 
-test/bin/index.js: test/index.ts test/node_modules
-	cd test && rm -rf bin && npm run build
+build/test/index.js: test/index.ts test/node_modules
+	rm -rf build/test/ && cd test && npm run build
 
 test/node_modules: test/package.json
 	cd test && npm install && touch node_modules
