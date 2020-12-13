@@ -1,14 +1,17 @@
 # Building wasm2brs
 All the dependencies for wasm2brs are installed within a Docker image that can be run with `./run.sh`.
 
+To build our repo:
 ```bash
 git submodule update --init --recursive
 ./run.sh make
 ```
 
-It is not recommended, but if you wish to run without our Docker image, you must install:
+It is not recommended, but if you wish to run without our Docker image, you should install:
 - cmake
 - clang
+- rustc
+- cargo
 - python3
 - pip3
 - wasienv
@@ -22,25 +25,27 @@ It is not recommended, but if you wish to run without our Docker image, you must
 - NaN value bit patterns are not represented
 - Loading and storing (or reinterpreting) Float/Double (also called f32/f64) to i32/i64 and back may lose precision / bits
 - Any Float/Double with an exponent of 0 (denormalized) is treated as 0 when loaded
-- Long jumps and exceptions are not yet supported (header `setjmp.h` does not exist)
-- For the following BrightScript errors, optimizing (O4 or Oz) helps alleviate the issues:
-- BrightScript has an internal limit on the number of `If`/`Else If` blocks in a function
-  - Results in `Internal limit size exceeded. (compile error &hae) in pkg:/source/test.brs(...)`
-  - By observation, allowed to have maximum 279 blocks for the first group, and then maximum 25 blocks for subsequent groups
-  - The last `Else` clause does not contribute to this limit
-  - No limit on how many groups
-- BrightScript has an internal limit of 253 variables in a function including function parameters
-  - Results in `Variable table size exceeded. (compile error &hb0)`
-- BrightScript has an internal limit of 256 goto labels in a function
-  - Results in `Label/Line Not Found. (compile error &h0e) in pkg:/source/test.brs(NaN)'label256'`
-  - A function can actually have more than 256 labels, but any attempts to goto labels beyond 256 will fail with the above error
-  - BrightScript compilation becomes exponentially slower with the number of labels in a function (beyond 10000 will hard lock the device)
+- Long jumps and exceptions are not yet supported (header `setjmp.h` does not exist, but we provide a stub that aborts)
 - BrightScript files cannot exceed 2MB and must be broken up
   - Results in `Error loading file. (compile error &hb9) in pkg:/source/test.brs(NaN)`
+  - Files are broken up automatically by wasm2brs via adding a number to the end (e.g. main.brs, main1.brs, main2.brs...)
 - BrightScript debugger will wrap line numbers beyond 65536 (overflow)
+  - Files are broken up automatically by wasm2brs so they don't exceed 65536, in the same way as the 2MB limit
+- For the following BrightScript errors, optimizing (O4 or Oz) helps alleviate the issues:
+  - BrightScript has an internal limit on the number of `If`/`Else If` blocks in a function
+    - Results in `Internal limit size exceeded. (compile error &hae) in pkg:/source/test.brs(...)`
+    - By observation, allowed to have maximum 279 blocks for the first group, and then maximum 25 blocks for subsequent groups
+    - The last `Else` clause does not contribute to this limit
+    - No limit on how many groups
+  - BrightScript has an internal limit of 253 variables in a function including function parameters
+    - Results in `Variable table size exceeded. (compile error &hb0)`
+  - BrightScript has an internal limit of 256 goto labels in a function
+    - Results in `Label/Line Not Found. (compile error &h0e) in pkg:/source/test.brs(NaN)'label256'`
+    - A function can actually have more than 256 labels, but any attempts to goto labels beyond 256 will fail with the above error
+    - BrightScript compilation becomes exponentially slower with the number of labels in a function (beyond 10000 will hard lock the device)
 
 # WASI limitations
-- Environment variables, command line arguments, and stdout/stderr/stdin strings only currently support ASCII strings
+- Environment variables, command line arguments, and stdout/stderr/stdin strings always in UTF8 encoding
 
 # API
 `Function external_append_stdin(bytesOrString as Dynamic) as Void`
@@ -54,6 +59,7 @@ It is not recommended, but if you wish to run without our Docker image, you must
 
 `m.external_output = custom_output`:
 - Signature: `Function custom_output(fd as Integer, bytes as Object) as Void`
+- Parameter bytes is an `roByteArray`
 - Will be called when raw bytes are written to stdout (fd = 1) or stderr (fd = 2).
 - Useful if the output of a program is binary data instead of text, or if special parsing is needed.
 - Overriding this function will prevent `m.external_print_line` from being called, however the helper function `PrintAndConsumeLines` can emulate the same behavior.
@@ -70,12 +76,22 @@ Run all the tests, this will auto discover your device with a default password o
 ./run.sh make run_test
 ```
 
+To run a specific test you can specify the .wast file as an absolute path, otherwise it assumes it's in the `third_part/testsuite/` directory, for example `i32.wast`:
+```bash
+./run.sh make run_test ARGS="wast i32.wast"
+```
+
 To use a non-default password:
 ```bash
 ./run.sh make run_test ARGS="password ..."
 ```
 
-To run a specific test you can specify the .wast file as an absolute path, otherwise it assumes it's in the `third_part/testsuite/` directory, for example `i32.wast`:
+To deploy to a specific device (e.g. `1.2.3.4`):
 ```bash
-./run.sh make run_test ARGS="wast i32.wast"
+./run.sh make run_test ARGS="deploy 1.2.3.4"
+```
+
+To provide multiple arguments:
+```bash
+./run.sh make run_test ARGS="password ... deploy 1.2.3.4 wast i32.wast"
 ```
