@@ -339,15 +339,18 @@ const outputAndMaybeDeploy = async (wastFile: string, host?: string): Promise<bo
   const guid = uuid.v4();
   const result = await outputWastTests(wastFile, guid);
   if (result === true) {
-    return deploy(guid, host);
+    if (host) {
+      return deploy(guid, host);
+    }
+    return false;
   }
   return result;
 };
 
 (async () => {
-  const host = args.deploy
-    ? args.deploy
-    : new URL((await RokuClient.discover()).ip).hostname;
+  const host = typeof args.deploy === "undefined"
+    ? new URL((await RokuClient.discover()).ip).hostname
+    : args.deploy;
 
   if (args.wast === undefined) {
     const results: string[] = [];
