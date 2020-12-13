@@ -35,7 +35,7 @@ build/wasm2brs/Makefile:
 # --- test
 test: test/bin/index.js
 
-run_test: test/bin/index.js wasm2brs clean-project
+run_test: test/bin/index.js build/wasm2brs/wasm2brs clean-project
 	cd test && node bin/index.js $(ARGS)
 
 test/bin/index.js: test/index.ts test/node_modules
@@ -50,7 +50,7 @@ doom: build/doom/doom-wasm.out.brs clean-project
 	cp samples/doom/doom.brs project/source/doom.out.brs
 	cp samples/doom/doom1.wad project/source/doom1.wad
 
-build/doom/doom-wasm.out.brs: build/doom/doom.wasm wasm2brs
+build/doom/doom-wasm.out.brs: build/doom/doom.wasm build/wasm2brs/wasm2brs
 	./build/wasm2brs/third_party/binaryen/bin/wasm-opt -g -O4 ./build/doom/doom.wasm -o ./build/doom/doom-opt.wasm
 	./build/wasm2brs/wasm2brs -o build/doom/doom-wasm.out.brs ./build/doom/doom-opt.wasm
 
@@ -66,7 +66,7 @@ files: build/files/files-wasm.out.brs clean-project
 	cp build/files/files-wasm.out*.brs project/source/
 	cp samples/files/files.brs project/source/files.out.brs
 
-build/files/files-wasm.out.brs: build/files/files.wasm wasm2brs
+build/files/files-wasm.out.brs: build/files/files.wasm build/wasm2brs/wasm2brs
 	./build/wasm2brs/third_party/binaryen/bin/wasm-opt -g -Oz ./build/files/files.wasm -o ./build/files/files-opt.wasm
 	./build/wasm2brs/wasm2brs -o build/files/files-wasm.out.brs ./build/files/files-opt.wasm
 
