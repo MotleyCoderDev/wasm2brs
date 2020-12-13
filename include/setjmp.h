@@ -1,10 +1,18 @@
-#include "setjmp.h"
+#pragma once
+#ifndef SETJMP_H
+
 #include <stdio.h>
 #include <stdlib.h>
-int setjmp(jmp_buf env) {
+
+typedef int jmp_buf;
+
+static int setjmp(jmp_buf env) {
     return 0;
 }
-void longjmp(jmp_buf env, int val) {
+
+static void longjmp(jmp_buf env, int val) {
     fprintf(stderr, "Function 'longjmp' called with value %d and is not yet supported (aborting...)\n", val);
     abort();
 }
+
+#endif
