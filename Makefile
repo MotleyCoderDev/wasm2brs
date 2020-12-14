@@ -75,3 +75,8 @@ build/files/files-wasm.out.brs: build/files/files.wasm build/wasm2brs/wasm2brs
 build/files/files.wasm: samples/files/files.cc
 	mkdir -p build/files
 	wasic++ -g -Oz samples/files/files.cc -o ./build/files/files.wasm
+
+# --- cmake
+build/cmake/Makefile:
+	mkdir -p build/cmake
+	cd build/cmake && wasimake cmake ../../samples/cmake
