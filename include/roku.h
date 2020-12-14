@@ -5,6 +5,14 @@
 #ifndef ROKU_H
 #define ROKU_H
 
+#define ROKU_BUILTIN(name) __attribute__((__import_module__(""), __import_name__(#name)))
+
+/*
+    This function causes the script to pause for the specified time, without wasting CPU cycles.
+    There are 1000 milliseconds in one second.
+*/
+ROKU_BUILTIN(seep) void roku_sleep(int milliseconds);
+
 /*
     Create a singleton global surface.
     If bitsPerPixel = 8, then you must call roku_set_surface_colors before roku_draw_surface.
