@@ -82,4 +82,10 @@ sub Main()
     End If
 
     Print "------ Completed ------"
+
+    If settings.PauseOnExit = True Then
+        While True
+            WaitForEvent()
+        End While
+    End If
 end sub
