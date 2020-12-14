@@ -265,6 +265,10 @@ Function wasi_snapshot_preview1_clock_time_get(clockid As Integer, precision As 
     Return 0 ' success
 End Function
 
+Function wasi_snapshot_preview1_poll_oneoff(in_pSubscription As Integer, out_pEvent As Integer, nsubscriptions As Integer, nevents_pSize As Integer) As Integer
+    ' Not yet implemented (things like sleep)
+    Stop
+End Function
 
 Function wasi_unstable_fd_prestat_get(p0 As Integer, p1 As Integer) As Integer
     Return wasi_snapshot_preview1_fd_prestat_get(p0, p1)
@@ -318,4 +322,7 @@ Function wasi_unstable_environ_get(p0 As Integer, p1 As Integer) As Integer
 End Function
 Function wasi_unstable_clock_time_get(p0 As Integer, p1 As LongInteger, p2 As Integer) As Integer
     Return wasi_snapshot_preview1_clock_time_get(p0, p1, p2)
+End Function
+Function wasi_unstable_poll_oneoff(p0 As Integer, p1 As Integer, p2 As Integer, p3 As Integer) As Integer
+    Return wasi_snapshot_preview1_poll_oneoff(p0, p1, p2, p3)
 End Function
