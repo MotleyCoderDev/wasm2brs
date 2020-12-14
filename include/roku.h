@@ -5,13 +5,13 @@
 #ifndef ROKU_H
 #define ROKU_H
 
-#define ROKU_BUILTIN(name) __attribute__((__import_module__(""), __import_name__(#name)))
+#define ROKU_BUILTIN(name) __attribute__((__import_name__(#name)))
 
 /*
     This function causes the script to pause for the specified time, without wasting CPU cycles.
     There are 1000 milliseconds in one second.
 */
-ROKU_BUILTIN(seep) void roku_sleep(int milliseconds);
+ROKU_BUILTIN(sleep) void roku_sleep(int milliseconds);
 
 /*
     Create a singleton global surface.
