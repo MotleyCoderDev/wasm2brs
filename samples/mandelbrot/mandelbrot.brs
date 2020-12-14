@@ -22,4 +22,5 @@ Function Start()
     While True
         WaitForEvent()
     End While
+    wasi_shutdown()
 End Function

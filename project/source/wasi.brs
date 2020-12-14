@@ -40,6 +40,16 @@ Function wasi_helper_output(fd as Integer, bytes as Object) as Void
     file.memory = PrintAndConsumeLines(fd, file.memory, m.external_print_line)
 End Function
 
+Function wasi_helper_flush_output(fd as Integer) as Void
+    file = m.wasi_fds[fd]
+    If file = Invalid Or fd <> 1 And fd <> 2 Throw "Invalid output fd"
+    If file.memory.Count() <> 0 Then
+        file.memory.Push(10) ' \n
+        file.memory = PrintAndConsumeLines(fd, file.memory, m.external_print_line)
+        If file.memory.Count() <> 0 Then Throw "Assert: Not all output consumed"
+    End If
+End Function
+
 Function external_append_stdin(bytesOrString as Dynamic) as Void
     If IsString(bytesOrString) Then
         bytesOrString = StringToBytes(bytesOrString)
@@ -107,6 +117,11 @@ Function wasi_init(memory as Object, executableFile as String, config as Object)
     End If
 
     m.wasi_date = CreateObject("roDateTime")
+End Function
+
+Function wasi_shutdown()
+    wasi_helper_flush_output(1)
+    wasi_helper_flush_output(2)
 End Function
 
 Function wasi_snapshot_preview1_proc_exit(rval As Integer) As Void
