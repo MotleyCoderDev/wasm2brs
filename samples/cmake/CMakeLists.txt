@@ -23,5 +23,5 @@ add_custom_command(TARGET cmake POST_BUILD
 
 # Output the final optimized wasm file to BrightScript
 add_custom_command(TARGET cmake POST_BUILD
-    COMMAND "${WASM2BRS_DIR}/build/wasm2brs/wasm2brs" -o cmake.brs cmake-opt.wasm
+    COMMAND "${WASM2BRS_DIR}/build/wasm2brs/wasm2brs" -o cmake-wasm.out.brs cmake-opt.wasm
 )
