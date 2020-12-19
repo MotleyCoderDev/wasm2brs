@@ -88,3 +88,17 @@ build/cmake/cmake.out.brs: build/cmake/Makefile build/wasm2brs/wasm2brs FORCE
 build/cmake/Makefile:
 	mkdir -p build/cmake
 	cd build/cmake && wasimake cmake ../../samples/cmake
+
+# --- mandelbrot
+mandelbrot: build/mandelbrot/mandelbrot-wasm.out.brs clean-project
+	cp build/mandelbrot/mandelbrot-wasm.out*.brs project/source/
+	cp samples/mandelbrot/mandelbrot.brs project/source/mandelbrot.out.brs
+	cp samples/mandelbrot/manifest project/manifest
+
+build/mandelbrot/mandelbrot-wasm.out.brs: build/mandelbrot/mandelbrot.wasm build/wasm2brs/wasm2brs
+	./build/wasm2brs/third_party/binaryen/bin/wasm-opt -O4 ./build/mandelbrot/mandelbrot.wasm -o ./build/mandelbrot/mandelbrot-opt.wasm
+	./build/wasm2brs/wasm2brs -o build/mandelbrot/mandelbrot-wasm.out.brs ./build/mandelbrot/mandelbrot-opt.wasm
+
+build/mandelbrot/mandelbrot.wasm: samples/mandelbrot/mandelbrot.c
+	mkdir -p build/mandelbrot
+	clang -Ofast --target=wasm32 -nostdlib -Wl,--no-entry samples/mandelbrot/mandelbrot.c -o ./build/mandelbrot/mandelbrot.wasm

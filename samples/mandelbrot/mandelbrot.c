@@ -1,3 +1,4 @@
+// Modified from https://github.com/ColinEberhardt/wasm-mandelbrot/blob/master/emscripten/mandelbrot.c
 #define WIDTH 320
 #define HEIGHT 200
 unsigned char image[WIDTH * HEIGHT * 3];

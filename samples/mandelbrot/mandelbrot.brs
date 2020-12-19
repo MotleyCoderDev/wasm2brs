@@ -1,8 +1,8 @@
+' This takes several minutes to complete
 Function Start()
     w2bInit__()
     wasi_init(m.w2b_memory, "mandelbrot.wasm", {})
-
-    wasi_experimental_create_surface(24, 320, 200)
+    roku_create_surface(24, 320, 200)
 
     iterations = 1000%
     x =  -0.7436447860#
@@ -13,14 +13,12 @@ Function Start()
 
     offset = w2b_mandelbrot(iterations, x, y, d)
 
-    print "------------------------------ FINISHED MANDLEBROT " ts.TotalMilliseconds()
+    print ts.TotalMilliseconds()
 
-    ts.Mark()
-    wasi_experimental_draw_surface(offset)
-    print "------------------------------ SWAPPED SCREEN " ts.TotalMilliseconds()
-
-    While True
-        WaitForEvent()
-    End While
+    roku_draw_surface(offset)
     wasi_shutdown()
+End Function
+
+Function GetSettings()
+    Return { PauseOnExit: True }
 End Function
