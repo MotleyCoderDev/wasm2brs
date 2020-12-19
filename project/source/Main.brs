@@ -28,7 +28,7 @@ Function custom_wait_for_stdin() as Void
     If m.screen <> Invalid Then
         Return
     End If
-    ' Not correct but it works for right now
+    ' This works because we only have the stdin keyboard event
     WaitForEvent()
 End Function
 
