@@ -10,6 +10,7 @@ git submodule update --init --recursive
 It is not recommended, but if you wish to run without our Docker image, you should install:
 - cmake
 - clang
+- wasm-ld
 - rustc
 - cargo
 - python3
