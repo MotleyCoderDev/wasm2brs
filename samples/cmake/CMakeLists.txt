@@ -4,7 +4,7 @@ project(cmake)
 set(WASM2BRS_DIR "../.." CACHE STRING "The wasm2brs repo directory")
 
 # Enable many optimizations which helps reduce code size
-#add_compile_options(-Ofast)
+add_compile_options(-Ofast)
 
 # The ignored warnings are due to the preamble.h in wasienv
 add_compile_options(-Wno-macro-redefined -Wno-writable-strings -Wno-return-type)
