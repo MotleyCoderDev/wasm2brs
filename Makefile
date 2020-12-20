@@ -77,12 +77,12 @@ build/files/files.wasm: samples/files/files.cc
 	wasic++ -g -Oz samples/files/files.cc -o ./build/files/files.wasm
 
 # --- cmake
-cmake: build/cmake/cmake.out.brs clean-project
+cmake: build/cmake/cmake-wasm.out.brs clean-project
 	cp build/cmake/cmake-wasm.out*.brs project/source/
 	cp samples/cmake/cmake.brs project/source/cmake.out.brs
 	cp samples/cmake/manifest project/manifest
 
-build/cmake/cmake.out.brs: build/cmake/Makefile build/wasm2brs/wasm2brs FORCE
+build/cmake/cmake-wasm.out.brs: build/cmake/Makefile build/wasm2brs/wasm2brs FORCE
 	GNUMAKEFLAGS=--no-print-directory cmake --build ./build/cmake --parallel
 
 build/cmake/Makefile:
