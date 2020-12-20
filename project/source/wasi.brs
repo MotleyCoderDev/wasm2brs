@@ -177,7 +177,7 @@ Function wasi_snapshot_preview1_fd_read(fd As Integer, iovs_pCiovec As Integer, 
         buf_pU8 = I32Load(m.wasi_memory, iovs_pCiovec)
         buf_len_Size = I32Load(m.wasi_memory, iovs_pCiovec + 4)
         If fd = 0 Then ' stdin
-            If file.memory.Count() = 0 And m.external_wait_for_stdin <> Invalid Then
+            If file.memory.Count() = file.position And m.external_wait_for_stdin <> Invalid Then
                 m.external_wait_for_stdin()
             End If
         End If
