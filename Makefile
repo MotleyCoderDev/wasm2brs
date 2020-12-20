@@ -1,8 +1,8 @@
 # These rules aren't backed by files and will always run
-.PHONY: wasm2brs doom files cmake test clean run_test all
+.PHONY: wasm2brs doom files mandelbrot cmake test clean run_test all
 
 # This rule must be first so it runs when you don't specify a target
-all: wasm2brs doom files cmake test
+all: wasm2brs doom files mandelbrot cmake test
 
 # Because we call into cmake, we don't know whether some rules need to be updated
 # For example in rule build/wasm2brs/wasm2brs we don't know if brs-writer.cc changed
