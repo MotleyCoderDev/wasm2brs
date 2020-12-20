@@ -9,6 +9,21 @@ git submodule update --init --recursive
 
 To run without the Docker image (not recommended) be sure to install the same dependencies as listed in the `Dockerfile`.
 
+# Running the samples
+```bash
+./run.sh make doom
+```
+
+This will place all the output files in `project/`. To run, either side load the project manually or use vscode with the BrightScript Language extension. When opening our repository in vscode, running the debugger will run `project/`.
+
+The samples we have are:
+- `cmake`
+- `doom`
+- `files`
+- `mandelbrot`
+- `javascript`
+- `rust`
+
 # Starting your own project
 The easiest way to get started is to look in our [samples](samples) directory. Specifically the [cmake](samples/cmake) sample is setup to be used as a template.
 
