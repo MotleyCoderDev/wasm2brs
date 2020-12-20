@@ -1,4 +1,4 @@
-
+' Copyright 2020, Trevor Sundberg. See LICENSE.md
 Function wasi_enum_filetype_directory() As Integer
     Return 3
 End Function

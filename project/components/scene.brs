@@ -1,3 +1,4 @@
+' Copyright 2020, Trevor Sundberg. See LICENSE.md
 Sub Init()
     m.keyboard = m.top.findNode("keyboard")
     m.enter = m.top.findNode("enter")

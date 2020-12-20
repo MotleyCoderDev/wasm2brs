@@ -1,4 +1,4 @@
-
+' Copyright 2020, Trevor Sundberg. See LICENSE.md
 Function StringToBytes(str as String) as Object
     bytes = CreateObject("roByteArray")
     bytes.FromAsciiString(str)

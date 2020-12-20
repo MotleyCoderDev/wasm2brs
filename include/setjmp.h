@@ -1,3 +1,4 @@
+/* Copyright 2020, Trevor Sundberg. See LICENSE.md */
 #pragma once
 #ifndef SETJMP_H
 

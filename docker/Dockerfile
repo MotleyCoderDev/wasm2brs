@@ -1,3 +1,4 @@
+# Copyright 2020, Trevor Sundberg. See LICENSE.md
 FROM ubuntu:20.10
 
 RUN apt-get update && \

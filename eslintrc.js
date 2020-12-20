@@ -1,3 +1,4 @@
+// Copyright 2020, Trevor Sundberg. See LICENSE.md
 module.exports = {
   parser: "@typescript-eslint/parser",
   extends: [

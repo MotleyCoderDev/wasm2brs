@@ -1,3 +1,4 @@
+' Copyright 2020, Trevor Sundberg. See LICENSE.md
 Function IsNegativeZero(value as Dynamic) as Boolean
     Return value.ToStr() = "-0"
 End Function

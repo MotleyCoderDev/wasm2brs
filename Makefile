@@ -1,3 +1,5 @@
+# Copyright 2020, Trevor Sundberg. See LICENSE.md
+
 # These rules aren't backed by files and will always run
 .PHONY: wasm2brs doom files mandelbrot javascript rust cmake test clean run_test all
 

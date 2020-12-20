@@ -1,3 +1,4 @@
+' Copyright 2020, Trevor Sundberg. See LICENSE.md
 ' All the functions here correspond with imports in `roku.h`.
 
 Function roku_create_surface(bitsPerPixel As Integer, width As Integer, height As Integer) as Void

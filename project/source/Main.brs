@@ -1,3 +1,4 @@
+' Copyright 2020, Trevor Sundberg. See LICENSE.md
 Function custom_print_line(fd as Integer, str as String) as Void
     If m.screen <> Invalid Then
         Return

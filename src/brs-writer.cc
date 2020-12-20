@@ -1,4 +1,9 @@
 /*
+  Copyright 2020 Trevor Sundberg
+  This file has been modified to output BrightScript
+  All modifications are licenced under LICENSE.md
+*/
+/*
  * Copyright 2017 WebAssembly Community Group participants
  *
  * Licensed under the Apache License, Version 2.0 (the "License");

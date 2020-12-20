@@ -1,3 +1,4 @@
+# Copyright 2020, Trevor Sundberg. See LICENSE.md
 cmake_minimum_required(VERSION 3.13.4)
 project(WASM2BRS VERSION 1.0.0)
 
