@@ -7,7 +7,7 @@ git submodule update --init --recursive
 ./run.sh make
 ```
 
-To run without the Docker image (not recommended) be sure to install the same dependencies as listed in the `Dockerfile`.
+To run `make` without the Docker image (not recommended) be sure to install the same dependencies as listed in the `Dockerfile`.
 
 # Running the samples
 ```bash
@@ -63,7 +63,7 @@ In general the process looks like:
     - BrightScript compilation becomes exponentially slower with the number of labels in a function (beyond 10000 will hard lock the device)
 
 # WASI limitations
-- Environment variables, command line arguments, and stdout/stderr/stdin strings always in UTF8 encoding
+- Environment variables, command line arguments, and stdout/stderr/stdin strings are always UTF8 encoding
 
 # API
 `Function external_append_stdin(bytesOrString as Dynamic) as Void`
