@@ -1,8 +1,8 @@
 # These rules aren't backed by files and will always run
-.PHONY: wasm2brs doom files mandelbrot javascript cmake test clean run_test all
+.PHONY: wasm2brs doom files mandelbrot javascript rust cmake test clean run_test all
 
 # This rule must be first so it runs when you don't specify a target
-all: wasm2brs doom files mandelbrot javascript cmake test
+all: wasm2brs doom files mandelbrot javascript rust cmake test
 
 # Because we call into cmake, we don't know whether some rules need to be updated
 # For example in rule build/wasm2brs/wasm2brs we don't know if brs-writer.cc changed
@@ -127,3 +127,18 @@ build/javascript/javascript.wasm: build/javascript/Makefile FORCE
 build/javascript/Makefile:
 	mkdir -p build/javascript
 	cd build/javascript && wasimake cmake ../../samples/javascript
+
+# --- rust
+rust: build/rust/rust-wasm.out.brs
+	$(call clean-project)
+	cp build/rust/rust-wasm.out*.brs project/source/
+	cp samples/rust/rust.brs project/source/rust.out.brs
+	cp samples/rust/manifest project/manifest
+
+build/rust/rust-wasm.out.brs: build/rust/rust.wasm build/wasm2brs/wasm2brs
+	./build/wasm2brs/third_party/binaryen/bin/wasm-opt -g -O4 ./build/rust/rust.wasm -o ./build/rust/rust-opt.wasm
+	./build/wasm2brs/wasm2brs -o build/rust/rust-wasm.out.brs ./build/rust/rust-opt.wasm
+
+build/rust/rust.wasm: samples/rust/rust.rs
+	mkdir -p build/rust
+	cd samples/rust && rustc --target wasm32-wasi rust.rs -o ../../build/rust/rust.wasm
