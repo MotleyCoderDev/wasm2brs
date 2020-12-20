@@ -13,14 +13,16 @@ all: wasm2brs doom files mandelbrot javascript cmake test
 FORCE: ;
 
 # --- clean
-clean: clean-project
+clean:
+	$(call clean-project)
 	rm -rf build
 	rm -rf test/node_modules
 
-clean-project:
+define clean-project
 	rm -rf project/source/*.out*
 	rm -rf project/source/*.wad
 	rm -rf project/manifest
+endef
 
 # --- wasm2brs
 wasm2brs: build/wasm2brs/wasm2brs
@@ -35,7 +37,8 @@ build/wasm2brs/Makefile:
 # --- test
 test: build/test/index.js
 
-run_test: build/test/index.js build/wasm2brs/wasm2brs clean-project
+run_test: build/test/index.js build/wasm2brs/wasm2brs
+	$(call clean-project)
 	NODE_PATH=test/node_modules node build/test/index.js $(ARGS)
 
 build/test/index.js: test/index.ts test/node_modules
@@ -45,7 +48,8 @@ test/node_modules: test/package.json
 	cd test && npm install && touch node_modules
 
 # --- doom
-doom: build/doom/doom-wasm.out.brs clean-project
+doom: build/doom/doom-wasm.out.brs
+	$(call clean-project)
 	cp build/doom/doom-wasm.out*.brs project/source/
 	cp samples/doom/doom.brs project/source/doom.out.brs
 	cp samples/doom/doom1.wad project/source/doom1.wad
@@ -63,7 +67,8 @@ build/doom/Makefile:
 	cd build/doom && wasimake cmake ../../samples/doom
 
 # --- files
-files: build/files/files-wasm.out.brs clean-project
+files: build/files/files-wasm.out.brs
+	$(call clean-project)
 	cp build/files/files-wasm.out*.brs project/source/
 	cp samples/files/files.brs project/source/files.out.brs
 	cp samples/files/manifest project/manifest
@@ -77,7 +82,8 @@ build/files/files.wasm: samples/files/files.cc
 	wasic++ -g -Oz samples/files/files.cc -o ./build/files/files.wasm
 
 # --- cmake
-cmake: build/cmake/cmake-wasm.out.brs clean-project
+cmake: build/cmake/cmake-wasm.out.brs
+	$(call clean-project)
 	cp build/cmake/cmake-wasm.out*.brs project/source/
 	cp samples/cmake/cmake.brs project/source/cmake.out.brs
 	cp samples/cmake/manifest project/manifest
@@ -90,7 +96,8 @@ build/cmake/Makefile:
 	cd build/cmake && wasimake cmake ../../samples/cmake
 
 # --- mandelbrot
-mandelbrot: build/mandelbrot/mandelbrot-wasm.out.brs clean-project
+mandelbrot: build/mandelbrot/mandelbrot-wasm.out.brs
+	$(call clean-project)
 	cp build/mandelbrot/mandelbrot-wasm.out*.brs project/source/
 	cp samples/mandelbrot/mandelbrot.brs project/source/mandelbrot.out.brs
 	cp samples/mandelbrot/manifest project/manifest
@@ -104,7 +111,8 @@ build/mandelbrot/mandelbrot.wasm: samples/mandelbrot/mandelbrot.c
 	clang -Ofast --target=wasm32 -nostdlib -Wl,--no-entry samples/mandelbrot/mandelbrot.c -o ./build/mandelbrot/mandelbrot.wasm
 
 # --- javascript
-javascript: build/javascript/javascript-wasm.out.brs clean-project
+javascript: build/javascript/javascript-wasm.out.brs
+	$(call clean-project)
 	cp build/javascript/javascript-wasm.out*.brs project/source/
 	cp samples/javascript/javascript.brs project/source/javascript.out.brs
 	cp samples/javascript/manifest project/manifest
