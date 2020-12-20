@@ -16,6 +16,11 @@ If you wish to use libc/libc++, then you should use install [wasienv](https://gi
 
 The mandelbrot sample shows how to use clang directly without wasienv and no standard libraries. Note that `wasm-ld` is required.
 
+In general the process looks like:
+- Run your build tool of choice to output a `.wasm` file, typicaly in Release mode with `-Oz`
+- Run Binaryen's `wasm-opt` to perform wasm specific optimizations that reduce goto/labels and stack variables. This is located in `build/wasm2brs/third_party/binaryen/bin/wasm-opt`
+- Run `wasm2brs` to convert into a `.brs` file. This is located in `build/wasm2brs/wasm2brs`
+
 # WASM / Brightscript limitations
 - Maximum number of arguments to a function is 32 due to BrightScript
 - Stack depth is dependent upon BrightScript's limitations and may be less than WASM standards
