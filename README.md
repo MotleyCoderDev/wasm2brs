@@ -36,7 +36,7 @@ In general the process looks like:
 - Run Binaryen's `wasm-opt` to perform wasm specific optimizations that reduce goto/labels and stack variables. This is located in `build/wasm2brs/third_party/binaryen/bin/wasm-opt`
 - Run `wasm2brs` to convert into a `.brs` file. This is located in `build/wasm2brs/wasm2brs`
 
-# WASM / Brightscript limitations
+# WASM / BrightScript limitations
 - Maximum number of arguments to a function is 32 due to BrightScript
 - Stack depth is dependent upon BrightScript's limitations and may be less than WASM standards
 - Floating point math is approximate (where possible we use the correct algorithm, but it may not perfectly match processors)

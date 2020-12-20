@@ -1275,7 +1275,7 @@ void CWriter::Write(const ExprList& exprs) {
 
       case ExprType::BrTable: {
         const auto* bt_expr = cast<BrTableExpr>(&expr);
-        // Reduce the number of If blocks (Brightscript limit) by using range checks
+        // Reduce the number of If blocks (BrightScript limit) by using range checks
         // e.g. If switch >= 1 And switch <= 10 Then
         // Also better for performance
         // Note that we now don't use Else because we found it causes the issue with BrightScript limits

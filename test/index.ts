@@ -143,7 +143,7 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<boolean 
       return arg.value + (arg.type === "i32" ? "%" : "&");
     }
 
-    // TODO(trevor): Differentiate between nan:canonical and nan:arithmetic (find a way in Brightscript)
+    // TODO(trevor): Differentiate between nan:canonical and nan:arithmetic (find a way in BrightScript)
     if (arg.value === "nan:canonical" || arg.value === "nan:arithmetic") {
       return arg.type === "f32" ? floatNanBrs : doubleNanBrs;
     }
