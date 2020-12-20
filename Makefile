@@ -102,3 +102,20 @@ build/mandelbrot/mandelbrot-wasm.out.brs: build/mandelbrot/mandelbrot.wasm build
 build/mandelbrot/mandelbrot.wasm: samples/mandelbrot/mandelbrot.c
 	mkdir -p build/mandelbrot
 	clang -Ofast --target=wasm32 -nostdlib -Wl,--no-entry samples/mandelbrot/mandelbrot.c -o ./build/mandelbrot/mandelbrot.wasm
+
+# --- javascript
+javascript: build/javascript/javascript-wasm.out.brs clean-project
+	cp build/javascript/javascript-wasm.out*.brs project/source/
+	cp samples/javascript/javascript.brs project/source/javascript.out.brs
+	cp samples/javascript/manifest project/manifest
+
+build/javascript/javascript-wasm.out.brs: build/javascript/javascript.wasm build/wasm2brs/wasm2brs
+	./build/wasm2brs/third_party/binaryen/bin/wasm-opt -g -O4 ./build/javascript/javascript.wasm -o ./build/javascript/javascript-opt.wasm
+	./build/wasm2brs/wasm2brs -o build/javascript/javascript-wasm.out.brs ./build/javascript/javascript-opt.wasm
+
+build/javascript/javascript.wasm: build/javascript/Makefile FORCE
+	GNUMAKEFLAGS=--no-print-directory cmake --build ./build/javascript --parallel
+
+build/javascript/Makefile:
+	mkdir -p build/javascript
+	cd build/javascript && wasimake cmake ../../samples/javascript
