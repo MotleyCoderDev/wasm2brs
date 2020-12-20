@@ -7,17 +7,14 @@ git submodule update --init --recursive
 ./run.sh make
 ```
 
-It is not recommended, but if you wish to run without our Docker image, you should install:
-- cmake
-- clang
-- wasm-ld
-- rustc
-- cargo
-- python3
-- pip3
-- wasienv
-- nodejs
-- npm
+To run without the Docker image (not recommended) be sure to install the same dependencies as listed in the `Dockerfile`.
+
+# Starting your own project
+The easiest way to get started is to look in our [samples](samples) directory. Specifically the [cmake](samples/cmake) sample is setup to be used as a template.
+
+If you wish to use libc/libc++, then you should use install [wasienv](https://github.com/wasienv/wasienv), which comes with `wasi-libc` as well as helpful scripts that run clang/make/cmake/etc with the correct compiler flags and directories.
+
+The mandelbrot sample shows how to use clang directly without wasienv and no standard libraries. Note that `wasm-ld` is required.
 
 # WASM / Brightscript limitations
 - Maximum number of arguments to a function is 32 due to BrightScript
