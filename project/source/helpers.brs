@@ -50,16 +50,16 @@ Function StringArrayWriteMemory(memory as Object, strings as Object, argv_ppU8 A
 End Function
 
 Function PrintAndConsumeLines(fd as Integer, bytes as Object, lineCallback as Dynamic) as Object
-    start = 0
+    begin = 0
     For i = 0 To bytes.Count() - 1
         If bytes[i] = 10 Then
-            line = StringFromBytes(bytes, start, i - start)
+            line = StringFromBytes(bytes, begin, i - begin)
             Print line
             If lineCallback <> Invalid Then lineCallback(fd, line)
-            start = i + 1
+            begin = i + 1
         End If
     End For
-    Return OptimizedSlice(bytes, start, bytes.Count() - start)
+    Return OptimizedSlice(bytes, begin, bytes.Count() - begin)
 End Function
 
 Function Min(a as Dynamic, b as Dynamic) as Dynamic
