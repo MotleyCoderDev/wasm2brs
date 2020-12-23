@@ -43,7 +43,7 @@ run_test: build/test/index.js build/wasm2brs/wasm2brs
 	$(call clean-project)
 	NODE_PATH=test/node_modules node build/test/index.js $(ARGS)
 
-build/test/index.js: test/index.ts test/node_modules
+build/test/index.js: test/index.ts test/tsconfig.json test/node_modules
 	rm -rf build/test/ && cd test && npm run build
 
 test/node_modules: test/package.json

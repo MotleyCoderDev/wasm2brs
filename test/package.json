@@ -11,6 +11,7 @@
     "@types/seedrandom": "^2.4.28",
     "@types/uuid": "^8.3.0",
     "adler-32": "^1.2.0",
+    "brighterscript": "^0.23.1",
     "execa": "^4.0.3",
     "mkdirp": "^1.0.4",
     "rimraf": "^3.0.2",

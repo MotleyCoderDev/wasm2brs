@@ -8,6 +8,7 @@ import * as uuid from "uuid";
 import ADLER32 from "adler-32";
 import mkdirp from "mkdirp";
 import rimraf from "rimraf";
+import * as brighterscript from "brighterscript";
 
 interface WastArg {
   type: "i32" | "i64" | "f32" | "f64";
@@ -339,8 +340,14 @@ const outputAndMaybeDeploy = async (wastFile: string, host?: string): Promise<bo
   const guid = uuid.v4();
   const result = await outputWastTests(wastFile, guid);
   if (result === true) {
-    if (host) {
-      return deploy(guid, host);
+    switch (host) {
+      case "brighterscript":
+        await new brighterscript.ProgramBuilder().run({
+          rootDir: project
+        });
+        break;
+      default:
+        return deploy(guid, host);
     }
     return false;
   }

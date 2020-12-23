@@ -10,7 +10,8 @@
     "allowJs": false,
     "esModuleInterop": true,
     "baseUrl": "./",
-    "outDir": "../build/test"
+    "outDir": "../build/test",
+    "skipLibCheck": true
   },
   "exclude": [
       "node_modules",
