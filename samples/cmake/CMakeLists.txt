@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.13.4)
 project(cmake)
 
-set(WASM2BRS_DIR "../.." CACHE STRING "The wasm2brs repo directory")
+set(WASM2BRS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../.." CACHE STRING "The wasm2brs repo directory")
 
 # Enable many optimizations which helps reduce code size
 add_compile_options(-Ofast)
