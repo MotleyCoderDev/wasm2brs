@@ -5,7 +5,11 @@
 #ifndef ROKU_H
 #define ROKU_H
 
+#ifdef __wasilibc_unmodified_upstream
 #define ROKU_BUILTIN(name) __attribute__((__import_name__(#name)))
+#else
+#define ROKU_BUILTIN(name)
+#endif
 
 /*
     This function causes the script to pause for the specified time, without wasting CPU cycles.
