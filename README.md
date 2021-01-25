@@ -33,8 +33,26 @@ The mandelbrot sample shows how to use clang directly without wasienv and no sta
 
 In general the process looks like:
 - Run your build tool of choice to output a `.wasm` file, typicaly in Release mode with `-Oz`
-- Run Binaryen's `wasm-opt` to perform wasm specific optimizations that reduce goto/labels and stack variables. This is located in `build/wasm2brs/third_party/binaryen/bin/wasm-opt`
+- Run Binaryen's `wasm-opt` to perform wasm specific optimizations that reduce goto/labels and stack variables. This is located in `build/wasm2brs/third_party/binaryen/bin/wasm-opt`. The recommended optimization level is `-O4`
 - Run `wasm2brs` to convert into a `.brs` file. This is located in `build/wasm2brs/wasm2brs`
+
+# Rust projects
+Rust is considerably easier to setup and involves changing the target of the project to `wasm32-wasi` and compiling with optimization level `z`:
+```toml
+opt-level = "z"
+```
+```bash
+rustup target add wasm32-wasi
+cargo build --target wasm32-wasi
+```
+Or
+```bash
+rustc -C opt-level=z --target wasm32-wasi yourfile.rs
+```
+
+As mentioned above, you'll want to run `wasm-opt` on the output wasm file and finally `wasm2brs` to convert into a `.brs` file.
+
+Note: Some Rust libraries depend upon crates that do not have a target built for `wasm32-wasi`, such as the [unix](https://crates.io/crates/unix) crate. The easiest path is to fork those libraries and remove their dependence upon crates that do not support `wasm32-wasi` crates.
 
 # WASM / BrightScript limitations
 - Maximum number of arguments to a function is 32 due to BrightScript
