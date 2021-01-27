@@ -52,7 +52,7 @@ rustc -C opt-level=z --target wasm32-wasi yourfile.rs
 
 As mentioned above, you'll want to run `wasm-opt` on the output wasm file and finally `wasm2brs` to convert into a `.brs` file.
 
-Note: Some Rust libraries depend upon crates that do not have a target built for `wasm32-wasi`, such as the [unix](https://crates.io/crates/unix) crate. The easiest path is to fork those libraries and remove their dependence upon crates that do not support `wasm32-wasi` crates.
+Note: Some Rust libraries depend upon crates that do not have a target built for `wasm32-wasi`, such as the [unix](https://crates.io/crates/unix) crate. The easiest path is to fork those libraries and remove their dependence upon those crates.
 
 # WASM / BrightScript limitations
 - Maximum number of arguments to a function is 32 due to BrightScript
