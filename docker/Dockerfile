@@ -1,5 +1,7 @@
 # Copyright 2020, Trevor Sundberg. See LICENSE.md
-FROM ubuntu:20.10
+FROM ubuntu:20.04
+
+ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && \
     apt-get install -y \
