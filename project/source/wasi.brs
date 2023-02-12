@@ -327,7 +327,7 @@ Function wasi_unstable_args_sizes_get(p0 As Integer, p1 As Integer) As Integer
 End Function
 
 Function wasi_unstable_args_get(p0 As Integer, p1 As Integer) As Integer
-    Return wasi_snapshot_preview1_args_sizes_get(p0, p1)
+    Return wasi_snapshot_preview1_args_get(p0, p1)
 End Function
 Function wasi_unstable_environ_sizes_get(p0 As Integer, p1 As Integer) As Integer
     Return wasi_snapshot_preview1_environ_sizes_get(p0, p1)
