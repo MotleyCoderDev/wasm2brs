@@ -9,6 +9,17 @@ git submodule update --init --recursive
 
 To run `make` without the Docker image (not recommended) be sure to install the same dependencies as listed in the `Dockerfile`.
 
+## Build Requirements
+- C++11 compatible compiler
+- CMake 3.13.4 or higher
+- If building manually, set the C++11 standard explicitly:
+  ```bash
+  mkdir -p build/wasm2brs
+  cd build/wasm2brs
+  cmake ../.. -DCMAKE_CXX_FLAGS="-std=c++11"
+  make -j
+  ```
+
 # Running the samples
 ```bash
 ./run.sh make doom

@@ -2,6 +2,11 @@
 cmake_minimum_required(VERSION 3.13.4)
 project(WASM2BRS VERSION 1.0.0)
 
+# Require C++11 standard for the project
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 add_subdirectory(third_party/wabt)
 add_subdirectory(third_party/binaryen)
 

@@ -124,7 +124,7 @@ int ProgramMain(int argc, char** argv) {
       result = ParseWatModule(lexer.get(), &module, &errors, &options);
     } else {
       location_type = Location::Type::Binary;
-      module = std::make_unique<wabt::Module>();
+    module = MakeUnique<wabt::Module>();
       const bool kStopOnFirstError = true;
       const bool kFailOnCustomSectionError = true;
       ReadBinaryOptions options(s_features, s_log_stream.get(),
