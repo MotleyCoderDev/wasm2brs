@@ -23,17 +23,22 @@
 
 #include <cctype>
 #include <cinttypes>
+#include <iterator>
+#include <limits>
 #include <map>
 #include <set>
 #include <iostream>
 #include <regex>
+#include <string_view>
+#include <vector>
 
-#include "src/cast.h"
-#include "src/common.h"
-#include "src/ir.h"
-#include "src/literal.h"
-#include "src/stream.h"
-#include "src/string-view.h"
+#include "wabt/cast.h"
+#include "wabt/common.h"
+#include "wabt/ir.h"
+#include "wabt/literal.h"
+#include "wabt/sha256.h"
+#include "wabt/stream.h"
+#include "wabt/string-util.h"
 
 #define INDENT_SIZE 2
 
@@ -156,7 +161,7 @@ class CWriter {
 
   std::string GetFilename(size_t index);
   FileStream OpenFileStream(size_t index);
-  void WriteModule(const Module&);
+  Result WriteModule(const Module&);
 
  private:
   typedef std::set<std::string> SymbolSet;
@@ -183,15 +188,15 @@ class CWriter {
   static std::string Deref(const std::string&);
 
   static char MangleType(Type);
-  static std::string LegalizeNameNoAddons(string_view);
-  std::string LegalizeName(const std::string& prefix, const std::string& module_name, string_view name);
-  std::string DefineName(SymbolSet*, string_view, const std::string& prefix = std::string());
+  static std::string LegalizeNameNoAddons(std::string_view);
+  std::string LegalizeName(const std::string& prefix, const std::string& module_name, std::string_view name);
+  std::string DefineName(SymbolSet*, std::string_view, const std::string& prefix = std::string());
   std::string DefineImportName(const std::string& name,
-                               string_view module_name,
-                               string_view mangled_field_name);
+                               std::string_view module_name,
+                               std::string_view mangled_field_name);
   std::string DefineGlobalScopeName(const std::string&, const std::string& prefix = std::string());
   std::string DefineLocalScopeName(const std::string&);
-  std::string DefineStackVarName(Index, Type, string_view);
+  std::string DefineStackVarName(Index, Type, std::string_view);
 
   void EndChunk();
   void Indent(int size = INDENT_SIZE);
@@ -214,7 +219,7 @@ class CWriter {
   void Write(OpenBrace);
   void Write(CloseBrace);
   void Write(Index);
-  void Write(string_view);
+  void Write(std::string_view);
   void Write(const LocalName&);
   void Write(const GlobalName&);
   void Write(const ExternalPtr&);
@@ -286,6 +291,7 @@ class CWriter {
   size_t label_count_ = 0;
   MemoryStream stream_;
   std::vector<std::string> chunks_;
+  Result result_ = Result::Ok;
   int indent_ = 0;
   bool should_write_indent_next_ = false;
 
@@ -300,14 +306,6 @@ class CWriter {
 };
 
 static const char kImplicitFuncLabel[] = "$Bfunc";
-
-#define SECTION_NAME(x) s_header_##x
-#include "src/prebuilt/wasm2c.include.h"
-#undef SECTION_NAME
-
-#define SECTION_NAME(x) s_source_##x
-#include "src/prebuilt/wasm2c.include.c"
-#undef SECTION_NAME
 
 static bool IsReplaceableMemFunction(const wabt::Func& func) {
   return
@@ -415,7 +413,7 @@ char CWriter::MangleType(Type type) {
   }
 }
 
-std::string CWriter::LegalizeNameNoAddons(string_view name) {
+std::string CWriter::LegalizeNameNoAddons(std::string_view name) {
   std::string result;
   for (size_t i = 0; i < name.size(); ++i)
     result += isalnum(name[i]) ? tolower(name[i]) : '_';
@@ -432,7 +430,7 @@ uint32_t adler32(const uint8_t* data, size_t len) {
   return (b << 16) | a;
 }
 
-std::string CWriter::LegalizeName(const std::string& prefix, const std::string& module_name, string_view name) {
+std::string CWriter::LegalizeName(const std::string& prefix, const std::string& module_name, std::string_view name) {
   const std::string legalized = LegalizeNameNoAddons(name);
   const std::string module_prefix = module_name == "env" ? "" : module_name + "_";
   const std::string output = prefix + module_prefix + legalized;
@@ -441,7 +439,7 @@ std::string CWriter::LegalizeName(const std::string& prefix, const std::string& 
     : output + "_" + std::to_string(adler32((const uint8_t*)name.begin(), name.length()));
 }
 
-std::string CWriter::DefineName(SymbolSet* set, string_view name, const std::string& prefix) {
+std::string CWriter::DefineName(SymbolSet* set, std::string_view name, const std::string& prefix) {
   std::string legal = LegalizeName(prefix, options_.name_prefix, name);
   if (set->find(legal) != set->end()) {
     std::string base = legal + "_";
@@ -454,7 +452,7 @@ std::string CWriter::DefineName(SymbolSet* set, string_view name, const std::str
   return legal;
 }
 
-string_view StripLeadingDollar(string_view name) {
+std::string_view StripLeadingDollar(std::string_view name) {
   if (!name.empty() && name[0] == '$') {
     name.remove_prefix(1);
   }
@@ -462,9 +460,9 @@ string_view StripLeadingDollar(string_view name) {
 }
 
 std::string CWriter::DefineImportName(const std::string& name,
-                                      string_view module,
-                                      string_view mangled_field_name) {
-  std::string mangled = mangled_field_name.to_string();
+                                      std::string_view module,
+                                      std::string_view mangled_field_name) {
+  std::string mangled(mangled_field_name);
   import_syms_.insert(name);
   global_syms_.insert(mangled);
   global_sym_map_.insert(SymbolMap::value_type(name, mangled));
@@ -485,7 +483,7 @@ std::string CWriter::DefineLocalScopeName(const std::string& name) {
 
 std::string CWriter::DefineStackVarName(Index index,
                                         Type type,
-                                        string_view name) {
+                                        std::string_view name) {
   std::string unique = DefineName(&local_syms_, name);
   StackTypePair stp = {index, type};
   stack_var_sym_map_.insert(StackVarSymbolMap::value_type(stp, unique));
@@ -554,7 +552,7 @@ void CWriter::Write(Index index) {
   Writef("%" PRIindex, index);
 }
 
-void CWriter::Write(string_view s) {
+void CWriter::Write(std::string_view s) {
   WriteData(s.data(), s.size());
 }
 
@@ -612,7 +610,7 @@ void CWriter::Write(const GotoLabel& goto_label) {
     // We've generated names for all labels, so we should only be using an
     // index when branching to the implicit function label, which can't be
     // named.
-    Write("Goto ", Var(kImplicitFuncLabel));
+    Write("Goto ", Var(kImplicitFuncLabel, {}));
   }
 }
 
@@ -950,7 +948,9 @@ void CWriter::WriteDataInitializers() {
     uint32_t max =
         memory->page_limits.has_max ? memory->page_limits.max : 65536;
     Write(ExternalPtr(memory->name), " = CreateObject(\"roByteArray\")", Newline());
-    Write(ExternalPtr(memory->name), "[", memory->page_limits.initial * WABT_PAGE_SIZE, "] = 0", Newline());
+    // TODO: should this be memory->page_size?
+    // 0x10000 = WABT_PAGE_SIZE
+    Write(ExternalPtr(memory->name), "[", memory->page_limits.initial * 0x10000, "] = 0", Newline());
     Write(ExternalPtr(memory->name), "Max = ", max, Newline());
   }
 
@@ -991,11 +991,13 @@ void CWriter::WriteElemInitializers() {
     Write(Newline());
 
     size_t i = 0;
-    for (const ElemExpr& elem_expr : elem_segment->elem_exprs) {
-      // We don't support the bulk-memory proposal here, so we know that we
-      // don't have any passive segments (where ref.null can be used).
-      assert(elem_expr.kind == ElemExprKind::RefFunc);
-      const Func* func = module_->GetFunc(elem_expr.var);
+    for (const ExprList& expr_list : elem_segment->elem_exprs) {
+      assert(expr_list.size() == 1);
+      const Expr& expr = expr_list.front();
+      assert(expr.type() == ExprType::RefFunc);
+
+      const RefFuncExpr& ref_func_expr = *cast<RefFuncExpr>(&expr);
+      const Func* func = module_->GetFunc(ref_func_expr.var);
       Index func_type_index = module_->GetFuncTypeIndex(func->decl.type_var);
 
       Write(ExternalRef(table->name), "[offset + ", i, "] = ", ExternalPtr(func->name), Newline());
@@ -1518,7 +1520,6 @@ void CWriter::Write(const ExprList& exprs) {
       case ExprType::AtomicWait:
       case ExprType::AtomicFence:
       case ExprType::AtomicNotify:
-      case ExprType::BrOnExn:
       case ExprType::Rethrow:
       case ExprType::ReturnCall:
       case ExprType::ReturnCallIndirect:
@@ -1565,7 +1566,7 @@ void CWriter::Write(const ExprList& exprs) {
       case ExprType::Return:
         // Goto the function label instead; this way we can do shared function
         // cleanup code in one place.
-        Write(GotoLabel(Var(label_stack_.size() - 1)), Newline());
+        Write(GotoLabel(Var(label_stack_.size() - 1, {})), Newline());
         // Stop processing this ExprList, since the following are unreachable.
         return;
 
@@ -2429,7 +2430,7 @@ FileStream CWriter::OpenFileStream(size_t index) {
   return FileStream(GetFilename(index).c_str());
 }
 
-void CWriter::WriteModule(const Module& module) {
+Result CWriter::WriteModule(const Module& module) {
   WABT_USE(options_);
   module_ = &module;
 
@@ -2485,14 +2486,15 @@ void CWriter::WriteModule(const Module& module) {
     lines += chunk_lines;
     bytes += chunk_bytes;
   }
+
+  return result_;
 }
 
 }  // end anonymous namespace
 
 Result WriteBrs(const Module* module, const WriteCOptions& options) {
-  CWriter c_writer(options);
-  c_writer.WriteModule(*module);
-  return Result::Ok;
+  CWriter brs_writer(options);
+  return brs_writer.WriteModule(*module);
 }
 
 }  // namespace wabt
