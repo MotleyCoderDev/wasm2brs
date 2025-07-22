@@ -16,6 +16,14 @@ RUN apt-get update && \
         python3-pip \
         dumb-init
 
+RUN git clone https://github.com/emscripten-core/emsdk.git /opt/emsdk && \
+    cd /opt/emsdk && \
+    ./emsdk install 4.0.11 && \
+    ./emsdk activate 4.0.11
+
+ENV EMSDK="/opt/emsdk"
+ENV PATH="/opt/emsdk:/opt/emsdk/upstream/emscripten:${PATH}"
+
 RUN ln /usr/bin/lld /usr/bin/wasm-ld
 
 RUN groupadd -g 1000 group && useradd -g 1000 -u 1000 -ms /bin/bash user

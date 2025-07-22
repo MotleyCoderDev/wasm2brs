@@ -144,3 +144,18 @@ build/rust/rust-wasm.out.brs: build/rust/rust.wasm build/wasm2brs/wasm2brs
 build/rust/rust.wasm: samples/rust/rust.rs
 	mkdir -p build/rust
 	cd samples/rust && rustc --target wasm32-wasi rust.rs -o ../../build/rust/rust.wasm
+
+# --- exceptions
+exceptions: build/exceptions/exceptions-wasm.out.brs
+	$(call clean-project)
+	cp build/exceptions/exceptions-wasm.out*.brs project/source/
+	cp samples/exceptions/exceptions.brs project/source/exceptions.out.brs
+	cp samples/exceptions/manifest project/manifest
+
+build/exceptions/exceptions-wasm.out.brs: build/exceptions/exceptions.wasm build/wasm2brs/wasm2brs
+	./build/wasm2brs/third_party/binaryen/bin/wasm-opt --enable-exception-handling --enable-bulk-memory-opt -g -Oz ./build/exceptions/exceptions.wasm -o ./build/exceptions/exceptions-opt.wasm
+	./build/wasm2brs/wasm2brs --enable-exceptions -o build/exceptions/exceptions-wasm.out.brs ./build/exceptions/exceptions-opt.wasm
+
+build/exceptions/exceptions.wasm: samples/exceptions/exceptions.cc
+	mkdir -p build/exceptions
+	emcc -g -Oz -fwasm-exceptions samples/exceptions/exceptions.cc -o ./build/exceptions/exceptions.wasm
