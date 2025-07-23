@@ -28,10 +28,10 @@ ENV WASMER_DIR="/home/user/.wasmer"
 ENV WASMER_CACHE_DIR="/home/user/.wasmer/cache"
 ENV PATH="/home/user/.wasmer/bin:/home/user/.wasienv/bin/:${PATH}:/home/user/.wasmer/globals/wapm_packages/.bin"
 
-RUN curl -sSf https://sh.rustup.rs | bash -s -- -y
+RUN curl -sSf https://sh.rustup.rs | bash -s -- -y --default-toolchain=1.81.0
 ENV PATH="/home/user/.cargo/bin:${PATH}"
 RUN rustup target add wasm32-wasi
-RUN cargo install cargo-wasi
+RUN cargo install --locked cargo-wasi
 
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 CMD echo "No command specified"
