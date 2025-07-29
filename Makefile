@@ -58,7 +58,7 @@ doom: build/doom/doom-wasm.out.brs
 	cp samples/doom/manifest project/manifest
 
 build/doom/doom-wasm.out.brs: build/doom/doom.wasm build/wasm2brs/wasm2brs
-	./build/wasm2brs/third_party/binaryen/bin/wasm-opt -g -O4 ./build/doom/doom.wasm -o ./build/doom/doom-opt.wasm
+	wasm-opt -g -O4 ./build/doom/doom.wasm -o ./build/doom/doom-opt.wasm
 	./build/wasm2brs/wasm2brs -o build/doom/doom-wasm.out.brs ./build/doom/doom-opt.wasm
 
 build/doom/doom.wasm: build/doom/Makefile FORCE
@@ -66,7 +66,7 @@ build/doom/doom.wasm: build/doom/Makefile FORCE
 
 build/doom/Makefile:
 	mkdir -p build/doom
-	cd build/doom && wasimake cmake ../../samples/doom
+	cd build/doom && cmake -DCMAKE_TOOLCHAIN_FILE=${WASI_SDK_PATH}/share/cmake/wasi-sdk.cmake ../../samples/doom
 
 # --- files
 files: build/files/files-wasm.out.brs
@@ -76,12 +76,12 @@ files: build/files/files-wasm.out.brs
 	cp samples/files/manifest project/manifest
 
 build/files/files-wasm.out.brs: build/files/files.wasm build/wasm2brs/wasm2brs
-	./build/wasm2brs/third_party/binaryen/bin/wasm-opt -g -Oz ./build/files/files.wasm -o ./build/files/files-opt.wasm
+	wasm-opt -O4 ./build/files/files.wasm -o ./build/files/files-opt.wasm
 	./build/wasm2brs/wasm2brs -o build/files/files-wasm.out.brs ./build/files/files-opt.wasm
 
 build/files/files.wasm: samples/files/files.cc
 	mkdir -p build/files
-	wasic++ -g -Oz samples/files/files.cc -o ./build/files/files.wasm
+	wasm32-wasi-clang -g -Oz samples/files/files.cc -o ./build/files/files.wasm
 
 # --- cmake
 cmake: build/cmake/cmake-wasm.out.brs
@@ -95,7 +95,7 @@ build/cmake/cmake-wasm.out.brs: build/cmake/Makefile build/wasm2brs/wasm2brs FOR
 
 build/cmake/Makefile:
 	mkdir -p build/cmake
-	cd build/cmake && wasimake cmake ../../samples/cmake
+	cd build/cmake && cmake -DCMAKE_TOOLCHAIN_FILE=${WASI_SDK_PATH}/share/cmake/wasi-sdk.cmake ../../samples/cmake
 
 # --- mandelbrot
 mandelbrot: build/mandelbrot/mandelbrot-wasm.out.brs
@@ -105,12 +105,12 @@ mandelbrot: build/mandelbrot/mandelbrot-wasm.out.brs
 	cp samples/mandelbrot/manifest project/manifest
 
 build/mandelbrot/mandelbrot-wasm.out.brs: build/mandelbrot/mandelbrot.wasm build/wasm2brs/wasm2brs
-	./build/wasm2brs/third_party/binaryen/bin/wasm-opt -O4 ./build/mandelbrot/mandelbrot.wasm -o ./build/mandelbrot/mandelbrot-opt.wasm
+	wasm-opt -O4 ./build/mandelbrot/mandelbrot.wasm -o ./build/mandelbrot/mandelbrot-opt.wasm
 	./build/wasm2brs/wasm2brs -o build/mandelbrot/mandelbrot-wasm.out.brs ./build/mandelbrot/mandelbrot-opt.wasm
 
 build/mandelbrot/mandelbrot.wasm: samples/mandelbrot/mandelbrot.c
 	mkdir -p build/mandelbrot
-	clang -Ofast --target=wasm32 -nostdlib -Wl,--no-entry samples/mandelbrot/mandelbrot.c -o ./build/mandelbrot/mandelbrot.wasm
+	wasm32-wasi-clang -O3 -ffast-math --target=wasm32 -nostdlib -Wl,--no-entry samples/mandelbrot/mandelbrot.c -o ./build/mandelbrot/mandelbrot.wasm
 
 # --- javascript
 javascript: build/javascript/javascript-wasm.out.brs
@@ -120,7 +120,7 @@ javascript: build/javascript/javascript-wasm.out.brs
 	cp samples/javascript/manifest project/manifest
 
 build/javascript/javascript-wasm.out.brs: build/javascript/javascript.wasm build/wasm2brs/wasm2brs
-	./build/wasm2brs/third_party/binaryen/bin/wasm-opt -g -O4 ./build/javascript/javascript.wasm -o ./build/javascript/javascript-opt.wasm
+	wasm-opt -g -O4 ./build/javascript/javascript.wasm -o ./build/javascript/javascript-opt.wasm
 	./build/wasm2brs/wasm2brs -o build/javascript/javascript-wasm.out.brs ./build/javascript/javascript-opt.wasm
 
 build/javascript/javascript.wasm: build/javascript/Makefile FORCE
@@ -128,7 +128,7 @@ build/javascript/javascript.wasm: build/javascript/Makefile FORCE
 
 build/javascript/Makefile:
 	mkdir -p build/javascript
-	cd build/javascript && wasimake cmake ../../samples/javascript
+	cd build/javascript && emcmake cmake ../../samples/javascript
 
 # --- rust
 rust: build/rust/rust-wasm.out.brs
@@ -138,7 +138,7 @@ rust: build/rust/rust-wasm.out.brs
 	cp samples/rust/manifest project/manifest
 
 build/rust/rust-wasm.out.brs: build/rust/rust.wasm build/wasm2brs/wasm2brs
-	./build/wasm2brs/third_party/binaryen/bin/wasm-opt -g -O4 ./build/rust/rust.wasm -o ./build/rust/rust-opt.wasm
+	wasm-opt -g -O4 ./build/rust/rust.wasm -o ./build/rust/rust-opt.wasm
 	./build/wasm2brs/wasm2brs -o build/rust/rust-wasm.out.brs ./build/rust/rust-opt.wasm
 
 build/rust/rust.wasm: samples/rust/rust.rs

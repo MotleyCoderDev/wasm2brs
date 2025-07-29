@@ -40,6 +40,9 @@ int main(void) {
     for (;;) {
         std::string input;
         std::getline(std::cin, input);
+        if (input == "exit") {
+            break;
+        }
         duk_eval_string(ctx, input.c_str());
         print_top_and_pop(ctx);
     }

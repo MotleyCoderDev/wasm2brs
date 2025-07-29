@@ -94,7 +94,7 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<boolean 
 
   const outJsonFilename = "current.json";
   const outJson = path.join(runtestOut, outJsonFilename);
-  const wast2Json = await execa("third_party/wabt/bin/wast2json",
+  const wast2Json = await execa("wast2json",
     [
       "--disable-multi-value",
       testWast,
@@ -269,72 +269,94 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<boolean 
   return true;
 };
 
-const deploy = async (guid: string, host: string): Promise<true | string> => {
-  console.log("Deploying...");
-  try {
-    await rokuDeploy.deploy({
-      host,
-      password: args.password || "rokudev",
-      rootDir: project,
-      outDir: rokuDeployOut,
-      failOnCompileError: true
-    });
-  } catch {
-    console.error("Failed to deploy. Connecting to see the error...");
-  }
-
+const deploy = (guid: string, host: string): Promise<true | string> => new Promise<true | string>((resolve, reject) => {
+  console.log("Connecting to telnet...");
+  const socket = net.connect(8085, host);
+  let str = "";
+  let writeOutput = false;
   let result: true | string = true;
+  let resolved = false;
 
-  console.log("Connecting...");
-  await new Promise<void>((resolve) => {
-    let str = "";
-    let writeOutput = false;
-    const socket = net.connect(8085, host);
-    socket.on("data", (buffer) => {
-      const text = buffer.toString();
-      str += text;
-      if (writeOutput) {
-        process.stdout.write(text);
-      } else {
-        const index = str.indexOf(`------ Compiling dev '${guid}' ------`);
-        if (index !== -1) {
-          str = str.substr(index);
-          process.stdout.write(str);
-          writeOutput = true;
-        }
-        if (str.indexOf("Console connection is already in use.") !== -1) {
-          throw new Error("Telnet connection already in use, please stop debugger to see result");
-        }
+  const end = (value: true | string) => {
+    if (resolved) {
+      return;
+    }
+    resolved = true;
+    process.stdout.write("\n");
+    socket.destroy();
+    resolve(value);
+  };
+
+  socket.on("data", (buffer) => {
+    const text = buffer.toString();
+    str += text;
+    if (writeOutput) {
+      process.stdout.write(text);
+    } else {
+      const index = str.indexOf(`------ Compiling dev '${guid}' ------`);
+      if (index !== -1) {
+        str = str.substr(index);
+        process.stdout.write(str);
+        writeOutput = true;
       }
-
-      const end = () => {
-        process.stdout.write("\n");
+      if (str.indexOf("Console connection is already in use.") !== -1) {
         socket.destroy();
-        resolve();
-      };
-
-      if (writeOutput) {
-        if (str.indexOf("------ Completed ------") !== -1) {
-          end();
-          return;
-        }
-        const match = str.match(/Syntax Error.*|.*runtime error.*/u) || str.match(/ERROR compiling.*/u);
-        if (match) {
-          const [error] = match;
-          const testCasesLineRegex = /pkg:\/source\/test-cases.out.brs\(([0-9]+)\)/u;
-          const testCasesMatch = str.match(testCasesLineRegex);
-          if (testCasesMatch && !error.match(testCasesLineRegex)) {
-            result = `${error} : ${testCasesMatch[0]}`;
-          } else {
-            result = error;
-          }
-          end();
-        }
+        reject(new Error("Telnet connection already in use, please stop debugger to see result"));
+        return;
       }
-    });
+    }
+
+    if (writeOutput) {
+      if (str.indexOf("------ Completed ------") !== -1) {
+        end(result);
+        return;
+      }
+      const match = str.match(/Syntax Error.*|.*runtime error.*/u) || str.match(/ERROR compiling.*/u);
+      if (match) {
+        const [error] = match;
+        const testCasesLineRegex = /pkg:\/source\/test-cases.out.brs\(([0-9]+)\)/u;
+        const testCasesMatch = str.match(testCasesLineRegex);
+        if (testCasesMatch && !error.match(testCasesLineRegex)) {
+          result = `${error} : ${testCasesMatch[0]}`;
+        } else {
+          result = error;
+        }
+        end(result);
+      }
+    }
   });
-  return result;
-};
+
+  socket.on("connect", async () => {
+    console.log("Deploying...");
+    try {
+      await rokuDeploy.deploy({
+        host,
+        password: args.password || "rokudev",
+        rootDir: project,
+        outDir: rokuDeployOut,
+        failOnCompileError: true
+      });
+    } catch (err) {
+      // The deploy call failed, but we will let the data handler find the error text
+      console.error("Failed to deploy. See telnet output for error...");
+      console.error(err);
+    }
+  });
+
+  socket.on("error", (err) => {
+    if (resolved) {
+      return;
+    }
+    resolved = true;
+    console.error("Socket error:", err);
+    socket.destroy();
+    reject(err);
+  });
+
+  socket.on("close", () => {
+    end(result);
+  });
+});
 
 const outputAndMaybeDeploy = async (wastFile: string, host?: string): Promise<boolean | string> => {
   const guid = uuid.v4();

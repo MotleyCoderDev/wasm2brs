@@ -38,6 +38,10 @@ Function CatchingStart()
         Start()
     Catch e
         Print e
+        For i = 0 to e.backtrace.Count() -1
+            backtrace = e.backtrace[i]
+            Print backtrace.function;" ";backtrace.filename.replace("pkg:/", "./project/");":";backtrace.line_number.ToStr()
+        End For
     End Try
 EndFunction
 
@@ -54,6 +58,8 @@ sub Main()
     sgScreen.SetMessagePort(m.port)
     scene = sgScreen.CreateScene("main")
     sgScreen.show()
+
+    ' vscode_rdb_on_device_component_entry
 
     m.keyboard = scene.findNode("keyboard")
     m.keyboard.setFocus(True)

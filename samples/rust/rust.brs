@@ -1,6 +1,6 @@
 Function Start()
-    w2bInit__()
-    wasi_init(m.w2b_memory, "rust.wasm", {})
-    w2b__start()
+    _rust_wasmInit__()
+    wasi_init(m._rust_wasm_memory, "rust.wasm", {})
+    _rust_wasm__start()
     wasi_shutdown()
 End Function

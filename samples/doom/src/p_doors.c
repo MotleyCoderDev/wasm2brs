@@ -478,7 +478,7 @@ EV_VerticalDoor
       case 32:
       case 33:
       case 34:
-	door->type = open;
+	door->type = opendoor;
 	line->special = 0;
 	break;
 	

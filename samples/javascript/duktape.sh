@@ -8,3 +8,6 @@ python tools/configure.py \
     --config-metadata config \
     --option-file "$DIR/duktape.yaml" \
     --rom-support
+
+# duktape.c contains classes, so it should be .cc
+mv "$DIR/duktape/duktape.c" "$DIR/duktape/duktape.cc"
