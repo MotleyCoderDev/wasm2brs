@@ -50,11 +50,17 @@ interface WastAssertReturnCommand extends WastCommand {
   expected: WastArg[];
 }
 
-interface WastJson {
-  commands: (WastModuleCommand | WastActionCommand | WastAssertReturnCommand)[];
+interface WastAssertExceptionCommand extends WastCommand {
+  type: "assert_exception";
+  action: WastActionInvoke;
+  expected: WastArg[];
 }
 
-type WastTestCommand = WastAssertReturnCommand | WastActionCommand;
+interface WastJson {
+  commands: (WastModuleCommand | WastActionCommand | WastAssertReturnCommand | WastAssertExceptionCommand)[];
+}
+
+type WastTestCommand = WastAssertReturnCommand | WastAssertExceptionCommand | WastActionCommand;
 
 interface WastTest {
   module: WastModuleCommand;
@@ -94,9 +100,10 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<boolean 
 
   const outJsonFilename = "current.json";
   const outJson = path.join(runtestOut, outJsonFilename);
-  const wast2Json = await execa("third_party/wabt/bin/wast2json",
+  const wast2Json = await execa("wast2json",
     [
       "--disable-multi-value",
+      "--enable-exceptions",
       testWast,
       "-o", outJson
     ],
@@ -121,7 +128,9 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<boolean 
         commands: []
       };
       tests.push(currentTest);
-    } else if (command.type === "action" || command.type === "assert_return" && command.action.type === "invoke") {
+    } else if (command.type === "action" ||
+      command.type === "assert_return" && command.action.type === "invoke" ||
+      command.type === "assert_exception" && command.action.type === "invoke") {
       command.jsonLine = currentJsonLine;
       currentTest.commands.push(command);
     }
@@ -206,6 +215,7 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<boolean 
     const wasm2BrsResult = await execa(wasm2brs,
       [
         "--name-prefix", moduleName,
+        "--enable-exceptions",
         path.join(runtestOut, test.module.filename)
       ],
       fromRootOptions);
@@ -222,17 +232,18 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<boolean 
       `Function ${moduleName}()\n` +
       `  ${moduleName}Init__() ${sourceMapNewline(test.module)}`;
 
-    const writeInvoke = (command: WastTestCommand, invoke: WastActionInvoke) => {
+    const writeInvoke = (command: WastTestCommand, invoke: WastActionInvoke, indent: string) => {
       const param = invoke.args.map((arg) => toArgValue(arg)).join(",");
       testFunction +=
-        `  result = ${legalizeName(invoke.module || moduleName, invoke.field)}(${param}) ${sourceMapNewline(command)}`;
+        `${indent}result = ${legalizeName(invoke.module || moduleName, invoke.field)}(${param}) ` +
+        `${sourceMapNewline(command)}`;
     };
 
     for (const command of test.commands) {
       switch (command.type) {
         case "assert_return": {
           if (command.action.type === "invoke") {
-            writeInvoke(command, command.action);
+            writeInvoke(command, command.action, "  ");
             for (const [index, arg] of command.expected.entries()) {
               const expected = toArgValue(arg);
               testFunction += `  AssertEquals(${command.expected.length === 1
@@ -243,8 +254,20 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<boolean 
           }
           break;
         }
+        case "assert_exception": {
+          if (command.action.type === "invoke") {
+            testFunction += "  Try\n";
+            writeInvoke(command, command.action, "    ");
+            testFunction += "    print \"Expected exception, but no exception was thrown\"\n";
+            testFunction += "    STOP\n";
+            testFunction += "  Catch e\n";
+            testFunction += "    AssertEquals(e.number, &h100)\n";
+            testFunction += "  End Try\n";
+          }
+          break;
+        }
         case "action": {
-          writeInvoke(command, command.action);
+          writeInvoke(command, command.action, "  ");
           break;
         }
       }
@@ -258,7 +281,7 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<boolean 
 
   testCasesFile += "Function GetSettings()\n" +
     "Return { CustomInit: InitSpectest }\n" +
-  "End Function";
+    "End Function";
 
   fs.writeFileSync(testCasesBrs, testCasesFile);
   fs.writeFileSync(testWasmBrs, testWasmFile);
@@ -269,72 +292,94 @@ const outputWastTests = async (wastFile: string, guid: string): Promise<boolean 
   return true;
 };
 
-const deploy = async (guid: string, host: string): Promise<true | string> => {
-  console.log("Deploying...");
-  try {
-    await rokuDeploy.deploy({
-      host,
-      password: args.password || "rokudev",
-      rootDir: project,
-      outDir: rokuDeployOut,
-      failOnCompileError: true
-    });
-  } catch {
-    console.error("Failed to deploy. Connecting to see the error...");
-  }
-
+const deploy = (guid: string, host: string): Promise<true | string> => new Promise<true | string>((resolve, reject) => {
+  console.log("Connecting to telnet...");
+  const socket = net.connect(8085, host);
+  let str = "";
+  let writeOutput = false;
   let result: true | string = true;
+  let resolved = false;
 
-  console.log("Connecting...");
-  await new Promise<void>((resolve) => {
-    let str = "";
-    let writeOutput = false;
-    const socket = net.connect(8085, host);
-    socket.on("data", (buffer) => {
-      const text = buffer.toString();
-      str += text;
-      if (writeOutput) {
-        process.stdout.write(text);
-      } else {
-        const index = str.indexOf(`------ Compiling dev '${guid}' ------`);
-        if (index !== -1) {
-          str = str.substr(index);
-          process.stdout.write(str);
-          writeOutput = true;
-        }
-        if (str.indexOf("Console connection is already in use.") !== -1) {
-          throw new Error("Telnet connection already in use, please stop debugger to see result");
-        }
+  const end = (value: true | string) => {
+    if (resolved) {
+      return;
+    }
+    resolved = true;
+    process.stdout.write("\n");
+    socket.destroy();
+    resolve(value);
+  };
+
+  socket.on("data", (buffer) => {
+    const text = buffer.toString();
+    str += text;
+    if (writeOutput) {
+      process.stdout.write(text);
+    } else {
+      const index = str.indexOf(`------ Compiling dev '${guid}' ------`);
+      if (index !== -1) {
+        str = str.substr(index);
+        process.stdout.write(str);
+        writeOutput = true;
       }
-
-      const end = () => {
-        process.stdout.write("\n");
+      if (str.indexOf("Console connection is already in use.") !== -1) {
         socket.destroy();
-        resolve();
-      };
-
-      if (writeOutput) {
-        if (str.indexOf("------ Completed ------") !== -1) {
-          end();
-          return;
-        }
-        const match = str.match(/Syntax Error.*|.*runtime error.*/u) || str.match(/ERROR compiling.*/u);
-        if (match) {
-          const [error] = match;
-          const testCasesLineRegex = /pkg:\/source\/test-cases.out.brs\(([0-9]+)\)/u;
-          const testCasesMatch = str.match(testCasesLineRegex);
-          if (testCasesMatch && !error.match(testCasesLineRegex)) {
-            result = `${error} : ${testCasesMatch[0]}`;
-          } else {
-            result = error;
-          }
-          end();
-        }
+        reject(new Error("Telnet connection already in use, please stop debugger to see result"));
+        return;
       }
-    });
+    }
+
+    if (writeOutput) {
+      if (str.indexOf("------ Completed ------") !== -1) {
+        end(result);
+        return;
+      }
+      const match = str.match(/Syntax Error.*|.*runtime error.*/u) || str.match(/ERROR compiling.*/u);
+      if (match) {
+        const [error] = match;
+        const testCasesLineRegex = /pkg:\/source\/test-cases.out.brs\(([0-9]+)\)/u;
+        const testCasesMatch = str.match(testCasesLineRegex);
+        if (testCasesMatch && !error.match(testCasesLineRegex)) {
+          result = `${error} : ${testCasesMatch[0]}`;
+        } else {
+          result = error;
+        }
+        end(result);
+      }
+    }
   });
-  return result;
-};
+
+  socket.on("connect", async () => {
+    console.log("Deploying...");
+    try {
+      await rokuDeploy.deploy({
+        host,
+        password: args.password || "rokudev",
+        rootDir: project,
+        outDir: rokuDeployOut,
+        failOnCompileError: true
+      });
+    } catch (err) {
+      // The deploy call failed, but we will let the data handler find the error text
+      console.error("Failed to deploy. See telnet output for error...");
+      console.error(err);
+    }
+  });
+
+  socket.on("error", (err) => {
+    if (resolved) {
+      return;
+    }
+    resolved = true;
+    console.error("Socket error:", err);
+    socket.destroy();
+    reject(err);
+  });
+
+  socket.on("close", () => {
+    end(result);
+  });
+});
 
 const outputAndMaybeDeploy = async (wastFile: string, host?: string): Promise<boolean | string> => {
   const guid = uuid.v4();
@@ -361,17 +406,30 @@ const outputAndMaybeDeploy = async (wastFile: string, host?: string): Promise<bo
 
   if (args.wast === undefined) {
     const results: string[] = [];
-    for (const file of fs.readdirSync(testSuiteDir)) {
-      if (path.extname(file) === ".wast" && file !== "names.wast") {
-        const result = await outputAndMaybeDeploy(path.join(testSuiteDir, file), host);
-        if (typeof result === "string") {
-          results.push(`FAIL - ${result} - ${file}`);
-        } else if (result === false) {
-          results.push(`SKIP - ${file}`);
-        } else {
-          results.push(`PASS - ${file}`);
-        }
+
+    const exceptionTestFiles = [
+      "proposals/wasm-3.0/throw_ref.wast",
+      "proposals/wasm-3.0/throw.wast",
+      "proposals/wasm-3.0/try_table.wast"
+    ].map((file) => path.join(testSuiteDir, file));
+
+    const rootTestFiles = fs.readdirSync(testSuiteDir).
+      filter((file) => path.extname(file) === ".wast" && file !== "names.wast").
+      map((file) => path.join(testSuiteDir, file));
+
+    const testFiles = [...rootTestFiles, ...exceptionTestFiles];
+
+    for (const file of testFiles) {
+      const result = await outputAndMaybeDeploy(file, host);
+      let line = "";
+      if (typeof result === "string") {
+        line = `FAIL - ${result} - ${path.basename(file)}`;
+      } else if (result === false) {
+        line = `SKIP - ${path.basename(file)}`;
+      } else {
+        line = `PASS - ${path.basename(file)}`;
       }
+      results.push(line);
     }
     console.log(results.sort().join("\n"));
   } else {

@@ -22,7 +22,10 @@
 #ifndef WABT_C_WRITER_H_
 #define WABT_C_WRITER_H_
 
-#include "src/common.h"
+#include <functional>
+#include "wabt/common.h"
+#include "wabt/feature.h"
+#include "wabt/ir.h"
 
 namespace wabt {
 
@@ -30,6 +33,8 @@ struct Module;
 class Stream;
 
 struct WriteCOptions {
+  std::string_view module_name;
+  Features features;
   std::string name_prefix;
   std::string out_filename;
 };

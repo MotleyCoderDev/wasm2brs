@@ -4,13 +4,13 @@
 
 const char* intro =
     "Write JavaScript and press enter to evaluate it. "
-    "Errors will abort due to unimplemented longjmp. Try:\n"
     "  9-3\n"
     "  Date()\n"
     "  Math.random()\n"
     "  [1,2].join(',')\n"
     "  ({test: 10*10})\n"
-    "  (function(){var a=3;return a*2})()\n";
+    "  (function(){var a=3;return a*2})()\n"
+    "  (function(){try{throw 'error!';}catch(e){return 'caught: ' + e;}})()\n";
 
 void print_top_and_pop(duk_context* ctx) {
     duk_idx_t top = duk_get_top(ctx);
@@ -40,6 +40,9 @@ int main(void) {
     for (;;) {
         std::string input;
         std::getline(std::cin, input);
+        if (input == "exit") {
+            break;
+        }
         duk_eval_string(ctx, input.c_str());
         print_top_and_pop(ctx);
     }

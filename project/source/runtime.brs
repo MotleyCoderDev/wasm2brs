@@ -625,17 +625,17 @@ Function F64Log(x as Double) as Double
 
     xStr = x.ToStr()
 
-    max = 709.782712893#
-    min = -744.440071921#
+    maxValue = 709.782712893#
+    minMin = -744.440071921#
 
     While True
-        guess = (max + min) / 2#
+        guess = (maxValue + minMin) / 2#
         value = 2.71828182845904523536# ^ guess
         If F64Abs(value - x) < 1e-5# Or value.ToStr() = xStr Return guess
         If value > x Then
-            max = guess
+            maxValue = guess
         Else
-            min = guess
+            minMin = guess
         End If
     End While
 End Function
@@ -1007,9 +1007,15 @@ Function MemoryGrow(memory as Object, maxPages as Integer, deltaPages as Integer
 End Function
 
 Function MemoryCopy(dstBytes as Object, dst as Integer, srcBytes as Object, src as Integer, size as Integer) as Integer
-    For i = 0 To size - 1
-        dstBytes[dst + i] = srcBytes[src + i]
-    End For
+    If dst < src Or dst >= src + size Then
+        For i = 0 To size - 1
+            dstBytes[dst + i] = srcBytes[src + i]
+        End For
+    Else
+        For i = size - 1 To 0 Step -1
+            dstBytes[dst + i] = srcBytes[src + i]
+        End For
+    End If
     Return size
 End Function
 

@@ -67,6 +67,7 @@ src/r_sky.c
 src/st_lib.c
 src/wi_stuff.c
 )
+set_target_properties(doom PROPERTIES OUTPUT_NAME doom.wasm)
 
 target_compile_options(doom PRIVATE "-Wno-everything")
 target_include_directories(doom PRIVATE ../../include)
